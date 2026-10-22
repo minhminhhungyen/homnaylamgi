@@ -1,0 +1,15 @@
+{
+  "name": "homnaylamgi-tools",
+  "private": true,
+  "type": "module",
+  "description": "Công cụ build cho homnaylamgi.com",
+  "scripts": {
+    "build": "node build.mjs",
+    "icons": "node make-icons.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "html-minifier-terser": "^7.2.0",
+    "sharp": "^0.35.5"
+  }
+}

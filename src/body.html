@@ -1,0 +1,211 @@
+<svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45l-5.8 3.05 1.1-6.45-4.7-4.6 6.5-.95z"/></symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6.5 3.5h11v17l-5.5-3.8-5.5 3.8z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 8 12 3.5 16.5 8M5 13.5V19a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-5.5"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="m4 17 5-5 4 4 2.5-2.5L20 18"/><circle cx="15.5" cy="9" r="1.5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5V5a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5v9A1.5 1.5 0 0 0 5 15.5h3.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+</svg>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#" aria-label="Hôm nay làm gì? Về đầu trang"><span class="brand-seal" aria-hidden="true">?</span><span>homnaylamgi</span></a>
+    <p class="today" id="today"></p>
+  </div>
+</header>
+
+<main class="wrap layout">
+  <section class="hero" aria-labelledby="hTitle">
+    <div class="hero-head">
+      <div>
+        <p class="eyebrow" id="greet">Hôm nay</p>
+        <h1 id="hTitle">Hôm nay làm gì<span class="q">?</span></h1>
+      </div>
+      <button class="tube needs-js" id="tube" type="button" aria-label="Lắc ống quẻ để rút quẻ khác">
+        <svg viewBox="0 0 80 126" aria-hidden="true">
+          <g transform="rotate(-11 40 120)"><rect class="t-stick" x="27" y="12" width="5" height="62" rx="2"/><rect class="t-tip" x="27" y="12" width="5" height="10" rx="2"/></g>
+          <g transform="rotate(9 40 120)"><rect class="t-stick" x="47" y="10" width="5" height="64" rx="2"/><rect class="t-tip" x="47" y="10" width="5" height="10" rx="2"/></g>
+          <g transform="rotate(-3 40 120)"><rect class="t-stick" x="33" y="16" width="5" height="60" rx="2"/><rect class="t-tip" x="33" y="16" width="5" height="10" rx="2"/></g>
+          <g transform="rotate(4 40 120)"><rect class="t-stick" x="42" y="18" width="5" height="58" rx="2"/><rect class="t-tip" x="42" y="18" width="5" height="10" rx="2"/></g>
+          <g class="pop"><rect class="t-stick" x="37.5" y="4" width="5.5" height="70" rx="2"/><rect class="t-tip" x="37.5" y="4" width="5.5" height="12" rx="2"/></g>
+          <rect class="t-body" x="12" y="48" width="56" height="74" rx="9"/>
+          <rect class="t-node" x="12" y="70" width="56" height="4"/>
+          <rect class="t-node" x="12" y="99" width="56" height="4"/>
+          <rect class="t-shine" x="19" y="52" width="6" height="66" rx="3"/>
+          <ellipse class="t-rim" cx="40" cy="49" rx="28" ry="5"/>
+          <rect class="t-label" x="31" y="78" width="18" height="17" rx="2"/>
+        </svg>
+      </button>
+    </div>
+    <p class="lede">Khỏi nghĩ nữa. Rút một quẻ, làm một việc nhỏ, để hôm nay khác hôm qua một chút.</p>
+    <p class="night" id="nightHint" hidden>Khuya rồi nên mình chỉ rút những việc nhẹ nhàng. Muốn lên kế hoạch cho cả ngày mai, mở phần Tinh chỉnh và chọn “Cả ngày”.</p>
+
+    <div class="draw">
+      <article class="slip" id="slip" aria-labelledby="qTitle">
+        <div class="slip-head">
+          <div>
+            <p class="slip-no">Quẻ số <b id="qNo">{{qNo}}</b></p>
+            <p class="slip-lv" id="qLv">{{qLv}}</p>
+          </div>
+          <div class="seal" id="qSeal" role="img" aria-label="{{qSealLabel}}">{{qSeal}}</div>
+        </div>
+        <h2 class="slip-title" id="qTitle">{{qTitle}}</h2>
+        <p class="slip-poem" id="qPoem">{{qPoem}}</p>
+        <div class="stars"><span class="stars-row" id="qStars" aria-hidden="true">{{qStars}}</span><span class="stars-txt" id="qStarsTxt">{{qStarsTxt}}</span></div>
+        <div class="perf" aria-hidden="true"></div>
+        <div class="first">
+          <p class="eyebrow">Bắt đầu ngay</p>
+          <p id="qStep">{{qStep}}</p>
+        </div>
+        <dl class="meta">
+          <div><dt>Thời gian</dt><dd id="qTime">{{qTime}}</dd></div>
+          <div><dt>Chi phí</dt><dd id="qCost">{{qCost}}</dd></div>
+          <div><dt>Ở đâu</dt><dd id="qWhere">{{qWhere}}</dd></div>
+          <div><dt>Đi cùng</dt><dd id="qWho">{{qWho}}</dd></div>
+        </dl>
+        <p class="status" id="qStatus" hidden></p>
+        <div class="stamp" aria-hidden="true">ĐÃ LÀM</div>
+      </article>
+      <noscript><p class="nojs-note">Trình duyệt đang tắt JavaScript nên chỉ xem được quẻ mẫu. Bật JavaScript để rút quẻ, lọc theo tâm trạng và nhận sao.</p></noscript>
+
+      <div class="actions needs-js">
+        <button class="btn btn-main" id="btnMain" type="button">Nhận quẻ này</button>
+        <button class="btn btn-line" id="btnDraw" type="button"><svg class="ico"><use href="#i-shuffle"/></svg><span>Rút quẻ khác</span></button>
+        <button class="btn btn-soft" id="btnSave" type="button" aria-pressed="false"><svg class="ico"><use href="#i-bookmark"/></svg><span>Để dành</span></button>
+        <button class="btn btn-soft" id="btnShare" type="button"><svg class="ico"><use href="#i-share"/></svg><span>Chia sẻ</span></button>
+      </div>
+      <div class="feel" id="feel" hidden>
+        <span>Thấy thế nào?</span>
+        <button class="chip" type="button" data-feel="vui" aria-pressed="false">Vui</button>
+        <button class="chip" type="button" data-feel="thuong" aria-pressed="false">Bình thường</button>
+        <button class="chip" type="button" data-feel="nho" aria-pressed="false">Đáng nhớ</button>
+        <button class="btn btn-soft btn-sm" id="btnCard" type="button"><svg class="ico"><use href="#i-image"/></svg><span>Tạo ảnh khoe</span></button>
+      </div>
+      <p class="relax" id="relaxNote" hidden></p>
+      <p class="care" id="careNote" hidden>Nếu nỗi buồn kéo dài nhiều ngày, bạn không phải chịu một mình. Đường dây <b>Ngày Mai</b> lắng nghe miễn phí, thứ Tư đến Chủ nhật, 13:00–20:30: <b>096 306 1414</b>.</p>
+      <p class="sr" id="live" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <aside class="panel needs-js" aria-label="Chọn theo ý bạn">
+    <section aria-labelledby="mTitle">
+      <h2 id="mTitle">Hôm nay bạn thấy thế nào?</h2>
+      <div class="chips" id="moods">
+        <button class="chip" type="button" data-m="all" aria-pressed="true"><span class="emo" aria-hidden="true">🙂</span>Bình thường</button>
+        <button class="chip" type="button" data-m="c" aria-pressed="false"><span class="emo" aria-hidden="true">😐</span>Chán</button>
+        <button class="chip" type="button" data-m="b" aria-pressed="false"><span class="emo" aria-hidden="true">😔</span>Buồn</button>
+        <button class="chip" type="button" data-m="m" aria-pressed="false"><span class="emo" aria-hidden="true">😪</span>Mệt</button>
+        <button class="chip" type="button" data-m="x" aria-pressed="false"><span class="emo" aria-hidden="true">😣</span>Căng thẳng</button>
+        <button class="chip" type="button" data-m="l" aria-pressed="false"><span class="emo" aria-hidden="true">🥺</span>Cô đơn</button>
+        <button class="chip" type="button" data-m="h" aria-pressed="false"><span class="emo" aria-hidden="true">🤩</span>Hứng khởi</button>
+      </div>
+    </section>
+
+    <section>
+      <details class="tune" id="tune">
+        <summary><h2>Tinh chỉnh</h2><span class="tune-sum" id="tuneSum"></span><svg class="ico caret"><use href="#i-down"/></svg></summary>
+        <div class="groups" id="groups">
+          <div class="group"><h3>Đi cùng ai</h3><div class="chips" data-f="who">
+            <button class="chip" type="button" data-v="">Ai cũng được</button><button class="chip" type="button" data-v="a">Một mình</button><button class="chip" type="button" data-v="b">Bạn bè</button><button class="chip" type="button" data-v="y">Người yêu</button><button class="chip" type="button" data-v="g">Gia đình</button>
+          </div></div>
+          <div class="group"><h3>Ngân sách</h3><div class="chips" data-f="budget">
+            <button class="chip" type="button" data-v="">Bao nhiêu cũng được</button><button class="chip" type="button" data-v="0">0 đồng</button><button class="chip" type="button" data-v="1">Dưới 100k</button><button class="chip" type="button" data-v="2">Dưới 300k</button>
+          </div></div>
+          <div class="group"><h3>Thời gian rảnh</h3><div class="chips" data-f="dur">
+            <button class="chip" type="button" data-v="">Bao lâu cũng được</button><button class="chip" type="button" data-v="20">15 phút</button><button class="chip" type="button" data-v="60">Khoảng 1 tiếng</button><button class="chip" type="button" data-v="240">Vài tiếng</button><button class="chip" type="button" data-v="999">Cả ngày</button>
+          </div></div>
+          <div class="group"><h3>Ở đâu</h3><div class="chips" data-f="place">
+            <button class="chip" type="button" data-v="">Đâu cũng được</button><button class="chip" type="button" data-v="i">Trong nhà</button><button class="chip" type="button" data-v="o">Ra ngoài</button>
+          </div></div>
+          <div class="group"><h3>Mức thử thách</h3><div class="chips" data-f="level">
+            <button class="chip" type="button" data-v="">Mức nào cũng được</button><button class="chip" type="button" data-v="1">Nhẹ (1–3 sao)</button><button class="chip" type="button" data-v="2">Vừa (4–6 sao)</button><button class="chip" type="button" data-v="3">Khó (7–10 sao)</button>
+          </div></div>
+          <div class="group"><h3>Khi nào</h3><div class="chips" data-f="when">
+            <button class="chip" type="button" data-v="now">Ngay bây giờ</button><button class="chip" type="button" data-v="day">Cả ngày</button>
+          </div></div>
+          <p class="count" id="poolCount"></p>
+        </div>
+      </details>
+    </section>
+
+    <section aria-labelledby="dLabel">
+      <h2 id="dLabel">Thử thách chung hôm nay</h2>
+      <div class="daily-card">
+        <div class="daily-top">
+          <span class="daily-badge"><svg class="star"><use href="#i-star"/></svg><span id="dDate"></span></span>
+          <span class="stars-txt" id="dStars"></span>
+        </div>
+        <h3 id="dTitle"></h3>
+        <p class="why" id="dWhy"></p>
+        <details><summary>Cách bắt đầu</summary><p id="dStep"></p></details>
+        <div class="daily-act">
+          <button class="btn btn-main btn-sm" id="dBtn" type="button">Nhận thử thách</button>
+          <span class="note">Ai vào trang hôm nay cũng nhận cùng thử thách này.</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="soonSec" aria-labelledby="sLabel">
+      <h2 id="sLabel">Sắp tới</h2>
+      <ul class="soon-list" id="soonList"></ul>
+    </section>
+  </aside>
+
+  <section class="journey needs-js" aria-labelledby="jTitle">
+    <h2 id="jTitle">Hành trình của bạn</h2>
+    <p class="sub">Làm xong mỗi quẻ, bạn nhận số sao bằng độ khó của quẻ. Gom sao để lên danh hiệu, giữ lửa mỗi ngày để mở huy hiệu.</p>
+    <div class="stats">
+      <div class="stat"><p class="big" id="jStars">0</p><p class="lab">sao đã gom</p></div>
+      <div class="stat"><p class="big" id="jStreak">0</p><p class="lab" id="jStreakLab">ngày liên tiếp</p></div>
+      <div class="stat"><p class="big" id="jDone">0</p><p class="lab">quẻ đã làm</p></div>
+    </div>
+    <div class="level">
+      <p class="eyebrow">Danh hiệu</p>
+      <p class="level-name" id="jLevel"></p>
+      <div class="bar" role="progressbar" aria-label="Tiến tới danh hiệu kế tiếp" aria-valuemin="0" aria-valuemax="100" id="jBarWrap"><span id="jBar"></span></div>
+      <p class="next" id="jNext"></p>
+    </div>
+    <div class="badges-wrap">
+      <h3>Huy hiệu</h3>
+      <ul class="badges" id="badges"></ul>
+    </div>
+    <div class="lists">
+      <div><h3>Đã làm gần đây</h3><div id="hist"></div></div>
+      <div><h3>Để dành</h3><div id="saved"></div></div>
+    </div>
+    <p class="local">Sao, huy hiệu và lịch sử được lưu ngay trên trình duyệt của bạn, không cần đăng nhập. Xóa dữ liệu trình duyệt thì chúng cũng mất. <button class="link muted" id="btnReset" type="button">Xóa dữ liệu</button></p>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <p class="about"><b>Hôm nay làm gì?</b> gợi ý mỗi ngày một việc nhỏ cho người trẻ 16–40 tuổi: vận động, khám phá, kết nối, học hỏi, chăm sóc bản thân. Có {{count}} quẻ, lọc theo tâm trạng, thời gian và túi tiền, không cần đăng ký.</p>
+    <p class="help">Có những ngày nặng lòng hơn bình thường. Nếu bạn cần ai đó lắng nghe, đường dây <b>Ngày Mai</b> hỗ trợ tâm lý miễn phí, thứ Tư đến Chủ nhật, 13:00–20:30: <a href="tel:0963061414">096 306 1414</a> <button class="link needs-js" id="btnHotline" type="button">Chép số</button></p>
+    <p class="tiny">Thời gian và chi phí trên mỗi quẻ là ước tính. Ngày âm lịch tính theo giờ Việt Nam.</p>
+    <p class="tiny">© 2026 homnaylamgi.com</p>
+  </div>
+</footer>
+
+<div class="modal" id="shareModal" hidden role="dialog" aria-modal="true" aria-labelledby="shTitle">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="shTitle">Rủ thêm người cùng làm</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="ico"><use href="#i-x"/></svg></button></div>
+    <textarea class="share-text" id="shareText" readonly aria-label="Lời mời để chia sẻ"></textarea>
+    <div class="share-acts">
+      <button class="btn btn-main btn-sm" id="btnCopy" type="button"><svg class="ico"><use href="#i-copy"/></svg><span>Chép lời mời</span></button>
+      <button class="btn btn-soft btn-sm" id="btnNative" type="button"><svg class="ico"><use href="#i-share"/></svg><span>Gửi qua ứng dụng</span></button>
+      <a class="btn btn-soft btn-sm" id="lnkFb" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fhomnaylamgi.com" target="_blank" rel="noopener">Facebook</a>
+      <button class="btn btn-soft btn-sm" id="btnCard2" type="button"><svg class="ico"><use href="#i-image"/></svg><span>Tạo ảnh khoe</span></button>
+    </div>
+    <div class="card-wrap" id="cardWrap" hidden>
+      <div id="cardBox"></div>
+      <p>Nhấn giữ ảnh (điện thoại) hoặc bấm chuột phải (máy tính) để lưu, rồi đăng lên story.</p>
+      <div id="shareImgRow"><button class="btn btn-soft btn-sm" id="btnShareImg" type="button"><svg class="ico"><use href="#i-share"/></svg><span>Gửi ảnh qua ứng dụng</span></button></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<canvas class="confetti" id="confetti" hidden aria-hidden="true"></canvas>
