@@ -20,7 +20,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 /* ---------- 1. nguồn ---------- */
 const css0 = read('style.css'), body0 = read('body.html'), data0 = read('data.js'), app0 = read('app.js');
-const ACT = new Function(`${data0}\nreturn ACTIVITIES;`)();
+const [ACT, FOODS] = new Function(`${data0}\nreturn [ACTIVITIES, FOODS];`)();
 const COUNT = ACT.length;
 if (!app0.includes('const DEPLOY = false;')) throw new Error('Không thấy cờ DEPLOY trong app.js');
 
@@ -36,7 +36,7 @@ const fill = {
   qTitle: esc(Q.t), qPoem: esc(Q.n), qStep: esc(Q.s),
   qStars: Array.from({ length: 10 }, (_, i) => `<svg class="star${i < Q.d ? ' on' : ''}" viewBox="0 0 24 24"><use href="#i-star"/></svg>`).join(''),
   qStarsTxt: `Độ khó ${Q.d}/10 · nhận ${Q.d} sao`, qTime: fmtTime(Q.p), qCost: ['0 đồng', 'Dưới 100k', '100k–300k', 'Trên 300k'][Q.k],
-  qWhere: { i: 'Trong nhà', o: 'Ra ngoài', b: 'Đâu cũng được' }[Q.o], qWho: fmtWho(Q.ai), count: String(COUNT)
+  qWhere: { i: 'Trong nhà', o: 'Ra ngoài', b: 'Đâu cũng được' }[Q.o], qWho: fmtWho(Q.ai), count: String(COUNT), foods: String(FOODS.length)
 };
 const body = body0.replace(/\{\{(\w+)\}\}/g, (m, k) => { if (!(k in fill)) throw new Error('Thiếu giá trị cho ' + m); return fill[k]; });
 
@@ -65,7 +65,7 @@ const jsArt = await minJs(data0 + '\n' + app0);
 const htmlOpts = { collapseWhitespace: true, conservativeCollapse: true, removeComments: true, minifyCSS: false, minifyJS: false, keepClosingSlash: true, decodeEntities: false };
 
 /* ---------- 5. dist/index.html ---------- */
-const DESC = `Không biết hôm nay làm gì? Rút một quẻ để nhận ngay một việc hợp tâm trạng, thời gian và túi tiền. ${COUNT} quẻ cho người trẻ 16–40 tuổi, có sao, huy hiệu và thử thách chung mỗi ngày.`;
+const DESC = `Không biết hôm nay làm gì, ăn gì? Rút một quẻ để nhận ngay một việc hợp tâm trạng, thời gian và túi tiền. ${COUNT} quẻ việc và ${FOODS.length} món ăn cho người trẻ 16–40 tuổi, có sao, huy hiệu và thử thách chung mỗi ngày.`;
 const ldjson = JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'Hôm nay làm gì?', url: SITE + '/', inLanguage: 'vi', description: DESC });
 const page = `<!doctype html>
 <html lang="vi" class="no-js">
@@ -109,7 +109,7 @@ const scriptHashes = inlineHashes(/<script(?: type="application\/ld\+json")?>([\
 const styleHashes = inlineHashes(/<style>([\s\S]*?)<\/style>/g);
 const CSP = [
   "default-src 'self'", `script-src 'self' ${scriptHashes.join(' ')}`, `style-src 'self' ${styleHashes.join(' ')}`,
-  "img-src 'self' data: blob:", "font-src 'self'", "connect-src 'self'", "manifest-src 'self'", "worker-src 'self'",
+  "img-src 'self' data: blob:", "font-src 'self'", "connect-src 'self' https://api.met.no https://air-quality-api.open-meteo.com", "manifest-src 'self'", "worker-src 'self'",
   "object-src 'none'", "base-uri 'none'", "form-action 'none'", 'upgrade-insecure-requests'
 ].join('; ');
 index = index.replace('__CSP__', CSP);
@@ -131,6 +131,51 @@ let p404 = await minifyHtml(`<!doctype html><html lang="vi"><head><meta charset=
 <style>${css404}</style></head><body><main><p class="no">Quẻ số 404</p><h1>Trang này không có trong ống quẻ.</h1><p>Có thể đường dẫn đã cũ hoặc gõ nhầm. Về trang chính để rút một quẻ cho hôm nay nhé.</p><a href="/">Về trang chính</a></main></body></html>`, htmlOpts);
 p404 = p404.replace('__H__', sha256(p404.match(/<style>([\s\S]*?)<\/style>/)[1]));
 
+/* ---------- 6b. trang link rủ cho từng quẻ: /q/12 và /an/5 ----------
+   Mạng xã hội đọc og:title, og:description, og:image của trang này để hiện thẻ xem trước;
+   người bấm vào được chuyển ngay về trang chính, mở đúng quẻ đó. */
+const OG_DIR = path.join(SRC, 'og');
+const hasOg = f => { try { readFileSync(path.join(OG_DIR, f)); return true; } catch (e) { return false; } };
+const cssLand = await minCss(css404 + '.po{margin-top:10px;font-style:italic}.meta{margin-top:12px;font-size:.9rem}');
+const GO = "location.replace('/?'+document.documentElement.dataset.go)";
+const LAND_CSP = `default-src 'none'; script-src 'sha256-${sha256(GO)}'; style-src 'sha256-${sha256(cssLand)}'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'`;
+const MEAL_NAME = { s: 'sáng', c: 'trưa', t: 'tối', k: 'khuya', v: 'ăn vặt' };
+const FOOD_KIND = { n: 'Ăn ngoài', h: 'Tự nấu', nh: 'Ăn ngoài hoặc tự nấu' };
+const landing = ({ kind, id, label, title, poem, meta, ogTitle, desc, og, cta }) => `<!doctype html>
+<html lang="vi" data-go="${kind === 'q' ? 'q' : 'm'}=${id}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="${LAND_CSP}">
+<title>${esc(ogTitle)}</title>
+<meta name="description" content="${esc(desc)}"><meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Hôm nay làm gì?"><meta property="og:locale" content="vi_VN">
+<meta property="og:url" content="${SITE}/${kind}/${id}"><meta property="og:title" content="${esc(ogTitle)}"><meta property="og:description" content="${esc(desc)}">
+<meta property="og:image" content="${og}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(ogTitle)}">
+<meta name="twitter:card" content="summary_large_image">
+<style>${cssLand}</style><script>${GO}</script></head>
+<body><main><p class="no">${label}</p><h1>${esc(title)}</h1><p class="po">${esc(poem)}</p><p class="meta">${esc(meta)}</p><a href="/?${kind === 'q' ? 'q' : 'm'}=${id}">${cta}</a></main></body></html>`;
+const LANDS = [];
+for (const a of ACT) {
+  const no = String(a.id).padStart(3, '0');
+  LANDS.push([`q/${a.id}.html`, landing({
+    kind: 'q', id: a.id, label: `Quẻ số ${no} · ${LVL(a.d)}`, title: a.t, poem: a.n, meta: `Độ khó ${a.d}/10 · ${fmtTime(a.p)} · ${['0 đồng', 'Dưới 100k', '100k–300k', 'Trên 300k'][a.k]}`,
+    ogTitle: `Hôm nay làm gì? ${a.t}`, desc: `${a.n} Quẻ số ${no}, độ khó ${a.d}/10. Rút quẻ của bạn tại homnaylamgi.com.`,
+    og: hasOg(`q-${a.id}.png`) ? `${SITE}/og/q-${a.id}.png` : `${SITE}/og-image.png`, cta: 'Mở quẻ này'
+  })]);
+}
+for (const f of FOODS) {
+  const no = String(f.id).padStart(3, '0');
+  LANDS.push([`an/${f.id}.html`, landing({
+    kind: 'an', id: f.id, label: `Quẻ ăn số ${no}`, title: f.t, poem: f.n, meta: `${FOOD_KIND[f.o]} · bữa ${f.b.split('').map(c => MEAL_NAME[c]).join(', ')}`,
+    ogTitle: `Hôm nay ăn gì? ${f.t}`, desc: `${f.n} Rút quẻ ăn của bạn tại homnaylamgi.com.`,
+    og: hasOg(`an-${f.id}.png`) ? `${SITE}/og/an-${f.id}.png` : `${SITE}/og-image.png`, cta: 'Xem món này'
+  })]);
+}
+for (const L of LANDS) {
+  L[1] = await minifyHtml(L[1], htmlOpts);
+  const sh = L[1].match(/<script>([\s\S]*?)<\/script>/)[1], st = L[1].match(/<style>([\s\S]*?)<\/style>/)[1];
+  if (sh !== GO || st !== cssLand) throw new Error('Mã trong trang link rủ bị đổi khi thu gọn: ' + L[0]);
+}
+
 /* ---------- 7. ghi dist/ ---------- */
 rmSync(DIST, { recursive: true, force: true });
 mkdirSync(path.join(DIST, 'assets', 'fonts'), { recursive: true });
@@ -139,6 +184,10 @@ out('index.html', index);
 out('404.html', p404);
 for (const f of fontFiles.concat('OFL.txt')) copyFileSync(path.join(SRC, 'fonts', f), path.join(DIST, 'assets', 'fonts', f));
 for (const f of readdirSync(path.join(SRC, 'static'))) copyFileSync(path.join(SRC, 'static', f), path.join(DIST, f));
+mkdirSync(path.join(DIST, 'q'), { recursive: true }); mkdirSync(path.join(DIST, 'an'), { recursive: true });
+for (const [f, html] of LANDS) out(f, html);
+let ogCount = 0;
+try { mkdirSync(path.join(DIST, 'og'), { recursive: true }); for (const f of readdirSync(OG_DIR)) if (f.endsWith('.png')) { copyFileSync(path.join(OG_DIR, f), path.join(DIST, 'og', f)); ogCount++; } } catch (e) { /* chưa có ảnh xem trước riêng */ }
 out('site.webmanifest', JSON.stringify({
   name: 'Hôm nay làm gì?', short_name: 'Hôm nay làm gì', description: 'Rút một quẻ, làm một việc nhỏ, để hôm nay khác hôm qua một chút.',
   lang: 'vi', dir: 'ltr', start_url: '/', scope: '/', display: 'standalone', background_color: '#F5F2F6', theme_color: '#D02842',
@@ -150,7 +199,7 @@ out('sw.js', await minJs(readFileSync(path.join(SRC, 'sw.js'), 'utf8').replace('
 
 const SECURITY = [
   ['X-Content-Type-Options', 'nosniff'], ['X-Frame-Options', 'DENY'], ['Referrer-Policy', 'strict-origin-when-cross-origin'],
-  ['Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()']
+  ['Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(), usb=()']
 ];
 out('.htaccess', `# homnaylamgi.com — cấu hình cho Hostinger (LiteSpeed/Apache). File này do tools/build.mjs tạo.
 Options -Indexes
@@ -168,6 +217,8 @@ ErrorDocument 404 /404.html
   RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
   # Chặn thư mục .git do Hostinger Git tạo ra
   RewriteRule (^|/)\\.git(/|$) - [F,L]
+  # Link rủ từng quẻ: /q/12 → q/12.html, /an/5 → an/5.html
+  RewriteRule ^(q|an)/([0-9]+)/?$ $1/$2.html [L]
 </IfModule>
 
 <IfModule mod_mime.c>
@@ -209,7 +260,8 @@ writeFileSync(path.join(ROOT, 'vercel.json'), JSON.stringify({
     { source: '/(.*)', headers: SECURITY.map(([key, value]) => ({ key, value })) },
     { source: '/assets/fonts/(.*)', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
     { source: '/sw.js', headers: [{ key: 'Cache-Control', value: 'no-cache' }] },
-    { source: '/(favicon.ico|favicon.svg|apple-touch-icon.png|icon-192.png|icon-512.png|icon-maskable-512.png|og-image.png)', headers: [{ key: 'Cache-Control', value: 'public, max-age=604800' }] }
+    { source: '/(favicon.ico|favicon.svg|apple-touch-icon.png|icon-192.png|icon-512.png|icon-maskable-512.png|og-image.png)', headers: [{ key: 'Cache-Control', value: 'public, max-age=604800' }] },
+    { source: '/og/(.*)', headers: [{ key: 'Cache-Control', value: 'public, max-age=604800' }] }
   ]
 }, null, 2) + '\n');
 
@@ -234,4 +286,5 @@ const fontBytes = fontFiles.reduce((s, f) => s + readFileSync(path.join(DIST, 'a
 console.log(`Đã build ${COUNT} quẻ · phiên bản ${VERSION}`);
 console.log(`index.html: ${kb(index.length)} → gzip ${kb(gzipSync(index).length)} · brotli ${kb(brotliCompressSync(index).length)}`);
 console.log(`font: ${fontFiles.length} file, tổng ${kb(fontBytes)}`);
+console.log(`link rủ: ${LANDS.length} trang (/q, /an) · ảnh xem trước riêng: ${ogCount}`);
 console.log(`artifact: ${kb(artifact.length)}`);

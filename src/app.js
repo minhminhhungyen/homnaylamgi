@@ -93,6 +93,21 @@ const TODAY_EVENTS = EVS.filter(e => e.diff === 0);
 /* ---------- dữ liệu ---------- */
 const A = ACTIVITIES;
 const byId = new Map(A.map(a => [a.id, a]));
+const F = FOODS;
+const foodById = new Map(F.map(f => [f.id, f]));
+const MEAL_OF_SLOT = { s: 's', c: 'c', t: 't', k: 'k' };
+const MEAL_LV = { s: 'Gợi ý bữa sáng', c: 'Gợi ý bữa trưa', t: 'Gợi ý bữa tối', k: 'Gợi ý ăn khuya', v: 'Gợi ý ăn vặt' };
+const MEAL_WORD = { s: 'sáng', c: 'trưa', t: 'tối', k: 'khuya', v: 'ăn vặt' };
+const MEAL_WHEN = { s: 'sáng nay', c: 'trưa nay', t: 'tối nay', k: 'đêm nay', v: 'lát nữa' };
+const FOOD_KIND = { n: 'Ăn ngoài', h: 'Tự nấu', nh: 'Ăn ngoài hoặc tự nấu' };
+const FOOD_SEAL = { n: ['ĂN', 'NGOÀI'], h: ['TỰ', 'NẤU'], nh: ['MÓN', 'NGON'] };
+const REGION = { '': 'Cả nước', B: 'Miền Bắc', T: 'Miền Trung', N: 'Miền Nam', TN: 'Miền Trung, miền Nam' };
+const PURSE = ['', 'Bình dân', 'Vừa phải', 'Hơi sang'];
+const SLOT_WHEN = { s: 'sáng nay', c: 'chiều nay', t: 'tối nay', k: 'mai' };
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const lower1 = s => s.charAt(0).toLowerCase() + s.slice(1);
+const mapsUrl = t => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t)}`;
+const cookUrl = t => `https://www.youtube.com/results?search_query=${encodeURIComponent('cách làm ' + t)}`;
 const CATS = {
   vd: { name: 'Vận động', seal: ['VẬN', 'ĐỘNG'], ab: 'VĐ', badge: 'Đôi chân không mỏi' },
   kp: { name: 'Khám phá', seal: ['KHÁM', 'PHÁ'], ab: 'KP', badge: 'Kẻ lang thang' },
@@ -121,12 +136,25 @@ const fmtTime = a => {
 };
 
 /* ---------- trạng thái (lưu trên máy người dùng) ---------- */
-const DEF = () => ({ v: 1, stars: 0, best: 0, done: [], saved: [], recent: [], got: [], cur: 0, curDay: '', acc: 0, accAt: 0, mood: 'all', moodDay: '', chAccDay: '', f: { who: '', budget: '', dur: '', place: '', level: '', when: 'now' } });
+const DEF = () => ({ v: 1, stars: 0, best: 0, done: [], saved: [], recent: [], got: [], cur: 0, curDay: '', acc: 0, accAt: 0, mood: 'all', moodDay: '', chAccDay: '', mode: 'lam', food: 0, foodDay: '', frecent: [], meal: '', mealDay: '', ftype: '', fmt: 'story', pref: {}, prefDay: '', wxOn: false, wxLoc: null, wx: null, aq: null, f: { who: '', budget: '', dur: '', place: '', level: '', when: 'now' } });
 let S = (() => {
   try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw), d = DEF(); return Object.assign(d, s, { f: Object.assign(d.f, s.f || {}) }); } } catch (e) { /* bỏ qua */ }
   return DEF();
 })();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* trình duyệt chặn lưu: trang vẫn chạy */ } };
+/* mở từ link rủ: trang /q/12 và /an/5 chuyển về /?q=12 và /?m=5 */
+const INV = (() => {
+  const none = { k: '', id: 0 };
+  let p; try { p = new URLSearchParams(location.search); } catch (e) { return none; }
+  const q = parseInt(p.get('q'), 10), m = parseInt(p.get('m'), 10);
+  if (q && byId.has(q)) return { k: 'q', id: q };
+  if (m && foodById.has(m)) return { k: 'an', id: m };
+  return none;
+})();
+if (location.search) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { /* bỏ qua */ } }
+/* học theo người dùng: chấm Vui/Đáng nhớ thì cộng điểm nhóm việc, bấm bỏ qua thì trừ nhẹ */
+const nudge = (c, v) => { if (!c) return; S.pref[c] = Math.max(-6, Math.min(6, Math.round(((S.pref[c] || 0) + v) * 100) / 100)); };
+const FEEL_PT = { vui: 1, thuong: 0, nho: 1.5 };
 const doneToday = id => S.done.some(r => r.id === id && r.day === TODAY);
 const recToday = id => S.done.find(r => r.id === id && r.day === TODAY);
 const doneWithin = (id, days) => { const lim = Date.now() - days * 864e5; return S.done.some(r => r.id === id && r.ts >= lim); };
@@ -151,6 +179,16 @@ const CH_POOL = A.filter(a => a.ch && !a.ev);
 const CH = CH_POOL[hash('hnlg' + TODAY) % CH_POOL.length];
 
 /* ---------- chọn quẻ ---------- */
+/* tâm trạng chưa tốt: ưu tiên nhóm việc dễ làm mình vui lên */
+const LIFT = { c: ['gt', 'kp', 'vd'], b: ['gt', 'kn', 'vd', 'cm'], m: ['cm'], x: ['vd', 'cm', 'gt'], l: ['kn', 'tt', 'gt'] };
+const MOOD_NOTE = {
+  c: 'Chán thì đổi gió: mình ưu tiên việc mới lạ, vui vui.',
+  b: 'Buồn thì làm gì đó nhẹ nhàng cho vui lên, có người bên cạnh càng tốt.',
+  m: 'Mệt thì làm việc nhẹ thôi, nghỉ ngơi cũng là một việc đáng làm.',
+  x: 'Căng thẳng thì ưu tiên việc giúp đầu óc thả lỏng.',
+  l: 'Cô đơn thì ưu tiên việc kết nối với một người.',
+  h: 'Đang hứng thì thử việc khó hơn một chút xem sao.'
+};
 const RELAX = ['place', 'level', 'dur', 'budget', 'who', 'when'];
 const RELAX_NAME = { place: 'nơi chốn', level: 'mức thử thách', dur: 'thời gian', budget: 'ngân sách', who: 'đi cùng ai', when: 'khung giờ' };
 const isSet = k => (k === 'when' ? S.f.when === 'now' : !!S.f[k]);
@@ -185,6 +223,9 @@ function weight(a) {
   if (ss.length) w *= ss.includes(SEASON) ? 1.5 : 0.4;
   if (S.mood === 'h' && a.d >= 5) w *= 1.6;
   if (S.mood === 'm' && a.d >= 6) w *= 0.4;
+  if (LIFT[S.mood] && LIFT[S.mood].includes(a.c)) w *= 1.5;
+  w *= 1 + 0.08 * (S.pref[a.c] || 0);
+  if (WX && S.f.when === 'now') w *= wxWeight(a, tags);
   if (SLOT === 'k' && S.f.when === 'now' && a.id === 97) w *= 5;
   if (S.f.dur === '999' && a.p >= 120) w *= 1.8;
   const ri = S.recent.indexOf(a.id);
@@ -204,6 +245,8 @@ function choose(exclude) {
   let P = pool.filter(a => a.id !== exclude);
   if (!P.length) P = pool;
   if (S.mood !== 'all') { const mm = P.filter(a => a.m.includes(S.mood)); if (mm.length >= 3) P = mm; }
+  /* mưa, dông, không khí xấu: chỉ gợi ý việc trong nhà (trừ khi người dùng tự chọn “Ra ngoài” ở Tinh chỉnh) */
+  if (WX && S.f.when === 'now' && !S.f.place && (WX.cls === 'rain' || WX.cls === 'storm' || WX.cls === 'air')) { const dry = P.filter(a => a.o !== 'o'); if (dry.length >= 3) P = dry; }
   return { a: pickWeighted(P), relaxed };
 }
 
@@ -213,7 +256,7 @@ let lastRelax = [];
 
 function renderHeader() {
   const L = lunarOf(NOW);
-  $('#today').innerHTML = `<span><b>${WD[NOW.getDay()]}, ${dm(NOW)}/${NOW.getFullYear()}</b></span><span>Âm lịch ${L.d}/${L.m}${L.leap ? ' nhuận' : ''} năm ${yearName(L.y)}</span>`;
+  $('#today').innerHTML = `<span><b>${WD[NOW.getDay()]}, ${dm(NOW)}<span class="yr">/${NOW.getFullYear()}</span></b></span><span>Âm lịch ${L.d}/${L.m}${L.leap ? ' nhuận' : ''}<span class="yr"> năm ${yearName(L.y)}</span></span>`;
   const part = { s: 'Sáng', c: 'Chiều', t: 'Tối', k: 'Khuya' }[SLOT];
   const wd = WD[NOW.getDay()].replace('Thứ', 'thứ');
   let g = SLOT === 'k' ? 'Khuya rồi đấy' : `${part} ${wd}`;
@@ -223,8 +266,14 @@ function renderHeader() {
 }
 
 function renderSlip() {
+  if (S.mode === 'an') { renderFood(); return; }
   const a = byId.get(S.cur); if (!a) return;
   const cat = CATS[a.c];
+  $('#qNoLbl').textContent = 'Quẻ số';
+  $('#qStepLbl').textContent = 'Bắt đầu ngay';
+  $('#qLinks').hidden = true;
+  [['#qM1', 'Thời gian'], ['#qM2', 'Chi phí'], ['#qM3', 'Ở đâu'], ['#qM4', 'Đi cùng']].forEach(([s, t]) => { $(s).textContent = t; });
+  $('#actions2').hidden = false;
   $('#qNo').textContent = String(a.id).padStart(3, '0');
   $('#qLv').textContent = LVL(a.d);
   const seal = $('#qSeal');
@@ -246,6 +295,9 @@ function renderSlip() {
   else st.hidden = true;
 
   const main = $('#btnMain'), drawBtn = $('#btnDraw');
+  drawBtn.innerHTML = `${icon('shuffle')}<span>Rút quẻ khác</span>`;
+  $('#btnCal').hidden = !!rec;
+  if (rec) $('#calBox').hidden = true;
   if (rec) { main.dataset.mode = 'next'; main.className = 'btn btn-main'; main.innerHTML = `${icon('shuffle')}<span>Rút quẻ tiếp</span>`; drawBtn.hidden = true; }
   else if (S.acc && S.curDay === TODAY) { main.dataset.mode = 'done'; main.className = 'btn btn-main is-go'; main.innerHTML = `${icon('check')}<span>Mình làm xong rồi</span>`; drawBtn.hidden = false; }
   else { main.dataset.mode = 'accept'; main.className = 'btn btn-main'; main.innerHTML = '<span>Nhận quẻ này</span>'; drawBtn.hidden = false; }
@@ -258,10 +310,92 @@ function renderSlip() {
   rn.hidden = !lastRelax.length;
   if (lastRelax.length) rn.textContent = `Không có quẻ nào khớp hết lựa chọn của bạn lúc này, nên mình nới bớt phần ${lastRelax.map(k => RELAX_NAME[k]).join(', ')}.`;
   $('#careNote').hidden = !(S.mood === 'b' || S.mood === 'l');
+  const inv = $('#invite');
+  inv.hidden = !(INV.k === 'q' && INV.id === a.id);
+  if (!inv.hidden) inv.textContent = rec ? 'Quẻ bạn bè gửi, bạn làm xong rồi đó 👏' : '👋 Bạn bè rủ bạn làm quẻ này. Nhận lời không?';
 }
 
 function renderMood() {
   $$('#moods .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === S.mood)));
+  const mn = $('#moodNote');
+  mn.hidden = S.mode === 'an' || !MOOD_NOTE[S.mood];
+  if (!mn.hidden) mn.textContent = MOOD_NOTE[S.mood];
+}
+
+/* ---------- ống quẻ "Hôm nay ăn gì?" ---------- */
+const curMeal = () => ((S.mealDay === TODAY && S.meal) ? S.meal : MEAL_OF_SLOT[SLOT]);
+function foodStep(f) {
+  if (f.o === 'n') return `Mở bản đồ tìm “${f.t}” quanh chỗ bạn, chọn quán đông khách và nhiều đánh giá tốt.`;
+  if (f.o === 'h') return 'Xem nhanh một video hướng dẫn, kiểm tra tủ lạnh rồi đi chợ mua phần còn thiếu.';
+  return `Lười thì tìm quán “${f.t}” gần nhất. Rảnh thì tự nấu, xem video hướng dẫn rồi đi chợ.`;
+}
+function renderFood() {
+  const f = foodById.get(S.food); if (!f) return;
+  const meal = curMeal(), seal = FOOD_SEAL[f.o];
+  $('#qNoLbl').textContent = 'Quẻ ăn số';
+  $('#qNo').textContent = String(f.id).padStart(3, '0');
+  $('#qLv').textContent = MEAL_LV[meal];
+  const sealEl = $('#qSeal');
+  sealEl.innerHTML = `<span>${seal[0]}</span><span>${seal[1]}</span>`;
+  sealEl.setAttribute('aria-label', FOOD_KIND[f.o]);
+  $('#qTitle').textContent = f.t;
+  $('#qPoem').textContent = f.n;
+  $('#qStepLbl').textContent = 'Ăn thế nào';
+  $('#qStep').textContent = foodStep(f);
+  const map = $('#lnkMap'), cook = $('#lnkCook');
+  map.hidden = !f.o.includes('n'); map.href = mapsUrl(f.t);
+  cook.hidden = !f.o.includes('h'); cook.href = cookUrl(f.t);
+  $('#qLinks').hidden = false;
+  [['#qM1', 'Bữa'], ['#qM2', 'Kiểu'], ['#qM3', 'Vùng'], ['#qM4', 'Túi tiền']].forEach(([s, t]) => { $(s).textContent = t; });
+  $('#qTime').textContent = cap(f.b.split('').map(c => MEAL_WORD[c]).join(', '));
+  $('#qCost').textContent = FOOD_KIND[f.o];
+  $('#qWhere').textContent = REGION[f.r] || 'Cả nước';
+  $('#qWho').textContent = PURSE[f.k];
+  $('#slip').classList.remove('is-done');
+  const main = $('#btnMain'), drawBtn = $('#btnDraw');
+  main.dataset.mode = 'food'; main.className = 'btn btn-main'; main.innerHTML = `${icon('users')}<span>Rủ bạn đi ăn</span>`;
+  drawBtn.hidden = false; drawBtn.innerHTML = `${icon('shuffle')}<span>Rút món khác</span>`;
+  ['#actions2', '#calBox', '#feel', '#relaxNote', '#careNote'].forEach(s => { $(s).hidden = true; });
+  const inv = $('#invite');
+  inv.hidden = !(INV.k === 'an' && INV.id === f.id);
+  if (!inv.hidden) inv.textContent = '😋 Bạn bè rủ bạn đi ăn món này';
+}
+function renderMeals() {
+  const meal = curMeal();
+  $$('#meals [data-meal]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.meal === meal)));
+  $$('#meals [data-ft]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.ft === S.ftype)));
+}
+function chooseFood(exclude) {
+  const meal = curMeal(), ft = S.ftype;
+  let P = F.filter(f => f.b.includes(meal) && (!ft || f.o.includes(ft)));
+  if (P.length < 3) P = F.filter(f => f.b.includes(meal));
+  if (P.length < 3) P = F;
+  const list = P.filter(f => f.id !== exclude).length ? P.filter(f => f.id !== exclude) : P;
+  const ws = list.map(f => { const ri = S.frecent.indexOf(f.id); return (ri >= 0 ? Math.min(1, 0.05 + ri * 0.08) : 1) * wxFood(f); });
+  let r = Math.random() * ws.reduce((x, y) => x + y, 0);
+  for (let i = 0; i < list.length; i++) { r -= ws[i]; if (r <= 0) return list[i]; }
+  return list[list.length - 1];
+}
+function setFood(id) {
+  S.food = id; S.foodDay = TODAY;
+  S.frecent = [id].concat(S.frecent.filter(x => x !== id)).slice(0, 15);
+  save();
+}
+function setMode(m) {
+  S.mode = m === 'an' ? 'an' : 'lam'; save();
+  const an = S.mode === 'an';
+  document.body.classList.toggle('mode-an', an);
+  $('#hVerb').textContent = an ? 'ăn' : 'làm';
+  $('#tabLam').setAttribute('aria-selected', String(!an));
+  $('#tabAn').setAttribute('aria-selected', String(an));
+  $('#moods').hidden = an;
+  $('#meals').hidden = !an;
+  $('#tuneSec').hidden = an;
+  renderMood(); renderWx();
+  $('#tube').setAttribute('aria-label', an ? 'Lắc ống quẻ để rút món khác' : 'Lắc ống quẻ để rút quẻ khác');
+  if (an && !(S.foodDay === TODAY && foodById.get(S.food))) setFood(chooseFood(0).id);
+  if (an) renderMeals();
+  renderSlip(); announce();
 }
 
 function renderTune() {
@@ -348,7 +482,10 @@ function setCur(id) {
   S.recent = [id].concat(S.recent.filter(x => x !== id)).slice(0, 30);
   save();
 }
-function announce() { const a = byId.get(S.cur); if (a) $('#live').textContent = `Quẻ số ${a.id}: ${a.t}`; }
+function announce() {
+  if (S.mode === 'an') { const f = foodById.get(S.food); if (f) $('#live').textContent = `Món gợi ý: ${f.t}`; return; }
+  const a = byId.get(S.cur); if (a) $('#live').textContent = `Quẻ số ${a.id}: ${a.t}`;
+}
 function animateSwap(swap) {
   if (reduced) { swap(); return; }
   const slip = $('#slip'), tube = $('#tube');
@@ -365,22 +502,35 @@ function refreshClock() {
   const now = new Date();
   if (ymd(now) !== TODAY) { location.reload(); return false; }
   const s = slotOf(now.getHours());
-  if (s !== SLOT) { SLOT = s; renderHeader(); renderTune(); }
+  if (s !== SLOT) { SLOT = s; renderHeader(); renderTune(); renderMeals(); }
   return true;
 }
+function drawFood() {
+  if (!refreshClock()) return;
+  const f = chooseFood(S.food);
+  animateSwap(() => { setFood(f.id); renderSlip(); announce(); });
+}
 function draw() {
+  if (S.mode === 'an') { drawFood(); return; }
   if (!refreshClock()) return;
   const res = choose(S.cur);
   if (!res.a) { toast('Chưa có quẻ hợp. Thử nới bớt phần Tinh chỉnh nhé.'); return; }
   animateSwap(() => { lastRelax = res.relaxed; setCur(res.a.id); renderSlip(); announce(); });
 }
 function busy() { return S.acc && S.curDay === TODAY && !doneToday(S.cur); }
+/* người dùng chủ động bấm đổi quẻ: ghi nhận là chưa hứng thú với nhóm việc đó */
+function skipDraw() {
+  const a = byId.get(S.cur);
+  if (S.mode !== 'an' && a && !busy() && !doneToday(a.id)) nudge(a.c, -0.25);
+  draw();
+}
 function complete(id) {
   if (doneToday(id)) return;
   const a = byId.get(id); if (!a) return;
   S.done.unshift({ id, day: TODAY, ts: Date.now(), d: a.d, ch: id === CH.id ? 1 : 0, f: '' });
   S.done = S.done.slice(0, 600);
   S.stars += a.d;
+  nudge(a.c, 0.5);
   S.best = Math.max(S.best, streak());
   if (S.cur === id) S.acc = 0;
   if (id === CH.id) S.chAccDay = '';
@@ -395,10 +545,67 @@ $('#btnMain').addEventListener('click', () => {
   const mode = $('#btnMain').dataset.mode;
   if (mode === 'accept') { S.acc = 1; S.accAt = Date.now(); save(); renderSlip(); toast('Đã nhận quẻ. Làm xong nhớ quay lại bấm nhé!'); }
   else if (mode === 'done') complete(S.cur);
+  else if (mode === 'food') openShare('item');
   else { lastRelax = []; draw(); }
 });
-$('#btnDraw').addEventListener('click', draw);
-$('#tube').addEventListener('click', () => { if (busy()) { toast('Bạn đang làm một quẻ. Bấm “Rút quẻ khác” nếu muốn đổi.'); return; } draw(); });
+$('#btnDraw').addEventListener('click', skipDraw);
+$('#tube').addEventListener('click', () => { if (S.mode !== 'an' && busy()) { toast('Bạn đang làm một quẻ. Bấm “Rút quẻ khác” nếu muốn đổi.'); return; } skipDraw(); });
+$$('#pickrow [role="tab"]').forEach(b => b.addEventListener('click', () => { if (S.mode !== b.dataset.mode) setMode(b.dataset.mode); }));
+$$('#meals [data-meal]').forEach(b => b.addEventListener('click', () => { S.meal = b.dataset.meal; S.mealDay = TODAY; save(); renderMeals(); drawFood(); }));
+$$('#meals [data-ft]').forEach(b => b.addEventListener('click', () => { S.ftype = S.ftype === b.dataset.ft ? '' : b.dataset.ft; save(); renderMeals(); drawFood(); }));
+
+/* ---------- thêm vào lịch ---------- */
+const utc = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+const localInput = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function calDefault(a) {
+  const now = new Date(), t = new Date(now);
+  t.setSeconds(0, 0); t.setMinutes(t.getMinutes() < 30 ? 30 : 60);
+  if (a.g.includes(slotOf(t.getHours()))) return t;
+  const startHour = { s: 7, c: 14, t: 19 };
+  for (const day of [0, 1]) for (const sl of ['s', 'c', 't']) {
+    if (!a.g.includes(sl)) continue;
+    const d = addDays(now, day); d.setHours(startHour[sl], 0, 0, 0);
+    if (d > now) return d;
+  }
+  return t;
+}
+function calRange() {
+  const a = byId.get(S.cur), v = $('#calTime').value;
+  const start = v ? new Date(v) : calDefault(a);
+  const mins = xs(a).includes('canngay') ? 30 : Math.min(240, Math.max(15, a.p));
+  return { a, start, end: new Date(start.getTime() + mins * 60000) };
+}
+function updateCal() {
+  const { a, start, end } = calRange();
+  if (isNaN(start)) return;
+  $('#calGoogle').href = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(a.t)}&dates=${utc(start)}/${utc(end)}&details=${encodeURIComponent(`${a.s}\n\nQuẻ từ ${SITE}`)}`;
+}
+$('#btnCal').addEventListener('click', () => {
+  const box = $('#calBox'), open = box.hidden;
+  box.hidden = !open; $('#btnCal').setAttribute('aria-expanded', String(open));
+  if (open) { $('#calTime').value = localInput(calDefault(byId.get(S.cur))); updateCal(); }
+});
+$('#calTime').addEventListener('input', updateCal);
+const icsEsc = s => String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+function icsFold(line) {
+  const enc = new TextEncoder(); let out = '', cur = '', bytes = 0;
+  for (const ch of line) { const b = enc.encode(ch).length; if (bytes + b > 73) { out += cur + '\r\n '; cur = ''; bytes = 1; } cur += ch; bytes += b; }
+  return out + cur;
+}
+$('#calIcs').addEventListener('click', () => {
+  const { a, start, end } = calRange();
+  if (isNaN(start)) { toast('Giờ hẹn chưa hợp lệ, bạn chọn lại nhé.'); return; }
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//homnaylamgi.com//Hom nay lam gi//VI', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+    `UID:que-${a.id}-${Date.now()}@homnaylamgi.com`, `DTSTAMP:${utc(new Date())}`, `DTSTART:${utc(start)}`, `DTEND:${utc(end)}`,
+    `SUMMARY:${icsEsc(a.t)}`, `DESCRIPTION:${icsEsc(`${a.s}\n\nQuẻ từ ${SITE}`)}`, `URL:${SITE}`,
+    'BEGIN:VALARM', 'TRIGGER:-PT10M', 'ACTION:DISPLAY', `DESCRIPTION:${icsEsc(a.t)}`, 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'];
+  const blob = new Blob([lines.map(icsFold).join('\r\n') + '\r\n'], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob), link = document.createElement('a');
+  link.href = url; link.download = `que-${a.id}-homnaylamgi.ics`;
+  document.body.appendChild(link); link.click(); link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  toast('Đã tạo file lịch. Mở file để thêm vào lịch của bạn.');
+});
 $('#btnSave').addEventListener('click', () => {
   const id = S.cur;
   if (S.saved.includes(id)) { S.saved = S.saved.filter(x => x !== id); toast('Đã bỏ khỏi danh sách để dành.'); }
@@ -407,7 +614,9 @@ $('#btnSave').addEventListener('click', () => {
 });
 $$('#feel [data-feel]').forEach(b => b.addEventListener('click', () => {
   const rec = recToday(S.cur); if (!rec) return;
+  const was = rec.f;
   rec.f = rec.f === b.dataset.feel ? '' : b.dataset.feel;
+  const a = byId.get(rec.id); if (a) nudge(a.c, (FEEL_PT[rec.f] || 0) - (FEEL_PT[was] || 0));
   save(); renderSlip(); renderJourney();
 }));
 $$('#moods .chip').forEach(b => b.addEventListener('click', () => {
@@ -428,6 +637,7 @@ $('#dBtn').addEventListener('click', () => {
 $('#soonList').addEventListener('click', e => {
   const btn = e.target.closest('.soon-item'); if (!btn) return;
   const ev = SOON[+btn.dataset.i]; if (!ev) return;
+  if (S.mode === 'an') setMode('lam');
   if (busy()) { toast('Bạn đang làm một quẻ. Làm xong rồi rút quẻ cho dịp này nhé.'); return; }
   const list = eventPool(ev.ev).filter(a => a.id !== S.cur);
   const a = list.length ? list[INT(Math.random() * list.length)] : null;
@@ -438,6 +648,7 @@ $('#soonList').addEventListener('click', e => {
 $('#saved').addEventListener('click', e => {
   const o = e.target.closest('[data-open]'), r = e.target.closest('[data-rm]');
   if (o) {
+    if (S.mode === 'an') setMode('lam');
     if (busy()) { toast('Bạn đang làm một quẻ. Làm xong rồi mở quẻ này nhé.'); return; }
     const id = +o.dataset.open;
     animateSwap(() => { lastRelax = []; setCur(id); renderSlip(); announce(); });
@@ -450,61 +661,359 @@ $('#btnReset').addEventListener('click', () => {
   const b = $('#btnReset');
   if (Date.now() - resetAt < 5000) {
     resetAt = 0; S = DEF(); save(); lastRelax = [];
-    setCur(choose(0).a.id); renderAll(); announce();
+    setCur(choose(0).a.id); renderAll(); setMode('lam');
     b.textContent = 'Xóa dữ liệu'; toast('Đã xóa sạch. Bắt đầu lại từ một quẻ mới.');
   } else {
     resetAt = Date.now(); b.textContent = 'Bấm lần nữa để xóa hết sao, huy hiệu và lịch sử';
     setTimeout(() => { if (resetAt && Date.now() - resetAt >= 5000) { resetAt = 0; b.textContent = 'Xóa dữ liệu'; } }, 5100);
   }
 });
-$('#btnHotline').addEventListener('click', () => copyText('0963061414', 'Đã chép số 096 306 1414.'));
+$('#btnHotline').addEventListener('click', () => copyText('0963061414').then(ok => toast(ok ? 'Đã chép số 096 306 1414.' : 'Máy chưa cho chép tự động. Bạn bôi đen số giúp mình nhé.')));
 
-/* ---------- chia sẻ ---------- */
-let shareId = 0, cardFile = null;
-function shareMsg(id) {
-  const a = byId.get(id);
-  return doneToday(id)
-    ? `Hôm nay mình đã làm xong quẻ: “${a.t}” (+${a.d} sao). Còn bạn, hôm nay làm gì? Rút một quẻ tại ${SITE_LABEL}`
-    : `Quẻ hôm nay của mình: “${a.t}” (độ khó ${a.d}/10). Còn bạn, hôm nay làm gì? Rút một quẻ tại ${SITE_LABEL}`;
+/* ---------- thời tiết: chỉ hỏi vị trí khi người dùng bấm ----------
+   Thời tiết: MET Norway (miễn phí, cho dùng thương mại, CC BY 4.0).
+   Không khí + UV: Open-Meteo Air Quality, mô hình CAMS (miễn phí cho web phi thương mại, CC BY 4.0).
+   Gọi thẳng từ trình duyệt, không khóa API; tọa độ làm tròn 2 chữ số (~1 km). */
+const CITIES = [
+  ['Hà Nội', 21.03, 105.85], ['TP. Hồ Chí Minh', 10.78, 106.7], ['Hải Phòng', 20.84, 106.69], ['Đà Nẵng', 16.05, 108.2],
+  ['Cần Thơ', 10.05, 105.75], ['Huế', 16.46, 107.59], ['Hưng Yên', 20.65, 106.05], ['Bắc Ninh', 21.19, 106.08],
+  ['Hải Dương', 20.94, 106.33], ['Hạ Long', 20.95, 107.08], ['Thái Nguyên', 21.59, 105.85], ['Nam Định', 20.42, 106.17],
+  ['Ninh Bình', 20.25, 105.97], ['Thanh Hóa', 19.81, 105.78], ['Vinh', 18.68, 105.68], ['Quy Nhơn', 13.78, 109.22],
+  ['Nha Trang', 12.24, 109.2], ['Đà Lạt', 11.94, 108.46], ['Buôn Ma Thuột', 12.67, 108.04], ['Pleiku', 13.98, 108],
+  ['Biên Hòa', 10.96, 106.84], ['Thủ Dầu Một', 10.98, 106.65], ['Vũng Tàu', 10.35, 107.08], ['Phan Thiết', 10.93, 108.1],
+  ['Mỹ Tho', 10.36, 106.36], ['Long Xuyên', 10.39, 105.44], ['Rạch Giá', 10.01, 105.08], ['Cà Mau', 9.18, 105.15],
+  ['Phú Quốc', 10.22, 103.96], ['Sa Pa', 22.34, 103.84]
+];
+const WX_SYM = [
+  [/thunder/, 'có dông', '⛈️'], [/heavyrain/, 'mưa to', '🌧️'], [/lightrain/, 'mưa nhỏ', '🌦️'], [/rainshowers/, 'mưa rào', '🌦️'],
+  [/rain/, 'có mưa', '🌧️'], [/sleet|snow/, 'mưa tuyết', '🌨️'], [/fog/, 'sương mù', '🌫️'], [/clearsky/, 'trời quang', '☀️'],
+  [/fair/, 'ít mây', '🌤️'], [/partlycloudy/, 'có mây', '⛅'], [/cloudy/, 'nhiều mây', '☁️']
+];
+const WX_TIP = { storm: 'ưu tiên việc trong nhà', rain: 'ưu tiên việc trong nhà', air: 'nên ở trong nhà', hot: 'tránh nắng, ưu tiên chỗ mát', cold: 'trời lạnh, nhớ mặc ấm', fog: 'ra đường đi chậm thôi', nice: 'hợp ra ngoài đấy' };
+const WX_TIP_FOOD = { storm: 'ưu tiên món nóng', rain: 'ưu tiên món nóng', cold: 'ưu tiên món nóng', hot: 'ưu tiên món mát' };
+const WX_TOAST = { air: 'Không khí đang xấu, mình ưu tiên việc trong nhà nhé.', storm: 'Trời đang có dông, mình đổi sang việc trong nhà nhé.', rain: 'Trời đang mưa, mình ưu tiên việc trong nhà nhé.', hot: 'Trời nắng nóng, mình ưu tiên việc trong nhà hoặc chỗ mát.', cold: 'Trời lạnh, nhớ mặc ấm nhé.', nice: 'Trời đẹp, hợp ra ngoài đấy!' };
+let WX = null, wxLoading = false, wxFail = '';
+/* nơi gần nhất trong danh sách (tính trên máy, không gửi tọa độ đi đâu thêm) */
+function nearCity(lat, lon) {
+  let best = null, bd = 1e9;
+  for (const c of CITIES) { const dx = (c[2] - lon) * Math.cos(lat * Math.PI / 180), dy = c[1] - lat, d = Math.sqrt(dx * dx + dy * dy) * 111; if (d < bd) { bd = d; best = c[0]; } }
+  return bd <= 35 ? best : '';
 }
-function copyText(t, okMsg) {
-  const fail = () => toast('Máy chưa cho chép tự động. Bạn bôi đen rồi chép giúp mình nhé.');
-  try { navigator.clipboard.writeText(t).then(() => toast(okMsg), fail); } catch (e) { fail(); }
+const AIR = aqi => (aqi >= 301 ? 'nguy hại' : aqi >= 201 ? 'rất xấu' : aqi >= 151 ? 'xấu' : aqi >= 101 ? 'kém' : aqi >= 51 ? 'trung bình' : 'tốt');
+
+/* giờ mặt trời lặn tính ngay trên máy (công thức thiên văn rút gọn, sai số vài phút) */
+function sunSet(day, lat, lon) {
+  const rad = Math.PI / 180, J1970 = 2440588, J2000 = 2451545, J0 = 0.0009, PI2 = 2 * Math.PI;
+  const d = day.valueOf() / 864e5 - 0.5 + J1970 - J2000, lw = -lon * rad, phi = lat * rad;
+  const n = Math.round(d - J0 - lw / PI2), ds = J0 + lw / PI2 + n;
+  const M = rad * (357.5291 + 0.98560028 * ds);
+  const L = M + rad * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) + rad * 102.9372 + Math.PI;
+  const dec = Math.asin(Math.sin(rad * 23.4397) * Math.sin(L));
+  const w = Math.acos((Math.sin(-0.833 * rad) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec)));
+  const J = J2000 + J0 + (w + lw) / PI2 + n + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  return new Date((J + 0.5 - J1970) * 864e5);
+}
+function parseMet(j, loc, exp) {
+  const ts = (j && j.properties && j.properties.timeseries) || [];
+  const rows = ts.slice(0, 18).map(t => {
+    const det = (t.data && t.data.instant && t.data.instant.details) || {}, nx = t.data.next_1_hours || t.data.next_6_hours || {};
+    return { t: Date.parse(t.time), c: det.air_temperature, h: det.relative_humidity, s: (nx.summary && nx.summary.symbol_code) || '', mm: (nx.details && nx.details.precipitation_amount) || 0 };
+  }).filter(r => isFinite(r.t) && typeof r.c === 'number');
+  const now = Date.now();
+  return { lat: loc.lat, lon: loc.lon, at: now, exp: exp && exp > now ? Math.min(exp, now + 3 * 36e5) : now + 30 * 60e3, rows };
+}
+/* tình hình lúc này: dữ liệu quá 6 tiếng thì không dùng */
+function wxNow() {
+  const W = S.wx, now = Date.now();
+  if (!S.wxOn || !S.wxLoc || !W || !W.rows || !W.rows.length || now - W.at > 6 * 36e5) return null;
+  if (W.lat !== S.wxLoc.lat || W.lon !== S.wxLoc.lon) return null;
+  let r = W.rows[0];
+  for (const x of W.rows) { if (x.t <= now + 30 * 60e3) r = x; else break; }
+  const s = r.s || '', hr = new Date().getHours();
+  const set = sunSet(new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate(), 12), W.lat, W.lon);
+  const toSet = (set - now) / 6e4;
+  const night = /_night/.test(s) || toSet < -25 || hr < 5;
+  const wet = /rain|sleet|snow/.test(s) || r.mm >= 0.3;
+  const Q = S.aq && S.aq.lat === W.lat && S.aq.lon === W.lon && now - S.aq.at < 3 * 36e5 ? S.aq : null;
+  const aqi = Q && typeof Q.aqi === 'number' ? Math.round(Q.aqi) : null, uv = Q && typeof Q.uv === 'number' ? Q.uv : null;
+  let cls = 'ok';
+  if (/thunder/.test(s)) cls = 'storm';
+  else if (wet) cls = 'rain';
+  else if (aqi !== null && aqi >= 151) cls = 'air';
+  else if (hr >= 9 && hr < 17 && (r.c >= 33 || (r.c >= 31 && r.h >= 70))) cls = 'hot';
+  else if (r.c <= 16) cls = 'cold';
+  else if (/fog/.test(s)) cls = 'fog';
+  else if (r.c >= 17 && r.c <= 32 && !(aqi !== null && aqi >= 101)) cls = 'nice';
+  const m = WX_SYM.find(x => x[0].test(s));
+  return {
+    cls, c: r.c, s, txt: m ? m[1] : '', emo: m ? (m[2] === '☀️' && night ? '🌙' : m[2]) : '🌡️', set,
+    aqi, air: aqi === null ? '' : AIR(aqi), airSens: aqi !== null && aqi >= 101 && aqi < 151, uvHigh: uv !== null && uv >= 8 && hr >= 9 && hr < 16,
+    golden: !wet && /clearsky|fair|partlycloudy/.test(s) && toSet >= 10 && toSet <= 100,
+    clearNight: night && /clearsky|fair/.test(s)
+  };
+}
+function wxWeight(a, tags) {
+  const o = a.o; let w = 1;
+  if (WX.cls === 'storm') w = o === 'o' ? 0.04 : o === 'i' ? 1.6 : 1;
+  else if (WX.cls === 'rain') w = o === 'o' ? 0.12 : o === 'i' ? 1.5 : 1;
+  else if (WX.cls === 'air') w = (o === 'o' ? 0.25 : o === 'i' ? 1.4 : 1) * (a.c === 'vd' && o !== 'i' ? 0.5 : 1);
+  else if (WX.cls === 'hot') w = o === 'o' ? 0.35 : o === 'i' ? 1.3 : 1;
+  else if (WX.cls === 'cold') w = o === 'o' ? 0.6 : o === 'i' ? 1.2 : 1;
+  else if (WX.cls === 'fog') w = o === 'o' ? 0.7 : 1;
+  else if (WX.cls === 'nice') w = (o === 'o' ? 1.8 : 1) * (a.c === 'vd' ? 1.3 : 1);
+  if (WX.airSens && a.c === 'vd' && o === 'o') w *= 0.5;
+  if (WX.uvHigh && o === 'o') w *= 0.6;
+  if (tags.includes('sao')) w *= WX.clearNight ? 4 : 0.05;
+  if (tags.includes('hoanghon')) w *= WX.golden ? 6 : (WX.cls === 'rain' || WX.cls === 'storm' ? 0.1 : 1);
+  return w;
+}
+function wxFood(f) {
+  if (!WX) return 1;
+  if (WX.cls === 'rain' || WX.cls === 'storm' || WX.cls === 'cold') return (f.w === 'n' ? 2.5 : f.w === 'm' ? 0.4 : 1) * (f.o === 'h' && WX.cls !== 'cold' ? 1.2 : 1);
+  if (WX.cls === 'hot') return f.w === 'm' ? 2.2 : f.w === 'n' ? 0.5 : 1;
+  return 1;
+}
+function renderWx() {
+  WX = wxNow();
+  const ask = $('#wxAsk'), now = $('#wxNow');
+  if (!WX) {
+    ask.hidden = false; now.hidden = true; ask.disabled = wxLoading;
+    $('span', ask).textContent = wxLoading ? 'Đang xem thời tiết…' : (S.wxOn && wxFail) ? wxFail : 'Gợi ý theo thời tiết chỗ bạn';
+    return;
+  }
+  ask.hidden = true; now.hidden = false;
+  let tip = S.mode === 'an' ? (WX_TIP_FOOD[WX.cls] || '') : (S.f.when === 'now' ? (WX_TIP[WX.cls] || '') : '');
+  if (S.mode !== 'an' && S.f.when === 'now' && !tip) tip = WX.airSens ? 'hạn chế vận động mạnh ngoài trời' : WX.uvHigh ? 'UV cao, nhớ che nắng' : '';
+  const L = S.wxLoc, place = L ? (L.name || nearCity(L.lat, L.lon)) : '';
+  const where = place ? ` ${L.name ? 'ở' : 'gần'} ${place}` : '';
+  $('#wxEmo').textContent = WX.emo;
+  $('#wxTxt').textContent = `${Math.round(WX.c)}°, ${WX.txt}${where}${WX.air ? ` · không khí ${WX.air} (AQI ${WX.aqi})` : ''}${tip ? ' · ' + tip : ''}`;
+}
+function openWxBox(msg) {
+  $('#wxMsg').textContent = msg || 'Lấy thời tiết ở đâu?';
+  $('#wxBox').hidden = false; $('#wxEdit').setAttribute('aria-expanded', 'true');
+  const sel = $('#wxCity');
+  sel.value = S.wxLoc && S.wxLoc.name ? String(CITIES.findIndex(c => c[0] === S.wxLoc.name)) : '';
+}
+function closeWxBox() { $('#wxBox').hidden = true; $('#wxEdit').setAttribute('aria-expanded', 'false'); }
+function getWx(userAction) {
+  const L = S.wxLoc; if (!S.wxOn || !L) { renderWx(); return; }
+  const now = Date.now(), W = S.wx, Q = S.aq;
+  const needW = !(W && W.lat === L.lat && W.lon === L.lon && now < W.exp);
+  const needQ = !(Q && Q.lat === L.lat && Q.lon === L.lon && now < Q.exp);
+  if (!needW && !needQ) { wxLoading = false; afterWx(userAction); return; }
+  wxLoading = true; wxFail = ''; renderWx();
+  const jobs = [];
+  if (needW) jobs.push(fetch(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${L.lat}&lon=${L.lon}`)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); const exp = Date.parse(r.headers.get('expires') || ''); return r.json().then(j => parseMet(j, L, exp)); })
+    .then(w => { if (!w.rows.length) throw new Error('trống'); S.wx = w; }));
+  if (needQ) jobs.push(fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${L.lat}&longitude=${L.lon}&current=us_aqi,pm2_5,uv_index`)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(j => { const c = (j && j.current) || {}; S.aq = { lat: L.lat, lon: L.lon, at: now, exp: now + 60 * 60e3, aqi: c.us_aqi, pm: c.pm2_5, uv: c.uv_index }; })
+    .catch(() => { S.aq = null; }));
+  Promise.all(jobs.map(p => p.catch(e => e))).then(() => {
+    wxLoading = false; save();
+    if (!wxNow()) { wxFail = 'Chưa xem được thời tiết, bấm để thử lại'; renderWx(); return; }
+    afterWx(userAction);
+  });
+}
+function afterWx(userAction) {
+  renderWx();
+  if (!userAction || !WX) return;
+  closeWxBox();
+  if (S.mode === 'an') drawFood();
+  else if (!busy() && !doneToday(S.cur) && S.f.when === 'now') { lastRelax = []; draw(); }
+  if (WX_TOAST[WX.cls]) toast(WX_TOAST[WX.cls]);
+}
+function locate() {
+  if (!navigator.geolocation) { openWxBox('Máy này không lấy được vị trí. Bạn chọn nơi gần nhất nhé.'); return; }
+  wxLoading = true; wxFail = ''; renderWx();
+  navigator.geolocation.getCurrentPosition(p => {
+    S.wxOn = true;
+    S.wxLoc = { lat: Math.round(p.coords.latitude * 100) / 100, lon: Math.round(p.coords.longitude * 100) / 100, name: '' };
+    save(); getWx(true);
+  }, err => {
+    wxLoading = false; renderWx();
+    openWxBox(err && err.code === 1 ? 'Bạn chưa cho xem vị trí, không sao. Chọn nơi gần bạn để xem thời tiết nhé.' : 'Chưa lấy được vị trí. Chọn nơi gần bạn nhé.');
+  }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 30 * 60e3 });
+}
+if (!DEPLOY) $('#wx').hidden = true; // bản xem trước trên Claude không gọi được dịch vụ thời tiết bên ngoài
+$('#wxCity').innerHTML = '<option value="">Hoặc chọn nơi gần bạn…</option>' + CITIES.map((c, i) => `<option value="${i}">${esc(c[0])}</option>`).join('');
+$('#wxAsk').addEventListener('click', () => { if (S.wxOn && S.wxLoc) getWx(true); else locate(); });
+$('#wxEdit').addEventListener('click', () => { if ($('#wxBox').hidden) openWxBox(); else closeWxBox(); });
+$('#wxLoc').addEventListener('click', locate);
+$('#wxCity').addEventListener('change', e => {
+  const c = CITIES[+e.target.value]; if (!c || e.target.value === '') return;
+  S.wxOn = true; S.wxLoc = { lat: c[1], lon: c[2], name: c[0] }; save(); getWx(true);
+});
+$('#wxOff').addEventListener('click', () => {
+  S.wxOn = false; S.wxLoc = null; S.wx = null; S.aq = null; wxFail = ''; save(); closeWxBox(); renderWx(); toast('Đã tắt gợi ý theo thời tiết.');
+});
+
+/* ---------- rủ bạn, chia sẻ ---------- */
+const TOUCH = !!(window.matchMedia && matchMedia('(hover: none) and (pointer: coarse)').matches);
+const canNative = () => typeof navigator.share === 'function';
+const APPS = {
+  zalo: { name: 'Zalo', web: 'https://chat.zalo.me/', webName: 'Mở Zalo Web' },
+  messenger: { name: 'Messenger', web: 'https://www.facebook.com/messages/', webName: 'Mở tin nhắn Facebook' },
+  facebook: { name: 'Facebook' }, instagram: { name: 'Instagram' }, tiktok: { name: 'TikTok' }
+};
+let shareKind = 'item', SH = { title: '', msg: '', url: SITE + '/' };
+function shareInfo() {
+  if (shareKind === 'site') return {
+    title: 'Hôm nay làm gì?', url: SITE + '/',
+    msg: S.stars > 0 ? `Mình gom được ${S.stars} sao ở “Hôm nay làm gì?” rồi đó ⭐ Bạn vào rút một quẻ xem, mỗi ngày một việc nhỏ thôi:` : 'Không biết hôm nay làm gì, ăn gì? Vào đây rút một quẻ, có cả sao với huy hiệu, vui phết 😆'
+  };
+  if (S.mode === 'an') {
+    const f = foodById.get(S.food);
+    return { title: `Hôm nay ăn gì? ${f.t}`, url: `${SITE}/an/${f.id}`, msg: `Ê, ${MEAL_WHEN[curMeal()]} ăn ${lower1(f.t)} không? 😋` };
+  }
+  const a = byId.get(S.cur);
+  return {
+    title: `Hôm nay làm gì? ${a.t}`, url: `${SITE}/q/${a.id}`,
+    msg: doneToday(a.id) ? `Hôm nay mình làm xong quẻ “${a.t}”, +${a.d} sao ✨ Còn bạn, hôm nay làm gì?` : `Ê, ${SLOT_WHEN[SLOT]} làm cái này với mình không: “${a.t}” 👀`
+  };
+}
+const shareMsg = () => $('#shareText').value.trim() || SH.msg;
+const shareFull = () => `${shareMsg()}\n${SH.url}`;
+function refreshNets() {
+  const m = encodeURIComponent(shareMsg()), u = encodeURIComponent(SH.url);
+  $('#netFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${u}`;
+  $('#netThreads').href = `https://www.threads.com/intent/post?text=${m}&url=${u}`;
+  $('#netTelegram').href = `https://t.me/share/url?url=${u}&text=${m}`;
+  $('#netX').href = `https://x.com/intent/tweet?text=${m}&url=${u}`;
+}
+function hint(msg, link) {
+  const h = $('#shareHint');
+  h.textContent = msg;
+  if (link) { const a = document.createElement('a'); a.href = link.href; a.target = '_blank'; a.rel = 'noopener'; a.textContent = link.text; h.append(' ', a); }
+  h.hidden = false;
+}
+/* chép chữ ngay trong cú bấm (kịp trước khi mở tab mới); không được thì dùng Clipboard API */
+function copyNow(t) {
+  const ta = document.createElement('textarea'), back = document.activeElement;
+  ta.value = t; ta.setAttribute('readonly', ''); ta.setAttribute('aria-hidden', 'true');
+  ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0';
+  document.body.appendChild(ta);
+  let ok = false;
+  try { ta.focus({ preventScroll: true }); ta.select(); ta.setSelectionRange(0, t.length); ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  ta.remove();
+  if (back && back.focus) { try { back.focus({ preventScroll: true }); } catch (e) { /* bỏ qua */ } }
+  return ok;
+}
+function copyText(t) {
+  if (copyNow(t)) return Promise.resolve(true);
+  try { return navigator.clipboard.writeText(t).then(() => true, () => false); } catch (e) { return Promise.resolve(false); }
+}
+function sheet(app) {
+  if (app) hint(`Chọn ${app} trong bảng chia sẻ của máy nhé.`);
+  navigator.share({ title: SH.title, text: shareMsg(), url: SH.url })
+    .then(() => hint('Gửi xong rồi. Rủ thêm ai nữa không?'))
+    .catch(err => {
+      if (err && err.name === 'AbortError') return;
+      copyText(shareFull()).then(ok => hint(ok ? `Máy chưa mở được bảng chia sẻ. Lời rủ kèm link đã chép sẵn, bạn mở ${app || 'ứng dụng'} rồi dán vào nhé.` : 'Máy chưa mở được bảng chia sẻ. Bạn chép lời rủ ở trên rồi gửi nhé.'));
+    });
+}
+$('#nets').addEventListener('click', e => {
+  const el = e.target.closest('[data-net]'); if (!el) return;
+  const k = el.dataset.net, app = APPS[k];
+  if (k === 'threads' || k === 'telegram' || k === 'x') { refreshNets(); return; }
+  if (k === 'instagram' || k === 'tiktok') { e.preventDefault(); shareImage(app.name); return; }
+  if (k === 'more') {
+    if (canNative()) sheet('');
+    else copyText(SH.url).then(ok => hint(ok ? 'Đã chép link.' : 'Máy chưa cho chép tự động, bạn chép link ở trên nhé.'));
+    return;
+  }
+  if (TOUCH && canNative()) { e.preventDefault(); sheet(app.name); return; }
+  if (k === 'facebook') { refreshNets(); if (copyNow(shareMsg())) hint('Lời rủ đã chép sẵn: khi Facebook mở ra, dán vào ô viết bài là xong.'); return; }
+  copyText(shareFull()).then(ok => hint(ok ? `Đã chép lời rủ kèm link. Mở ${app.name}, chọn bạn rồi dán (Ctrl+V) là xong.` : `Bạn chép lời rủ ở trên rồi dán vào ${app.name} nhé.`, { href: app.web, text: app.webName }));
+});
+
+/* ảnh khoe 1080×1920 (story) hoặc 1080×1350 (bài đăng), vẽ bằng canvas */
+let card = null, cardJob = null;
+const cardKey = () => [S.mode, S.mode === 'an' ? S.food : S.cur, S.fmt === 'post' ? 'post' : 'story', S.mode !== 'an' && doneToday(S.cur) ? 1 : 0].join('|');
+const fileOk = f => { try { return !!(f && navigator.canShare && navigator.canShare({ files: [f] })); } catch (e) { return false; } };
+function ensureCard() {
+  const key = cardKey();
+  if (card && card.key === key) return Promise.resolve(card);
+  if (cardJob && cardJob.key === key) return cardJob.p;
+  const p = drawCard().then(c => {
+    if (cardJob && cardJob.key === key) cardJob = null;
+    if (!c) return null;
+    c.key = key;
+    if (card && card.url && card.url.indexOf('blob:') === 0) URL.revokeObjectURL(card.url);
+    card = c; putCard(); return c;
+  }, () => { cardJob = null; return null; });
+  cardJob = { key, p };
+  return p;
+}
+function putCard() {
+  const img = new Image(), dl = $('#btnSaveImg');
+  img.alt = 'Ảnh quẻ để đăng lên mạng xã hội'; img.width = card.w; img.height = card.h;
+  img.onerror = () => {
+    img.onerror = null; if (!card.file) return;
+    const r = new FileReader(); r.onload = () => { img.src = r.result; dl.href = r.result; }; r.readAsDataURL(card.file);
+  };
+  img.src = card.url;
+  $('#cardBox').replaceChildren(img);
+  dl.href = card.url; dl.download = card.name;
+  $('#btnShareImg').hidden = !fileOk(card.file);
+}
+async function showCard(app) {
+  $('#cardWrap').hidden = false;
+  const c = await ensureCard();
+  if (!c) { hint('Máy này chưa tạo được ảnh. Bạn chụp màn hình lá quẻ để đăng nhé.'); return; }
+  hint(fileOk(c.file) ? `Ảnh xong rồi. Bấm “Gửi ảnh” rồi chọn ${app || 'ứng dụng muốn đăng'}.` : `Tải ảnh về rồi đăng lên ${app || 'story'} nhé, nhớ gắn link ${SH.url.replace('https://', '')}.`);
+  $('#cardWrap').scrollIntoView({ block: 'nearest', behavior: reduced ? 'auto' : 'smooth' });
+}
+function shareImage(app) {
+  if (card && card.key === cardKey() && fileOk(card.file)) {
+    if (app === 'Instagram' && copyNow(SH.url)) hint('Chọn Instagram rồi chọn Tin. Link đã chép sẵn: thêm nhãn dán Liên kết rồi dán vào.');
+    else hint(`Chọn ${app} để đăng ảnh này nhé.`);
+    navigator.share({ files: [card.file] }).catch(err => { if (!err || err.name !== 'AbortError') showCard(app); });
+    return;
+  }
+  showCard(app);
 }
 let lastFocus = null;
 const BEHIND = ['.top', 'main', '.foot'];
 const setInert = on => BEHIND.forEach(s => { const el = $(s); if (el) el.inert = on; });
 function openModal(m) { lastFocus = document.activeElement; m.hidden = false; document.body.classList.add('modal-open'); setInert(true); const f = $('[data-close]', m); if (f) f.focus(); }
 function closeModal(m) { m.hidden = true; document.body.classList.remove('modal-open'); setInert(false); if (lastFocus && lastFocus.focus) lastFocus.focus(); }
-function openShare(withCard) {
-  shareId = S.cur; cardFile = null;
-  $('#shareText').value = shareMsg(shareId);
-  $('#btnNative').hidden = typeof navigator.share !== 'function';
-  $('#cardWrap').hidden = true;
+const renderFmt = () => $$('[data-fmt]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.fmt === (S.fmt === 'post' ? 'post' : 'story'))));
+function openShare(kind) {
+  shareKind = kind === 'site' ? 'site' : 'item';
+  SH = shareInfo();
+  $('#shTitle').textContent = shareKind === 'site' ? 'Rủ bạn bè cùng chơi' : S.mode === 'an' ? 'Rủ bạn đi ăn' : (doneToday(S.cur) ? 'Khoe với bạn bè' : 'Rủ thêm người cùng làm');
+  $('#shareText').value = SH.msg;
+  const su = $('#shareUrl'); su.href = SH.url; su.textContent = SH.url.replace('https://', '');
+  const more = $('#netMore'), nat = canNative();
+  $('use', more).setAttribute('href', nat ? '#i-share' : '#i-link');
+  $('span', more).textContent = nat ? 'Khác' : 'Chép link';
+  $('#shareHint').hidden = true; $('#cardWrap').hidden = true;
+  renderFmt(); refreshNets();
   openModal($('#shareModal'));
-  if (withCard) buildCard();
+  if (kind === 'card') showCard('');
+  else setTimeout(() => { if (!$('#shareModal').hidden) ensureCard(); }, 450);
 }
-$('#btnShare').addEventListener('click', () => openShare(false));
-$('#btnCard').addEventListener('click', () => openShare(true));
-$('#btnCard2').addEventListener('click', buildCard);
-$('#btnCopy').addEventListener('click', () => {
-  const ta = $('#shareText');
-  try { navigator.clipboard.writeText(ta.value).then(() => toast('Đã chép. Dán vào Zalo, Messenger hay story nhé.'), () => { ta.focus(); ta.select(); toast('Đã bôi đen sẵn, bạn bấm chép giúp mình nhé.'); }); }
-  catch (e) { ta.focus(); ta.select(); }
-});
-$('#btnNative').addEventListener('click', () => {
-  navigator.share({ title: 'Hôm nay làm gì?', text: $('#shareText').value, url: SITE }).catch(err => { if (!err || err.name !== 'AbortError') toast('Thiết bị này chưa gửi trực tiếp được. Dùng nút Chép lời mời nhé.'); });
-});
+$('#shareText').addEventListener('input', refreshNets);
+$$('[data-fmt]').forEach(b => b.addEventListener('click', () => { S.fmt = b.dataset.fmt; save(); renderFmt(); showCard(''); }));
+$('#btnShare').addEventListener('click', () => openShare('item'));
+$('#btnCard').addEventListener('click', () => openShare('card'));
+$('#btnInvite').addEventListener('click', () => openShare('site'));
+$('#btnCard2').addEventListener('click', () => showCard(''));
+$('#btnCopy').addEventListener('click', () => copyText(shareFull()).then(ok => {
+  if (ok) { hint('Đã chép lời rủ kèm link. Dán vào Zalo, Messenger, bình luận hay story đều được.'); return; }
+  const ta = $('#shareText'); ta.focus(); ta.select(); hint('Máy chưa cho chép tự động. Bạn nhấn giữ vào lời rủ để chép nhé.');
+}));
 $('#btnShareImg').addEventListener('click', () => {
-  if (cardFile && navigator.canShare && navigator.canShare({ files: [cardFile] })) {
-    navigator.share({ files: [cardFile], text: $('#shareText').value }).catch(err => { if (!err || err.name !== 'AbortError') toast('Chưa gửi được. Nhấn giữ ảnh để lưu nhé.'); });
-  } else toast('Thiết bị này chưa gửi ảnh trực tiếp được. Nhấn giữ ảnh để lưu nhé.');
+  if (!card || !fileOk(card.file)) { hint('Thiết bị này chưa gửi ảnh trực tiếp được. Bấm Tải ảnh hoặc nhấn giữ ảnh để lưu nhé.'); return; }
+  navigator.share({ files: [card.file] }).catch(err => { if (!err || err.name !== 'AbortError') hint('Chưa gửi được. Bấm Tải ảnh rồi đăng từ thư viện ảnh nhé.'); });
 });
 $$('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.closest('.modal'))));
 $('#shareModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(e.currentTarget); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $$('.modal').forEach(m => { if (!m.hidden) closeModal(m); }); });
 
-/* ảnh khoe 1080×1350 vẽ bằng canvas */
 function wrapLines(ctx, text, maxW, maxLines) {
   const words = text.split(' '), lines = []; let line = '';
   for (const w of words) {
@@ -520,10 +1029,12 @@ function starPath(ctx, cx, cy, R) {
   for (let i = 0; i < 10; i++) { const ang = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r : R; ctx[i ? 'lineTo' : 'moveTo'](cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)); }
   ctx.closePath();
 }
-async function buildCard() {
-  const a = byId.get(shareId || S.cur); if (!a) return;
+async function drawCard() {
+  const food = S.mode === 'an';
+  const a = food ? foodById.get(S.food) : byId.get(S.cur); if (!a) return null;
   try { await Promise.all(['800 80px "Bricolage Grotesque"', 'italic 400 40px "Fraunces"', '600 30px "Be Vietnam Pro"'].map(f => document.fonts.load(f))); } catch (e) { /* dùng font dự phòng */ }
-  const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const story = S.fmt !== 'post';
+  const W = 1080, H = story ? 1920 : 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d');
   const RED = '#D02842', PAPER = '#FFF3EC', INK = '#241826', MUTED = '#6A5B6E', GOLD = '#E0A100', LINE = '#EBA7B2';
   const DISP = '"Bricolage Grotesque", "Be Vietnam Pro", sans-serif', BODY = '"Be Vietnam Pro", sans-serif', POEM = '"Fraunces", Georgia, serif';
@@ -531,34 +1042,39 @@ async function buildCard() {
   x.fillStyle = PAPER; x.fillRect(64, 64, W - 128, H - 128);
   x.strokeStyle = RED; x.lineWidth = 4; x.strokeRect(84, 84, W - 168, H - 168);
   x.strokeStyle = LINE; x.lineWidth = 2; x.strokeRect(96, 96, W - 192, H - 192);
-  const L = 140, R = W - 140, TW = R - L;
+  const L = 140, R = W - 140, TW = R - L, y0 = story ? 300 : 180;
   x.textBaseline = 'alphabetic';
   x.fillStyle = RED; x.font = `600 28px ${BODY}`;
   if ('letterSpacing' in x) x.letterSpacing = '4px';
-  x.fillText('HÔM NAY LÀM GÌ?', L, 180);
+  x.fillText(food ? 'HÔM NAY ĂN GÌ?' : 'HÔM NAY LÀM GÌ?', L, y0);
   if ('letterSpacing' in x) x.letterSpacing = '0px';
-  x.font = `800 64px ${DISP}`; x.fillText(`Quẻ số ${String(a.id).padStart(3, '0')}`, L, 262);
-  x.fillStyle = MUTED; x.font = `600 30px ${BODY}`; x.fillText(LVL(a.d), L, 312);
-  // con dấu nhóm
-  x.save(); x.translate(R - 82, 232); x.rotate(-5 * Math.PI / 180);
+  x.font = `800 64px ${DISP}`; x.fillText(`${food ? 'Quẻ ăn số' : 'Quẻ số'} ${String(a.id).padStart(3, '0')}`, L, y0 + 82);
+  x.fillStyle = MUTED; x.font = `600 30px ${BODY}`; x.fillText(food ? MEAL_LV[curMeal()] : LVL(a.d), L, y0 + 132);
+  // con dấu
+  x.save(); x.translate(R - 82, y0 + 52); x.rotate(-5 * Math.PI / 180);
   x.fillStyle = RED; x.fillRect(-82, -82, 164, 164);
   x.strokeStyle = PAPER; x.lineWidth = 4; x.strokeRect(-70, -70, 140, 140);
   x.fillStyle = PAPER; x.textAlign = 'center'; x.font = `800 34px ${DISP}`;
-  const seal = CATS[a.c].seal; x.fillText(seal[0], 0, -6); x.fillText(seal[1], 0, 38);
+  const seal = food ? FOOD_SEAL[a.o] : CATS[a.c].seal; x.fillText(seal[0], 0, -6); x.fillText(seal[1], 0, 38);
   x.restore(); x.textAlign = 'left';
   // tiêu đề + lời quẻ
-  let y = 430;
-  x.fillStyle = INK; x.font = `800 74px ${DISP}`;
-  for (const ln of wrapLines(x, a.t, TW, 4)) { x.fillText(ln, L, y); y += 88; }
-  y += 18; x.fillStyle = MUTED; x.font = `italic 400 40px ${POEM}`;
-  for (const ln of wrapLines(x, a.n, TW, 3)) { x.fillText(ln, L, y); y += 56; }
-  // sao độ khó
+  let y = y0 + (story ? 330 : 250);
+  const TS = story ? 88 : 74, TL = story ? 104 : 88, PS = story ? 46 : 40, PL = story ? 64 : 56;
+  x.fillStyle = INK; x.font = `800 ${TS}px ${DISP}`;
+  for (const ln of wrapLines(x, a.t, TW, story ? 5 : 4)) { x.fillText(ln, L, y); y += TL; }
+  y += 18; x.fillStyle = MUTED; x.font = `italic 400 ${PS}px ${POEM}`;
+  for (const ln of wrapLines(x, a.n, TW, story ? 4 : 3)) { x.fillText(ln, L, y); y += PL; }
   y += 40;
-  for (let i = 0; i < 10; i++) { starPath(x, L + 26 + i * 62, y, 26); x.fillStyle = i < a.d ? GOLD : '#EADBD5'; x.fill(); }
-  y += 74; x.fillStyle = MUTED; x.font = `600 32px ${BODY}`; x.fillText(`Độ khó ${a.d}/10 · ${a.d} sao`, L, y);
+  if (food) {
+    x.fillStyle = MUTED; x.font = `600 32px ${BODY}`;
+    x.fillText(`${FOOD_KIND[a.o]} · ${PURSE[a.k]} · ${REGION[a.r] || 'Cả nước'}`, L, y + 10);
+  } else {
+    for (let i = 0; i < 10; i++) { starPath(x, L + 26 + i * 62, y, 26); x.fillStyle = i < a.d ? GOLD : '#EADBD5'; x.fill(); }
+    y += 74; x.fillStyle = MUTED; x.font = `600 32px ${BODY}`; x.fillText(`Độ khó ${a.d}/10 · ${a.d} sao`, L, y);
+  }
   // dấu "đã làm"
-  if (doneToday(a.id)) {
-    x.save(); x.translate(R - 150, H - 400); x.rotate(-12 * Math.PI / 180);
+  if (!food && doneToday(a.id)) {
+    x.save(); x.translate(R - 150, H - (story ? 520 : 400)); x.rotate(-12 * Math.PI / 180);
     x.strokeStyle = RED; x.lineWidth = 6; x.strokeRect(-150, -62, 300, 112); x.lineWidth = 2; x.strokeRect(-140, -52, 280, 92);
     x.fillStyle = RED; x.textAlign = 'center'; x.font = `800 60px ${DISP}`; x.fillText('ĐÃ LÀM', 0, 18);
     x.restore(); x.textAlign = 'left';
@@ -570,13 +1086,17 @@ async function buildCard() {
   x.fillStyle = RED; x.font = `800 58px ${DISP}`; x.fillText(SITE_LABEL, L, H - 130);
   x.fillStyle = MUTED; x.font = `600 28px ${BODY}`; x.textAlign = 'right';
   x.fillText(`${WD[NOW.getDay()]}, ${dm(NOW)}/${NOW.getFullYear()}`, R, H - 196); x.textAlign = 'left';
-  const box = $('#cardBox'), img = new Image();
-  img.alt = 'Ảnh quẻ hôm nay để đăng lên mạng xã hội'; img.width = W; img.height = H;
-  img.src = c.toDataURL('image/png');
-  box.replaceChildren(img);
-  $('#cardWrap').hidden = false;
-  try { c.toBlob(b => { if (b) cardFile = new File([b], `que-${a.id}-homnaylamgi.png`, { type: 'image/png' }); }, 'image/png'); } catch (e) { cardFile = null; }
-  $('#shareImgRow').hidden = !navigator.canShare;
+  const name = `${food ? 'mon' : 'que'}-${a.id}-homnaylamgi.png`;
+  return new Promise(res => {
+    const viaData = () => { try { res({ url: c.toDataURL('image/png'), file: null, w: W, h: H, name }); } catch (e) { res(null); } };
+    try {
+      c.toBlob(b => {
+        if (!b) { viaData(); return; }
+        let file = null; try { file = new File([b], name, { type: 'image/png' }); } catch (e) { file = null; }
+        res({ url: URL.createObjectURL(b), file, w: W, h: H, name });
+      }, 'image/png');
+    } catch (e) { viaData(); }
+  });
 }
 
 /* ---------- hiệu ứng ---------- */
@@ -603,19 +1123,31 @@ function confetti() {
 /* ---------- khởi động ---------- */
 if (S.moodDay !== TODAY) { S.mood = 'all'; S.moodDay = TODAY; }
 if (S.chAccDay && S.chAccDay !== TODAY) S.chAccDay = '';
+if (S.prefDay !== TODAY) { Object.keys(S.pref).forEach(k => { S.pref[k] = Math.round(S.pref[k] * 92) / 100; }); S.prefDay = TODAY; }
+WX = wxNow(); // thời tiết đã lưu (nếu còn mới) dùng luôn cho quẻ đầu tiên
+let startMsg = '';
+if (INV.k === 'q') {
+  if (busy() && S.cur !== INV.id && !S.saved.includes(S.cur)) { S.saved = [S.cur].concat(S.saved).slice(0, 40); startMsg = 'Quẻ bạn đang làm đã được cất vào mục Để dành.'; }
+  S.mode = 'lam';
+  if (!(S.cur === INV.id && S.curDay === TODAY)) { lastRelax = []; setCur(INV.id); }
+} else if (INV.k === 'an') { S.mode = 'an'; setFood(INV.id); }
 let start = S.curDay === TODAY ? byId.get(S.cur) : null;
-if (start && !S.acc && !doneToday(start.id)) {
+if (INV.k !== 'q' && start && !S.acc && !doneToday(start.id)) {
   if (start.ev && !ACTIVE_ITEMS.has(start.ev)) start = null;
   else if (S.f.when === 'now' && !start.g.includes(SLOT)) start = null;
 }
 if (!start) { const r = choose(0); lastRelax = r.relaxed; setCur(r.a.id); }
 else if (S.curDay !== TODAY) S.acc = 0;
-renderAll(); renderSoon(); announce(); save();
-document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshClock(); });
+if (S.mealDay !== TODAY) { S.meal = ''; S.mealDay = ''; }
+if (window.matchMedia && matchMedia('(min-width: 960px)').matches) $('#tune').open = true;
+renderAll(); renderSoon(); setMode(S.mode); save();
+if (startMsg) toast(startMsg);
+if (S.wxOn && S.wxLoc) getWx(false);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && refreshClock() && S.wxOn && S.wxLoc) getWx(false); });
 window.addEventListener('focus', refreshClock);
 window.addEventListener('pageshow', e => { if (e.persisted) refreshClock(); });
 if (DEPLOY && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* không có service worker thì trang vẫn chạy */ }); });
 }
-window.__hnlg = { choose, buildPool, eligible, state: () => S, CH, EVS, SLOT, A };
+window.__hnlg = { choose, buildPool, eligible, chooseFood, setMode, state: () => S, CH, EVS, SLOT, A, F, sunSet, parseMet, wxNow, nearCity, wx: () => WX, weight, INV };
 })();

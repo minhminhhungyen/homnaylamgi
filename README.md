@@ -7,20 +7,23 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 | Đường dẫn | Nội dung |
 |---|---|
 | `src/data.js` | Thư viện quẻ. Sửa hoặc thêm quẻ ở đây. |
-| `src/app.js` | Logic trang: rút quẻ, lọc, sao, huy hiệu, âm lịch, chia sẻ. |
+| `src/app.js` | Logic trang: rút quẻ, lọc, sao, huy hiệu, âm lịch, thời tiết, chia sẻ. |
 | `src/style.css`, `src/body.html` | Giao diện. |
 | `src/sw.js` | Service worker để trang mở được khi mất mạng. |
-| `src/static/` | Ảnh chia sẻ (og-image), favicon, biểu tượng ứng dụng. |
-| `tools/build.mjs` | Build ra `dist/` (bản web) và `artifact/` (bản xem trên Claude). |
+| `src/static/` | Ảnh chia sẻ chung (og-image), favicon, biểu tượng ứng dụng. |
+| `src/og/` | Ảnh xem trước 1200×630 riêng từng quẻ (`q-12.png`) và từng món (`an-5.png`), do `tools/make-og.mjs` tạo. |
+| `tools/build.mjs` | Build ra `dist/` (bản web, gồm trang link rủ `/q/12`, `/an/5`) và `artifact/` (bản xem trên Claude). |
+| `tools/make-og.mjs` | Tạo lại ảnh xem trước trong `src/og/` (cần Playwright). |
 | `dist/` | Bản đã build. Vercel và Hostinger dùng thư mục này. **Không sửa tay.** |
 | `vercel.json` | Cấu hình Vercel, do build tạo. |
 
 ## Sửa nội dung rồi đưa lên
 
 1. Sửa file trong `src/`.
-2. Build: `cd tools && npm ci && npm run build`
-3. Commit và push nhánh `main` → Vercel tự deploy.
-4. Chạy `bash tools/deploy-hostinger.sh` → cập nhật nhánh `deploy` → Hostinger tự kéo về `public_html` (nếu đã bật Auto Deployment trong hPanel).
+2. Thêm hoặc sửa quẻ thì tạo lại ảnh xem trước: `cd tools && npm run og` (cần `npm i -D playwright && npx playwright install chromium`). Quẻ chưa có ảnh riêng sẽ dùng ảnh chung.
+3. Build: `cd tools && npm ci && npm run build`
+4. Commit và push nhánh `main` → Vercel tự deploy.
+5. Chạy `bash tools/deploy-hostinger.sh` → cập nhật nhánh `deploy` → Hostinger tự kéo về `public_html` (nếu đã bật Auto Deployment trong hPanel).
 
 ## Các khóa của một quẻ (`src/data.js`)
 
@@ -37,12 +40,29 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 | `m` | Tâm trạng: `c` chán, `b` buồn, `m` mệt, `x` căng thẳng, `l` cô đơn, `h` hứng khởi |
 | `d` | Độ khó 1–10 = số sao nhận được |
 | `ch` | `1` = được chọn làm thử thách chung (cần có cả `s` và `t` trong `g`) |
-| `x` | Nhãn phụ: `cuoituan`, `canngay`, mùa (`xuan he thu dong`), dịp (`ram`, `vulan`, `2011`) |
+| `x` | Nhãn phụ: `cuoituan`, `canngay`, mùa (`xuan he thu dong`), dịp (`ram`, `vulan`, `2011`), trời (`hoanghon` cần trời quang lúc mặt trời lặn, `sao` cần trời quang ban đêm) |
 | `ev` | Chỉ hiện quanh một dịp: `halloween`, `2011`, `noel`, `tet`, `trungthu`, `phunu`, `valentine`, `giadinh`, `thieunhi`, `giaothua`, `ram`, `cathangtu`, `doan`, `nghile` |
+
+Món ăn (`FOODS`) có thêm khóa `w`: `n` món nóng, ấm bụng (ưu tiên khi mưa, lạnh), `m` món mát (ưu tiên khi nóng).
+
+## Chia sẻ và link rủ
+
+- Mỗi quẻ có link riêng `homnaylamgi.com/q/<số>`, mỗi món `homnaylamgi.com/an/<số>`. Trang này có thẻ xem trước riêng (tiêu đề, lời quẻ, ảnh) cho Facebook, Zalo, Threads, Messenger, Telegram, X; người bấm vào được chuyển ngay về trang chính, mở đúng quẻ đó, kèm dòng “Bạn bè rủ bạn…”.
+- Bảng chia sẻ: Zalo, Messenger, Facebook, Instagram, TikTok, Threads, Telegram, X, Khác. Trên điện thoại dùng bảng chia sẻ của máy; Instagram, TikTok gửi ảnh story. Trên máy tính, Facebook/Threads/Telegram/X mở trang đăng bài; Zalo, Messenger chép sẵn lời rủ kèm link để dán. Zalo không có link chia sẻ công khai nếu không có Official Account, nên không dùng SDK của Zalo.
+- Vercel tự hiểu `/q/12` nhờ `cleanUrls`; Hostinger dùng luật `RewriteRule` trong `.htaccess`.
+
+## Thời tiết, không khí, tâm trạng
+
+- Chỉ hỏi vị trí khi người dùng bấm “Gợi ý theo thời tiết chỗ bạn”; không cho thì chọn tỉnh, thành. Tọa độ làm tròn 2 chữ số (~1 km), chỉ lưu trên máy người dùng.
+- Thời tiết: MET Norway Locationforecast (miễn phí, cho dùng thương mại, CC BY 4.0, phải ghi nguồn, tôn trọng `Expires`). Khi lượng truy cập lớn, MET khuyên đặt máy chủ trung gian.
+- Không khí (US AQI, PM2.5) và UV: Open-Meteo Air Quality, mô hình CAMS của Copernicus, độ phân giải ~45 km (ước tính). **Miễn phí chỉ cho web phi thương mại**: nếu web có quảng cáo, thu phí hoặc dùng để quảng bá sản phẩm thì phải mua gói thương mại của Open-Meteo hoặc tắt phần này.
+- Giờ mặt trời lặn và nơi gần nhất tính ngay trên máy, không gọi dịch vụ nào.
+- Trời mưa, dông, không khí xấu: chỉ gợi ý quẻ trong nhà hoặc đâu cũng được (trừ khi người dùng tự chọn “Ra ngoài” ở Tinh chỉnh); trời đẹp: ưu tiên ra ngoài, vận động; nắng gắt, UV cao: tránh ra ngoài buổi trưa; gần giờ mặt trời lặn mà trời quang: gợi ý ngắm hoàng hôn; tối trời quang: ngắm sao. Món ăn: mưa, lạnh ưu tiên món nóng; nóng ưu tiên món mát.
+- Tâm trạng chưa tốt: ưu tiên nhóm việc giúp vui lên, kèm câu động viên. Học theo người dùng: chấm “Vui”/“Đáng nhớ” cộng điểm nhóm việc, bấm “Rút quẻ khác” trừ nhẹ; điểm giảm dần theo ngày.
 
 ## Ghi chú kỹ thuật
 
 - Một trang duy nhất, không cần máy chủ. Sao, huy hiệu, lịch sử lưu trong `localStorage` của từng người (khóa `hnlg.v1`).
 - Font tự host (Be Vietnam Pro, Bricolage Grotesque, Fraunces; giấy phép SIL OFL), chỉ tải bộ ký tự Latin và tiếng Việt cần dùng.
-- Chính sách bảo mật nội dung (CSP) nằm trong thẻ meta của `index.html`, mã băm do build tự tính. Sửa tay `dist/index.html` sẽ làm trang hỏng; luôn sửa `src/` rồi build lại.
+- Chính sách bảo mật nội dung (CSP) nằm trong thẻ meta của `index.html`, mã băm do build tự tính. Trang chỉ được gọi ra ngoài tới `api.met.no` và `air-quality-api.open-meteo.com`. Sửa tay `dist/index.html` sẽ làm trang hỏng; luôn sửa `src/` rồi build lại.
 - Âm lịch dùng thuật toán Hồ Ngọc Đức, múi giờ GMT+7.

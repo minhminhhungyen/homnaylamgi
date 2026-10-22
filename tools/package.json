@@ -5,7 +5,8 @@
   "description": "Công cụ build cho homnaylamgi.com",
   "scripts": {
     "build": "node build.mjs",
-    "icons": "node make-icons.mjs"
+    "icons": "node make-icons.mjs",
+    "og": "node make-og.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
