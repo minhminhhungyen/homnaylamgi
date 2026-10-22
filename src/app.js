@@ -858,19 +858,21 @@ const APPS = {
   messenger: { name: 'Messenger', web: 'https://www.facebook.com/messages/', webName: 'Mở tin nhắn Facebook' },
   facebook: { name: 'Facebook' }, instagram: { name: 'Instagram' }, tiktok: { name: 'TikTok' }
 };
-let shareKind = 'item', SH = { title: '', msg: '', url: SITE + '/' };
+/* link rủ trỏ về tên miền đang chạy: trên bản Vercel (*.vercel.app) thì dùng chính nó, còn lại dùng homnaylamgi.com */
+const SHARE_SITE = /\.vercel\.app$/.test(location.hostname) ? location.origin : SITE;
+let shareKind = 'item', SH = { title: '', msg: '', url: SHARE_SITE + '/' };
 function shareInfo() {
   if (shareKind === 'site') return {
-    title: 'Hôm nay làm gì?', url: SITE + '/',
+    title: 'Hôm nay làm gì?', url: SHARE_SITE + '/',
     msg: S.stars > 0 ? `Mình gom được ${S.stars} sao ở “Hôm nay làm gì?” rồi đó ⭐ Bạn vào rút một quẻ xem, mỗi ngày một việc nhỏ thôi:` : 'Không biết hôm nay làm gì, ăn gì? Vào đây rút một quẻ, có cả sao với huy hiệu, vui phết 😆'
   };
   if (S.mode === 'an') {
     const f = foodById.get(S.food);
-    return { title: `Hôm nay ăn gì? ${f.t}`, url: `${SITE}/an/${f.id}`, msg: `Ê, ${MEAL_WHEN[curMeal()]} ăn ${lower1(f.t)} không? 😋` };
+    return { title: `Hôm nay ăn gì? ${f.t}`, url: `${SHARE_SITE}/an/${f.id}`, msg: `Ê, ${MEAL_WHEN[curMeal()]} ăn ${lower1(f.t)} không? 😋` };
   }
   const a = byId.get(S.cur);
   return {
-    title: `Hôm nay làm gì? ${a.t}`, url: `${SITE}/q/${a.id}`,
+    title: `Hôm nay làm gì? ${a.t}`, url: `${SHARE_SITE}/q/${a.id}`,
     msg: doneToday(a.id) ? `Hôm nay mình làm xong quẻ “${a.t}”, +${a.d} sao ✨ Còn bạn, hôm nay làm gì?` : `Ê, ${SLOT_WHEN[SLOT]} làm cái này với mình không: “${a.t}” 👀`
   };
 }
