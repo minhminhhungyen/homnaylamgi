@@ -9,6 +9,7 @@ Em đã làm sẵn: dự án app Android (`android/`), file AAB đã ký, APK b�
 
 ## 1. Điều kiện trước khi phát hành
 - homnaylamgi.com phải chạy HTTPS, tức là xong bước Hostinger. App bản chính mở đúng tên miền này.
+- Tạo hộp thư **hotro@homnaylamgi.com** (hPanel → Email). Ngày 23/10/2026 tên miền chưa có bản ghi MX, nên thư gửi tới địa chỉ này sẽ bị trả lại.
 - Mở thử https://homnaylamgi.com/.well-known/assetlinks.json và https://homnaylamgi.com/rieng-tu, cả hai phải hiện được.
 
 ## 2. Tạo tài khoản Google Play Console (Sếp tự làm, em không được nhập thông tin thanh toán)

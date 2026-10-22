@@ -178,6 +178,7 @@ for (const L of LANDS) {
 
 /* ---------- 6c. Chính sách quyền riêng tư: /rieng-tu ---------- */
 const COMPANY = { name: 'CÔNG TY TNHH MINH MINH HƯNG YÊN', tax: '0901197922', addr: 'Đường Huyện Đội, Thôn Trai Trang, Xã Yên Mỹ, Tỉnh Hưng Yên', phone: '0368 386 357', email: 'minhminhhungyenco.ltd@gmail.com' };
+const SUPPORT = { email: 'hotro@homnaylamgi.com', phone: '0919 391 060' };
 const PRIV_DATE = '23/10/2026';
 const cssDoc = await minCss(FONTS.filter(f => PRELOAD.includes(f[3])).map(face).join('') + `
 :root{--bg:#F5F2F6;--ink:#241826;--muted:#6A5B6E;--do:#D02842;--line:#E4DCE6;--card:#FFFFFF;color-scheme:light}
@@ -223,9 +224,10 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <h2>6. Độ tuổi</h2>
 <p>Dịch vụ dành cho người từ 16 tuổi trở lên.</p>
 <h2>7. Quyền của bạn</h2>
-<p>Theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, bạn có quyền được biết về việc xử lý dữ liệu của mình, đồng ý hoặc rút lại đồng ý, và yêu cầu xóa dữ liệu. Vì dữ liệu nằm trên thiết bị của bạn, bạn có thể tự xóa ngay như ở mục 1. Mọi câu hỏi xin gửi về địa chỉ dưới đây.</p>
+<p>Theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, bạn có quyền được biết về việc xử lý dữ liệu của mình, đồng ý hoặc rút lại đồng ý, và yêu cầu xóa dữ liệu. Vì dữ liệu nằm trên thiết bị của bạn, bạn có thể tự xóa ngay như ở mục 1. Mọi câu hỏi xin gửi về <a href="mailto:${SUPPORT.email}">${SUPPORT.email}</a>.</p>
 <h2>8. Liên hệ</h2>
-<p>${COMPANY.name}<br>Mã số thuế: ${COMPANY.tax}<br>Địa chỉ: ${COMPANY.addr}<br>Điện thoại: <a href="tel:${COMPANY.phone.replace(/ /g, '')}">${COMPANY.phone}</a> · Email: <a href="mailto:${COMPANY.email}">${COMPANY.email}</a></p>
+<p>Hỗ trợ người dùng: email <a href="mailto:${SUPPORT.email}">${SUPPORT.email}</a> hoặc gọi Admin: <a href="tel:${SUPPORT.phone.replace(/ /g, '')}">${SUPPORT.phone}</a>.</p>
+<p>Đơn vị vận hành: ${COMPANY.name}<br>Mã số thuế: ${COMPANY.tax}<br>Địa chỉ: ${COMPANY.addr}<br>Điện thoại: <a href="tel:${COMPANY.phone.replace(/ /g, '')}">${COMPANY.phone}</a> · Email: <a href="mailto:${COMPANY.email}">${COMPANY.email}</a></p>
 <h2>9. Thay đổi chính sách</h2>
 <p>Khi chính sách thay đổi, trang này được cập nhật và ghi lại ngày cập nhật ở đầu trang.</p>
 </main></body></html>`, htmlOpts);

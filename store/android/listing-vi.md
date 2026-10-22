@@ -40,7 +40,7 @@ Không biết hôm nay làm gì, ăn gì? Mở “Hôm nay làm gì?” là có 
 • Sao, huy hiệu, lịch sử chỉ lưu trên điện thoại của bạn.
 • Không quảng cáo, không theo dõi.
 
-Ứng dụng do Công ty TNHH Minh Minh Hưng Yên phát triển. Góp ý: minhminhhungyenco.ltd@gmail.com
+Ứng dụng do Công ty TNHH Minh Minh Hưng Yên phát triển. Hỗ trợ, góp ý: hotro@homnaylamgi.com
 
 ## Đồ họa (trong thư mục này)
 | Mục trên Play Console | File |
@@ -51,7 +51,7 @@ Không biết hôm nay làm gì, ăn gì? Mở “Hôm nay làm gì?” là có 
 
 ## Thông tin khác
 - Danh mục: Ứng dụng → Phong cách sống (Lifestyle)
-- Email liên hệ: minhminhhungyenco.ltd@gmail.com
-- Điện thoại (không bắt buộc): 0368 386 357
+- Email liên hệ: hotro@homnaylamgi.com (phải tạo hộp thư này trước, xem HUONG-DAN.md)
+- Điện thoại (không bắt buộc): 0919 391 060
 - Trang web: https://homnaylamgi.com
 - Chính sách quyền riêng tư: https://homnaylamgi.com/rieng-tu
