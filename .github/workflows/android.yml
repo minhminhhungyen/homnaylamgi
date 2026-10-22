@@ -1,0 +1,49 @@
+# Build app Android (Trusted Web Activity) cho homnaylamgi.com.
+# Chỉ build bản CHƯA KÝ; khóa ký nằm ngoài repo, ký trên máy theo android/README.md.
+# Kết quả được đẩy sang nhánh android-build.
+name: Build Android
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/android.yml']
+permissions:
+  contents: write
+concurrency:
+  group: android-build
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build bản chính (homnaylamgi.com) và bản thử (homnaylamgi.vercel.app)
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon bundleRelease
+          mkdir -p ../out
+          cp app/build/outputs/bundle/release/app-release.aab ../out/homnaylamgi-unsigned.aab
+          ./gradlew --no-daemon -Pthu clean bundleRelease
+          cp app/build/outputs/bundle/release/app-release.aab ../out/homnaylamgi-thu-unsigned.aab
+      - name: Tải bundletool (Google, Apache-2.0) để tạo APK cài thử
+        run: |
+          URL=$(curl -fsSL https://api.github.com/repos/google/bundletool/releases/latest | jq -r '.assets[] | select(.name | test("^bundletool-all-.*\\.jar$")) | .browser_download_url' | head -1)
+          echo "bundletool: $URL"
+          curl -fsSL -o out/bundletool.jar "$URL"
+          curl -fsSL -o out/bundletool-LICENSE.txt https://raw.githubusercontent.com/google/bundletool/master/LICENSE
+      - name: Đẩy kết quả sang nhánh android-build
+        run: |
+          cd out
+          printf 'Bản build tự động từ commit %s lúc %s (UTC).\nCác file .aab CHƯA KÝ. Ký theo hướng dẫn trong android/README.md của nhánh main.\n' "$GITHUB_SHA" "$(date -u +%F\ %T)" > README.md
+          git init -q -b android-build
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Android build ${GITHUB_SHA::7}"
+          git push -q --force "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" android-build

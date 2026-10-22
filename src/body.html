@@ -63,7 +63,7 @@
           <label class="sr" for="wxCity">Hoặc chọn nơi gần bạn</label>
           <select class="wx-city" id="wxCity"><option value="">Hoặc chọn nơi gần bạn…</option></select>
         </div>
-        <p class="wx-note">Vị trí chỉ dùng để lấy dự báo thời tiết và chất lượng không khí, được làm tròn khoảng 1 km và chỉ lưu trên máy bạn. Thời tiết: <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a>. Không khí, UV: ước tính từ <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">CAMS (Copernicus)</a> qua <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>. Cùng giấy phép CC BY 4.0. <button class="link muted" id="wxOff" type="button">Tắt thời tiết</button></p>
+        <p class="wx-note">Vị trí chỉ dùng để lấy dự báo thời tiết và chất lượng không khí, được làm tròn khoảng 1 km và chỉ lưu trên máy bạn. Thời tiết: <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a>. Không khí, UV: ước tính từ <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">CAMS (Copernicus)</a> qua <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>. Cùng giấy phép CC BY 4.0. <a href="/rieng-tu">Quyền riêng tư</a> · <button class="link muted" id="wxOff" type="button">Tắt thời tiết</button></p>
       </div>
     </div>
 
@@ -152,6 +152,13 @@
         <button class="chip" type="button" data-feel="nho" aria-pressed="false">Đáng nhớ</button>
         <button class="btn btn-soft btn-sm" id="btnCard" type="button"><svg class="ico"><use href="#i-image"/></svg><span>Tạo ảnh khoe</span></button>
       </div>
+      <div class="nudge" id="installNudge" hidden>
+        <p>Mai rút quẻ tiếp nhé! Cài app lên màn hình chính để mở một chạm.</p>
+        <div class="nudge-acts">
+          <button class="btn btn-main btn-sm" data-install type="button"><svg class="ico"><use href="#i-download"/></svg><span>Cài ứng dụng</span></button>
+          <button class="link muted" id="btnNudgeNo" type="button">Để sau</button>
+        </div>
+      </div>
       <p class="relax" id="relaxNote" hidden></p>
       <p class="care" id="careNote" hidden>Nếu nỗi buồn kéo dài nhiều ngày, bạn không phải chịu một mình. Đường dây <b>Ngày Mai</b> lắng nghe miễn phí, thứ Tư đến Chủ nhật, 13:00–20:30: <b>096 306 1414</b>.</p>
       <p class="sr" id="live" aria-live="polite"></p>
@@ -227,6 +234,10 @@
       <p>Rủ cả hội cùng rút quẻ mỗi ngày, ai làm xong cũng có sao.</p>
       <button class="btn btn-soft btn-sm" id="btnInvite" type="button"><svg class="ico"><use href="#i-users"/></svg><span>Rủ bạn cùng chơi</span></button>
     </div>
+    <div class="invite-row" id="installRow" hidden>
+      <p>Cài lên màn hình chính: mỗi sáng mở một chạm là có quẻ, không cần gõ địa chỉ.</p>
+      <button class="btn btn-soft btn-sm" data-install type="button"><svg class="ico"><use href="#i-download"/></svg><span>Cài ứng dụng</span></button>
+    </div>
     <div class="badges-wrap">
       <h3>Huy hiệu</h3>
       <ul class="badges" id="badges"></ul>
@@ -244,7 +255,7 @@
     <p class="about"><b>Hôm nay làm gì?</b> gợi ý mỗi ngày một việc nhỏ cho người trẻ 16–40 tuổi: vận động, khám phá, kết nối, học hỏi, chăm sóc bản thân, và cả hôm nay ăn gì. Có {{count}} quẻ việc và {{foods}} món ăn, lọc theo tâm trạng, thời gian và túi tiền, không cần đăng ký.</p>
     <p class="help">Có những ngày nặng lòng hơn bình thường. Nếu bạn cần ai đó lắng nghe, đường dây <b>Ngày Mai</b> hỗ trợ tâm lý miễn phí, thứ Tư đến Chủ nhật, 13:00–20:30: <a href="tel:0963061414">096 306 1414</a> <button class="link needs-js" id="btnHotline" type="button">Chép số</button></p>
     <p class="tiny">Thời gian, chi phí và túi tiền trên mỗi quẻ là ước tính. Ngày âm lịch tính theo giờ Việt Nam. Thời tiết: <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a>. Chất lượng không khí, UV: <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">Copernicus Atmosphere Monitoring Service</a> qua <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0).</p>
-    <p class="tiny">© 2026 homnaylamgi.com</p>
+    <p class="tiny">© 2026 homnaylamgi.com · <a href="/rieng-tu">Chính sách quyền riêng tư</a></p>
   </div>
 </footer>
 
@@ -283,6 +294,13 @@
       </div>
       <p>Đăng story xong, thêm nhãn dán Liên kết trỏ về link ở trên để bạn bè bấm vào rút quẻ.</p>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="installModal" hidden role="dialog" aria-modal="true" aria-labelledby="inTitle">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="inTitle">Cài lên màn hình chính</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="ico"><use href="#i-x"/></svg></button></div>
+    <div class="guide" id="inBody"></div>
   </div>
 </div>
 

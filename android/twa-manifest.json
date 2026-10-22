@@ -1,0 +1,57 @@
+{
+  "packageId": "com.homnaylamgi.app",
+  "host": "homnaylamgi.com",
+  "name": "Hôm nay làm gì?",
+  "launcherName": "Hôm nay làm gì",
+  "display": "standalone",
+  "themeColor": "#D02842",
+  "themeColorDark": "#141018",
+  "navigationColor": "#F5F2F6",
+  "navigationColorDark": "#141018",
+  "navigationDividerColor": "#E4DCE6",
+  "navigationDividerColorDark": "#352B3A",
+  "backgroundColor": "#F5F2F6",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://homnaylamgi.com/icon-512.png",
+  "maskableIconUrl": "https://homnaylamgi.com/icon-maskable-512.png",
+  "monochromeIconUrl": "https://homnaylamgi.com/icon-monochrome-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./upload-keystore.jks",
+    "alias": "upload"
+  },
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Rút quẻ hôm nay",
+      "shortName": "Rút quẻ",
+      "url": "/?mode=lam",
+      "chosenIconUrl": "https://homnaylamgi.com/shortcut-que.png"
+    },
+    {
+      "name": "Hôm nay ăn gì?",
+      "shortName": "Ăn gì",
+      "url": "/?mode=an",
+      "chosenIconUrl": "https://homnaylamgi.com/shortcut-an.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://homnaylamgi.com/",
+  "minSdkVersion": 21,
+  "orientation": "default",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersionName": "1.0.0",
+  "webManifestUrl": "https://homnaylamgi.com/site.webmanifest"
+}

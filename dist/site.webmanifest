@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "Hôm nay làm gì?",
   "short_name": "Hôm nay làm gì",
   "description": "Rút một quẻ, làm một việc nhỏ, để hôm nay khác hôm qua một chút.",
@@ -9,6 +10,10 @@
   "display": "standalone",
   "background_color": "#F5F2F6",
   "theme_color": "#D02842",
+  "categories": [
+    "lifestyle",
+    "entertainment"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -25,6 +30,75 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/icon-monochrome-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "monochrome"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Rút quẻ hôm nay",
+      "short_name": "Rút quẻ",
+      "url": "/?mode=lam",
+      "icons": [
+        {
+          "src": "/shortcut-que.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Hôm nay ăn gì?",
+      "short_name": "Ăn gì",
+      "url": "/?mode=an",
+      "icons": [
+        {
+          "src": "/shortcut-an.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/narrow-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mở ra là có ngay một quẻ hợp giờ, tâm trạng và thời tiết"
+    },
+    {
+      "src": "/screenshots/narrow-2.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Hôm nay ăn gì? Rút món hợp bữa và hợp trời"
+    },
+    {
+      "src": "/screenshots/narrow-3.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Rủ bạn qua Zalo, Messenger, Facebook, Instagram, Threads"
+    },
+    {
+      "src": "/screenshots/narrow-4.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Gom sao, lên danh hiệu, mở khóa huy hiệu"
+    },
+    {
+      "src": "/screenshots/wide-1.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Hôm nay làm gì? trên máy tính"
     }
   ]
 }

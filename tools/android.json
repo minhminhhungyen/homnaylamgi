@@ -1,0 +1,7 @@
+{
+  "_ghi_chu": "Dấu vân tay SHA-256 của khóa ký app Android, dùng để tạo /.well-known/assetlinks.json. Sau khi tải AAB lên Google Play: vào Play Console → Phát hành → Thiết lập → Tính toàn vẹn của ứng dụng (App integrity), chép SHA-256 của 'Khóa ký ứng dụng' thêm vào com.homnaylamgi.app, rồi build lại.",
+  "packages": {
+    "com.homnaylamgi.app": ["48:D4:F0:56:7E:BC:57:59:B9:4E:15:E3:F9:DB:5C:29:E5:8B:10:82:D9:FE:40:4C:D6:43:F6:20:B2:0D:46:41"],
+    "com.homnaylamgi.app.thu": ["48:D4:F0:56:7E:BC:57:59:B9:4E:15:E3:F9:DB:5C:29:E5:8B:10:82:D9:FE:40:4C:D6:43:F6:20:B2:0D:46:41"]
+  }
+}

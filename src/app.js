@@ -151,6 +151,8 @@ const INV = (() => {
   if (m && foodById.has(m)) return { k: 'an', id: m };
   return none;
 })();
+/* ?mode=an hoặc ?mode=lam: phím tắt “Ăn gì”, “Rút quẻ” khi giữ lâu biểu tượng app */
+const START_MODE = (() => { try { const v = new URLSearchParams(location.search).get('mode'); return v === 'an' || v === 'lam' ? v : ''; } catch (e) { return ''; } })();
 if (location.search) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { /* bỏ qua */ } }
 /* học theo người dùng: chấm Vui/Đáng nhớ thì cộng điểm nhóm việc, bấm bỏ qua thì trừ nhẹ */
 const nudge = (c, v) => { if (!c) return; S.pref[c] = Math.max(-6, Math.min(6, Math.round(((S.pref[c] || 0) + v) * 100) / 100)); };
@@ -310,6 +312,7 @@ function renderSlip() {
   rn.hidden = !lastRelax.length;
   if (lastRelax.length) rn.textContent = `Không có quẻ nào khớp hết lựa chọn của bạn lúc này, nên mình nới bớt phần ${lastRelax.map(k => RELAX_NAME[k]).join(', ')}.`;
   $('#careNote').hidden = !(S.mood === 'b' || S.mood === 'l');
+  renderInstall();
   const inv = $('#invite');
   inv.hidden = !(INV.k === 'q' && INV.id === a.id);
   if (!inv.hidden) inv.textContent = rec ? 'Quẻ bạn bè gửi, bạn làm xong rồi đó 👏' : '👋 Bạn bè rủ bạn làm quẻ này. Nhận lời không?';
@@ -355,7 +358,7 @@ function renderFood() {
   const main = $('#btnMain'), drawBtn = $('#btnDraw');
   main.dataset.mode = 'food'; main.className = 'btn btn-main'; main.innerHTML = `${icon('users')}<span>Rủ bạn đi ăn</span>`;
   drawBtn.hidden = false; drawBtn.innerHTML = `${icon('shuffle')}<span>Rút món khác</span>`;
-  ['#actions2', '#calBox', '#feel', '#relaxNote', '#careNote'].forEach(s => { $(s).hidden = true; });
+  ['#actions2', '#calBox', '#feel', '#relaxNote', '#careNote', '#installNudge'].forEach(s => { $(s).hidden = true; });
   const inv = $('#invite');
   inv.hidden = !(INV.k === 'an' && INV.id === f.id);
   if (!inv.hidden) inv.textContent = '😋 Bạn bè rủ bạn đi ăn món này';
@@ -980,7 +983,7 @@ function shareImage(app) {
 let lastFocus = null;
 const BEHIND = ['.top', 'main', '.foot'];
 const setInert = on => BEHIND.forEach(s => { const el = $(s); if (el) el.inert = on; });
-function openModal(m) { lastFocus = document.activeElement; m.hidden = false; document.body.classList.add('modal-open'); setInert(true); const f = $('[data-close]', m); if (f) f.focus(); }
+function openModal(m) { lastFocus = document.activeElement; $('#toast').classList.remove('show'); m.hidden = false; document.body.classList.add('modal-open'); setInert(true); const f = $('[data-close]', m); if (f) f.focus(); }
 function closeModal(m) { m.hidden = true; document.body.classList.remove('modal-open'); setInert(false); if (lastFocus && lastFocus.focus) lastFocus.focus(); }
 const renderFmt = () => $$('[data-fmt]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.fmt === (S.fmt === 'post' ? 'post' : 'story'))));
 function openShare(kind) {
@@ -1101,6 +1104,62 @@ async function drawCard() {
   });
 }
 
+/* ---------- cài ứng dụng (web cài được như app: Android, máy tính, iPhone) ---------- */
+const UA = navigator.userAgent || '';
+const IS_IOS = /iP(hone|ad|od)/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+const MAC_SAFARI = !IS_IOS && /Macintosh/.test(UA) && /Version\/[\d.]+.*Safari\//.test(UA) && !/Chrome|Chromium|Edg\/|Firefox|OPR\//.test(UA);
+const IN_APP = (() => {
+  const m = UA.match(/\b(Zalo|FBAN|FBAV|FB_IAB|Instagram|Line\/|TikTok|musical_ly|BytedanceWebview)/i);
+  if (!m) return '';
+  const k = m[1].toLowerCase();
+  return k === 'zalo' ? 'Zalo' : k === 'instagram' ? 'Instagram' : k.indexOf('line') === 0 ? 'LINE' : /tiktok|musical|bytedance/.test(k) ? 'TikTok' : 'Facebook';
+})();
+const isStandalone = () => !!((window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches)) || navigator.standalone === true || /^android-app:/.test(document.referrer || ''));
+let installEvt = null;
+const canInstall = () => !isStandalone() && !!(installEvt || IS_IOS || IN_APP || MAC_SAFARI);
+function renderInstall() {
+  const ok = canInstall();
+  $('#installRow').hidden = !ok;
+  const rec = S.mode !== 'an' && recToday(S.cur);
+  $('#installNudge').hidden = !(ok && rec && !S.instNo);
+}
+const glyph = id => `<span class="glyph" aria-hidden="true">${icon(id)}</span>`;
+function installGuide() {
+  const body = $('#inBody');
+  if (IN_APP) {
+    $('#inTitle').textContent = 'Mở bằng trình duyệt để cài';
+    body.innerHTML = `<p>Bạn đang xem trong ứng dụng ${esc(IN_APP)}, nơi này không cài app được.</p><ol><li>Bấm nút <b>⋯</b> hoặc <b>⋮</b> ở góc trên màn hình.</li><li>Chọn <b>Mở bằng trình duyệt</b> (Safari hoặc Chrome).</li><li>Ở trình duyệt, bấm lại <b>Cài ứng dụng</b>.</li></ol><p><button class="btn btn-soft btn-sm" id="inCopy" type="button">${icon('link')}<span>Chép link trang</span></button></p>`;
+    $('#inCopy').addEventListener('click', () => copyText(SHARE_SITE + '/').then(ok => toast(ok ? 'Đã chép link. Dán vào Safari hoặc Chrome nhé.' : 'Bạn chép link trên thanh địa chỉ giúp mình nhé.')));
+  } else if (IS_IOS) {
+    $('#inTitle').textContent = 'Cài lên iPhone, iPad';
+    body.innerHTML = `<ol><li>Bấm nút Chia sẻ ${glyph('share')} trên thanh công cụ của trình duyệt.</li><li>Kéo xuống, chọn <b>Thêm vào MH chính</b>.</li><li>Bấm <b>Thêm</b>. Biểu tượng “Hôm nay làm gì” sẽ nằm trên màn hình chính.</li></ol><p class="note">Mở từ biểu tượng đó, web chạy toàn màn hình như một ứng dụng, sao và huy hiệu vẫn giữ nguyên.</p>`;
+  } else if (MAC_SAFARI) {
+    $('#inTitle').textContent = 'Cài lên máy Mac';
+    body.innerHTML = '<ol><li>Trên thanh menu Safari, chọn <b>Tệp</b> (File).</li><li>Chọn <b>Thêm vào Dock</b> (Add to Dock), rồi bấm <b>Thêm</b>.</li></ol>';
+  } else {
+    $('#inTitle').textContent = 'Cài lên màn hình chính';
+    body.innerHTML = '<p>Trình duyệt này chưa hỗ trợ cài app. Bạn mở trang bằng Chrome hoặc Edge rồi bấm Cài ứng dụng nhé.</p>';
+  }
+  openModal($('#installModal'));
+}
+function install() {
+  if (installEvt) {
+    const e = installEvt;
+    e.prompt();
+    e.userChoice.then(c => {
+      if (c && c.outcome === 'accepted') { installEvt = null; S.instNo = 1; save(); }
+      renderInstall();
+    }, () => { /* bỏ qua */ });
+    return;
+  }
+  installGuide();
+}
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; renderInstall(); });
+window.addEventListener('appinstalled', () => { installEvt = null; S.instNo = 1; save(); renderInstall(); toast('Đã cài xong. Lần sau mở thẳng từ màn hình chính nhé!'); });
+document.addEventListener('click', e => { if (e.target.closest('[data-install]')) install(); });
+$('#btnNudgeNo').addEventListener('click', () => { S.instNo = 1; save(); renderInstall(); toast('Ok, khi nào cần thì vào phần Hành trình để cài nhé.'); });
+$('#installModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(e.currentTarget); });
+
 /* ---------- hiệu ứng ---------- */
 let toastT = 0;
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2800); }
@@ -1133,6 +1192,7 @@ if (INV.k === 'q') {
   S.mode = 'lam';
   if (!(S.cur === INV.id && S.curDay === TODAY)) { lastRelax = []; setCur(INV.id); }
 } else if (INV.k === 'an') { S.mode = 'an'; setFood(INV.id); }
+else if (START_MODE) S.mode = START_MODE;
 let start = S.curDay === TODAY ? byId.get(S.cur) : null;
 if (INV.k !== 'q' && start && !S.acc && !doneToday(start.id)) {
   if (start.ev && !ACTIVE_ITEMS.has(start.ev)) start = null;
@@ -1151,5 +1211,5 @@ window.addEventListener('pageshow', e => { if (e.persisted) refreshClock(); });
 if (DEPLOY && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* không có service worker thì trang vẫn chạy */ }); });
 }
-window.__hnlg = { choose, buildPool, eligible, chooseFood, setMode, state: () => S, CH, EVS, SLOT, A, F, sunSet, parseMet, wxNow, nearCity, wx: () => WX, weight, INV };
+window.__hnlg = { canInstall, installGuide, START_MODE, choose, buildPool, eligible, chooseFood, setMode, state: () => S, CH, EVS, SLOT, A, F, sunSet, parseMet, wxNow, nearCity, wx: () => WX, weight, INV };
 })();

@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node build.mjs",
     "icons": "node make-icons.mjs",
-    "og": "node make-og.mjs"
+    "og": "node make-og.mjs",
+    "shots": "node make-shots.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

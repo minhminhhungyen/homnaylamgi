@@ -1,0 +1,26 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.homnaylamgi.app",
+      "sha256_cert_fingerprints": [
+        "48:D4:F0:56:7E:BC:57:59:B9:4E:15:E3:F9:DB:5C:29:E5:8B:10:82:D9:FE:40:4C:D6:43:F6:20:B2:0D:46:41"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.homnaylamgi.app.thu",
+      "sha256_cert_fingerprints": [
+        "48:D4:F0:56:7E:BC:57:59:B9:4E:15:E3:F9:DB:5C:29:E5:8B:10:82:D9:FE:40:4C:D6:43:F6:20:B2:0D:46:41"
+      ]
+    }
+  }
+]

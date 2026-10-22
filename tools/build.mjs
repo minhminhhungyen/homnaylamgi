@@ -176,6 +176,61 @@ for (const L of LANDS) {
   if (sh !== GO || st !== cssLand) throw new Error('Mã trong trang link rủ bị đổi khi thu gọn: ' + L[0]);
 }
 
+/* ---------- 6c. Chính sách quyền riêng tư: /rieng-tu ---------- */
+const COMPANY = { name: 'CÔNG TY TNHH MINH MINH HƯNG YÊN', tax: '0901197922', addr: 'Đường Huyện Đội, Thôn Trai Trang, Xã Yên Mỹ, Tỉnh Hưng Yên', phone: '0368 386 357', email: 'minhminhhungyenco.ltd@gmail.com' };
+const PRIV_DATE = '23/10/2026';
+const cssDoc = await minCss(FONTS.filter(f => PRELOAD.includes(f[3])).map(face).join('') + `
+:root{--bg:#F5F2F6;--ink:#241826;--muted:#6A5B6E;--do:#D02842;--line:#E4DCE6;--card:#FFFFFF;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#141018;--ink:#F4ECF2;--muted:#B7A8BB;--do:#FF5C72;--line:#352B3A;--card:#1D1722;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.65 "Be Vietnam Pro",system-ui,sans-serif;padding:28px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px))}
+main{max-width:720px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:28px clamp(18px,4vw,40px)}
+.back{display:inline-block;margin-bottom:16px;color:var(--do);font-weight:400;text-decoration:none}.back:hover{text-decoration:underline}
+h1{margin:0 0 4px;font:800 clamp(1.6rem,5vw,2.1rem)/1.2 "Bricolage Grotesque",system-ui,sans-serif;text-wrap:balance}
+h2{margin:28px 0 8px;font:800 1.15rem/1.3 "Bricolage Grotesque",system-ui,sans-serif}
+p,ul{margin:0 0 10px}ul{padding-left:1.2em}li{margin-bottom:4px}.date{color:var(--muted);font-size:.9rem}
+.sum{margin-top:16px;padding:14px 18px;border-left:3px solid var(--do);background:var(--bg);border-radius:6px}
+a{color:var(--do)}a:focus-visible{outline:3px solid var(--ink);outline-offset:2px}`);
+let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'sha256-__H__'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Chính sách quyền riêng tư | Hôm nay làm gì?</title>
+<meta name="description" content="Hôm nay làm gì? không cần tài khoản, không quảng cáo, không theo dõi. Dữ liệu của bạn nằm trên thiết bị của bạn.">
+<link rel="canonical" href="${SITE}/rieng-tu"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>${cssDoc}</style></head><body><main>
+<a class="back" href="/">← Về trang chính</a>
+<h1>Chính sách quyền riêng tư</h1>
+<p class="date">Cập nhật ngày ${PRIV_DATE}</p>
+<p>“Hôm nay làm gì?” gồm website homnaylamgi.com và ứng dụng cùng tên trên điện thoại, máy tính. Dịch vụ do ${COMPANY.name} vận hành. Trang này nói rõ dịch vụ xử lý dữ liệu nào và vì sao.</p>
+<div class="sum"><ul>
+<li>Không cần tài khoản, không thu tên, email hay số điện thoại.</li>
+<li>Sao, huy hiệu, lịch sử và lựa chọn của bạn chỉ lưu trên thiết bị của bạn.</li>
+<li>Vị trí chỉ dùng khi bạn tự bật gợi ý theo thời tiết, và được làm tròn khoảng 1 km.</li>
+<li>Không quảng cáo, không công cụ theo dõi, không bán dữ liệu.</li>
+</ul></div>
+<h2>1. Dữ liệu lưu trên thiết bị của bạn</h2>
+<p>Các thông tin sau được lưu trong bộ nhớ trình duyệt trên thiết bị của bạn (localStorage): quẻ đang làm, số sao, huy hiệu, lịch sử quẻ đã làm và cảm nhận, danh sách để dành, tâm trạng, bữa ăn, các lựa chọn ở phần Tinh chỉnh. Nếu bạn bật thời tiết, có thêm vị trí đã làm tròn hoặc tỉnh, thành bạn chọn và bản dự báo gần nhất.</p>
+<p>Các dữ liệu này không được gửi về máy chủ của công ty. Bạn xóa được bất cứ lúc nào bằng nút “Xóa dữ liệu” ở phần Hành trình, bằng cách xóa dữ liệu trang web trong trình duyệt, hoặc gỡ ứng dụng.</p>
+<h2>2. Vị trí và thời tiết (tùy chọn)</h2>
+<p>Dịch vụ chỉ hỏi quyền vị trí khi bạn bấm “Gợi ý theo thời tiết chỗ bạn”. Tọa độ được làm tròn đến 2 chữ số thập phân (khoảng 1 km), rồi gửi thẳng từ thiết bị của bạn tới:</p>
+<ul><li><a href="https://www.met.no/en" rel="noopener">MET Norway</a> (Viện Khí tượng Na Uy, api.met.no) để lấy dự báo thời tiết;</li>
+<li><a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a> (air-quality-api.open-meteo.com) để lấy chất lượng không khí và chỉ số UV.</li></ul>
+<p>Như mọi dịch vụ trên mạng, các nhà cung cấp này cũng nhận địa chỉ IP của bạn khi trả dữ liệu và xử lý theo chính sách của họ. Bạn có thể không cho phép vị trí mà chọn tỉnh, thành thay thế, hoặc bấm “Tắt thời tiết” để xóa vị trí đã lưu.</p>
+<h2>3. Chia sẻ</h2>
+<p>Khi bạn bấm chia sẻ, lời rủ và đường link được chuyển tới ứng dụng bạn chọn (Zalo, Messenger, Facebook, Instagram…) hoặc bảng chia sẻ của thiết bị. Dịch vụ không đọc danh bạ và không đăng bài thay bạn. Việc xử lý sau đó theo chính sách của ứng dụng bạn chọn.</p>
+<h2>4. Máy chủ lưu trữ</h2>
+<p>Website được phục vụ qua Hostinger và Vercel. Như mọi trang web, các nhà cung cấp này có thể ghi nhật ký kỹ thuật (địa chỉ IP, thời gian truy cập, loại trình duyệt) để vận hành và chống tấn công. Công ty không dùng nhật ký này để nhận diện cá nhân.</p>
+<h2>5. Không quảng cáo, không theo dõi</h2>
+<p>Website và ứng dụng không hiển thị quảng cáo, không dùng cookie quảng cáo hay công cụ phân tích hành vi, không bán hay cho thuê dữ liệu.</p>
+<h2>6. Độ tuổi</h2>
+<p>Dịch vụ dành cho người từ 16 tuổi trở lên.</p>
+<h2>7. Quyền của bạn</h2>
+<p>Theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, bạn có quyền được biết về việc xử lý dữ liệu của mình, đồng ý hoặc rút lại đồng ý, và yêu cầu xóa dữ liệu. Vì dữ liệu nằm trên thiết bị của bạn, bạn có thể tự xóa ngay như ở mục 1. Mọi câu hỏi xin gửi về địa chỉ dưới đây.</p>
+<h2>8. Liên hệ</h2>
+<p>${COMPANY.name}<br>Mã số thuế: ${COMPANY.tax}<br>Địa chỉ: ${COMPANY.addr}<br>Điện thoại: <a href="tel:${COMPANY.phone.replace(/ /g, '')}">${COMPANY.phone}</a> · Email: <a href="mailto:${COMPANY.email}">${COMPANY.email}</a></p>
+<h2>9. Thay đổi chính sách</h2>
+<p>Khi chính sách thay đổi, trang này được cập nhật và ghi lại ngày cập nhật ở đầu trang.</p>
+</main></body></html>`, htmlOpts);
+privacy = privacy.replace('__H__', sha256(privacy.match(/<style>([\s\S]*?)<\/style>/)[1]));
+
 /* ---------- 7. ghi dist/ ---------- */
 rmSync(DIST, { recursive: true, force: true });
 mkdirSync(path.join(DIST, 'assets', 'fonts'), { recursive: true });
@@ -183,18 +238,36 @@ const out = (f, s) => writeFileSync(path.join(DIST, f), s);
 out('index.html', index);
 out('404.html', p404);
 for (const f of fontFiles.concat('OFL.txt')) copyFileSync(path.join(SRC, 'fonts', f), path.join(DIST, 'assets', 'fonts', f));
-for (const f of readdirSync(path.join(SRC, 'static'))) copyFileSync(path.join(SRC, 'static', f), path.join(DIST, f));
+for (const f of readdirSync(path.join(SRC, 'static'), { withFileTypes: true })) if (f.isFile()) copyFileSync(path.join(SRC, 'static', f.name), path.join(DIST, f.name));
 mkdirSync(path.join(DIST, 'q'), { recursive: true }); mkdirSync(path.join(DIST, 'an'), { recursive: true });
 for (const [f, html] of LANDS) out(f, html);
 let ogCount = 0;
 try { mkdirSync(path.join(DIST, 'og'), { recursive: true }); for (const f of readdirSync(OG_DIR)) if (f.endsWith('.png')) { copyFileSync(path.join(OG_DIR, f), path.join(DIST, 'og', f)); ogCount++; } } catch (e) { /* chưa có ảnh xem trước riêng */ }
+const SHOTS = (() => { try { return readdirSync(path.join(SRC, 'static', 'screenshots')).filter(f => f.endsWith('.png')).sort(); } catch (e) { return []; } })();
+const SHOT_LABEL = { 'narrow-1': 'Mở ra là có ngay một quẻ hợp giờ, tâm trạng và thời tiết', 'narrow-2': 'Hôm nay ăn gì? Rút món hợp bữa và hợp trời', 'narrow-3': 'Rủ bạn qua Zalo, Messenger, Facebook, Instagram, Threads', 'narrow-4': 'Gom sao, lên danh hiệu, mở khóa huy hiệu', 'wide-1': 'Hôm nay làm gì? trên máy tính' };
 out('site.webmanifest', JSON.stringify({
-  name: 'Hôm nay làm gì?', short_name: 'Hôm nay làm gì', description: 'Rút một quẻ, làm một việc nhỏ, để hôm nay khác hôm qua một chút.',
+  id: '/', name: 'Hôm nay làm gì?', short_name: 'Hôm nay làm gì', description: 'Rút một quẻ, làm một việc nhỏ, để hôm nay khác hôm qua một chút.',
   lang: 'vi', dir: 'ltr', start_url: '/', scope: '/', display: 'standalone', background_color: '#F5F2F6', theme_color: '#D02842',
-  icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }, { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }]
+  categories: ['lifestyle', 'entertainment'],
+  icons: [{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: '/icon-512.png', sizes: '512x512', type: 'image/png' }, { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }, { src: '/icon-monochrome-512.png', sizes: '512x512', type: 'image/png', purpose: 'monochrome' }],
+  shortcuts: [
+    { name: 'Rút quẻ hôm nay', short_name: 'Rút quẻ', url: '/?mode=lam', icons: [{ src: '/shortcut-que.png', sizes: '192x192', type: 'image/png' }] },
+    { name: 'Hôm nay ăn gì?', short_name: 'Ăn gì', url: '/?mode=an', icons: [{ src: '/shortcut-an.png', sizes: '192x192', type: 'image/png' }] }
+  ],
+  screenshots: SHOTS.map(f => { const k = f.replace('.png', ''), wide = k.startsWith('wide'); return { src: `/screenshots/${f}`, sizes: wide ? '1920x1080' : '1080x1920', type: 'image/png', form_factor: wide ? 'wide' : 'narrow', label: SHOT_LABEL[k] || 'Hôm nay làm gì?' }; })
 }, null, 2));
+if (SHOTS.length) { mkdirSync(path.join(DIST, 'screenshots'), { recursive: true }); for (const f of SHOTS) copyFileSync(path.join(SRC, 'static', 'screenshots', f), path.join(DIST, 'screenshots', f)); }
+
+/* app Android (Trusted Web Activity): khai báo quyền mở web toàn màn hình */
+const ANDROID = JSON.parse(readFileSync(path.join(ROOT, 'tools', 'android.json'), 'utf8'));
+mkdirSync(path.join(DIST, '.well-known'), { recursive: true });
+out('.well-known/assetlinks.json', JSON.stringify(Object.entries(ANDROID.packages).map(([pkg, fps]) => ({
+  relation: ['delegate_permission/common.handle_all_urls'],
+  target: { namespace: 'android_app', package_name: pkg, sha256_cert_fingerprints: fps }
+})), null, 2) + '\n');
+out('rieng-tu.html', privacy);
 out('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
-out('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE}/</loc><lastmod>${TODAY}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>\n</urlset>\n`);
+out('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE}/</loc><lastmod>${TODAY}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>\n  <url><loc>${SITE}/rieng-tu</loc><lastmod>${TODAY}</lastmod><changefreq>yearly</changefreq><priority>0.2</priority></url>\n</urlset>\n`);
 out('sw.js', await minJs(readFileSync(path.join(SRC, 'sw.js'), 'utf8').replace('__VERSION__', VERSION)));
 
 const SECURITY = [
@@ -219,6 +292,11 @@ ErrorDocument 404 /404.html
   RewriteRule (^|/)\\.git(/|$) - [F,L]
   # Link rủ từng quẻ: /q/12 → q/12.html, /an/5 → an/5.html
   RewriteRule ^(q|an)/([0-9]+)/?$ $1/$2.html [L]
+  # Trang không đuôi: /rieng-tu → rieng-tu.html
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.+)$ $1.html [L]
 </IfModule>
 
 <IfModule mod_mime.c>

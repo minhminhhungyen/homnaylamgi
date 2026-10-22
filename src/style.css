@@ -322,6 +322,17 @@ body.modal-open{overflow:hidden}
 .invite-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:22px;padding:14px 16px;border:1px dashed var(--do-line);border-radius:8px;max-width:640px}
 .invite-row p{flex:1 1 220px;font-size:.94rem}
 
+/* cài ứng dụng */
+.nudge{margin-top:16px;padding:14px 16px;border-radius:8px;background:var(--surface);border:1px dashed var(--do-line);display:grid;gap:10px;max-width:560px}
+.nudge p{font-weight:600}
+.nudge-acts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.guide{margin-top:12px;display:grid;gap:12px}
+.guide ol{margin:0;padding-left:1.4em;display:grid;gap:8px}
+.guide li::marker{font-weight:700;color:var(--do)}
+.guide .note{font-size:.88rem;color:var(--muted)}
+.guide .glyph{display:inline-grid;place-items:center;width:1.6em;height:1.6em;margin:0 2px;border:1.5px solid var(--line);border-radius:6px;vertical-align:-.35em;color:var(--do)}
+.guide .glyph .ico{width:1em;height:1em}
+
 /* chế độ Ăn gì: ẩn phần chỉ dành cho quẻ việc */
 .mode-an #qStarsWrap,.mode-an .stamp,.mode-an #qStatus{display:none!important}
 

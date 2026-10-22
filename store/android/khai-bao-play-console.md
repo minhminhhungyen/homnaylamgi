@@ -1,0 +1,32 @@
+# Khai báo trong Play Console (bản nháp để Sếp duyệt)
+
+Đây là đề xuất trả lời theo đúng cách app đang chạy ngày 23/10/2026. Người chịu trách nhiệm khai báo là chủ tài khoản. Nếu sau này thêm đăng nhập, quảng cáo hay công cụ đo lường thì phải khai lại.
+
+## An toàn dữ liệu (Data safety)
+- **Ứng dụng có thu thập hoặc chia sẻ dữ liệu người dùng không?** Có, chỉ một loại:
+  - **Vị trí → Vị trí gần đúng (Approximate location):**
+    - Thu thập (Collected): Có. Tọa độ làm tròn ~1 km được gửi từ máy người dùng tới dịch vụ thời tiết.
+    - Chia sẻ (Shared): Có. Bên nhận là MET Norway (thời tiết) và Open-Meteo (chất lượng không khí). Em đề xuất khai thận trọng là có chia sẻ, vì hai bên này không xử lý dữ liệu thay mặt công ty.
+    - Xử lý tạm thời (ephemeral): Không. Không kiểm soát được thời gian lưu của bên thứ ba.
+    - Bắt buộc hay tùy chọn: Tùy chọn. Người dùng tự bật; không cho thì chọn tỉnh, thành.
+    - Mục đích: Chức năng ứng dụng (App functionality).
+- Không thu thập: tên, email, số điện thoại, danh bạ, ảnh, tệp, lịch sử duyệt web, định danh thiết bị, dữ liệu tài chính, sức khỏe.
+- **Dữ liệu có được mã hóa khi truyền không?** Có (HTTPS).
+- **Người dùng có thể yêu cầu xóa dữ liệu không?** Có. Dữ liệu chỉ nằm trên máy: nút “Xóa dữ liệu” trong app, nút “Tắt thời tiết” hoặc gỡ app.
+- Lưu ý: nhà cung cấp máy chủ (Vercel, Hostinger) ghi nhật ký kỹ thuật có địa chỉ IP. Điều này đã nêu trong chính sách quyền riêng tư; không có mục riêng trong Data safety.
+
+## Phân loại nội dung (Content rating)
+- Loại ứng dụng: Tất cả các loại ứng dụng khác (All Other App Types).
+- Bạo lực, nội dung tình dục, ngôn ngữ thô tục, chất kích thích, cờ bạc: **Không** (đã rà 199 quẻ và 58 món: không có rượu bia, thuốc lá, cá cược).
+- Người dùng trò chuyện hoặc trao đổi nội dung với nhau trong app: **Không** (chỉ chia sẻ ra ngoài qua ứng dụng khác).
+- Chia sẻ vị trí với người dùng khác: **Không**.
+- Mua hàng trong app: **Không**.
+
+## Đối tượng mục tiêu (Target audience)
+- Nhóm tuổi: **16–17** và **18 trở lên**. Không chọn dưới 13 tuổi để không thuộc chính sách Gia đình.
+- App không nhắm tới trẻ em.
+
+## Mục khác
+- Quảng cáo: **Không** chứa quảng cáo.
+- Quyền truy cập ứng dụng (App access): mọi chức năng dùng được ngay, **không cần đăng nhập**.
+- Ứng dụng tin tức, sức khỏe, tài chính, chính phủ: **Không**.
