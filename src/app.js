@@ -1116,7 +1116,7 @@ const IN_APP = (() => {
 })();
 const isStandalone = () => !!((window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches)) || navigator.standalone === true || /^android-app:/.test(document.referrer || ''));
 let installEvt = null;
-const canInstall = () => !isStandalone() && !!(installEvt || IS_IOS || IN_APP || MAC_SAFARI);
+const canInstall = () => DEPLOY && !isStandalone() && !!(installEvt || IS_IOS || IN_APP || MAC_SAFARI); // bản xem trước trên Claude không cài được
 function renderInstall() {
   const ok = canInstall();
   $('#installRow').hidden = !ok;

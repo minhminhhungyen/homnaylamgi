@@ -60,6 +60,14 @@ Món ăn (`FOODS`) có thêm khóa `w`: `n` món nóng, ấm bụng (ưu tiên k
 - Trời mưa, dông, không khí xấu: chỉ gợi ý quẻ trong nhà hoặc đâu cũng được (trừ khi người dùng tự chọn “Ra ngoài” ở Tinh chỉnh); trời đẹp: ưu tiên ra ngoài, vận động; nắng gắt, UV cao: tránh ra ngoài buổi trưa; gần giờ mặt trời lặn mà trời quang: gợi ý ngắm hoàng hôn; tối trời quang: ngắm sao. Món ăn: mưa, lạnh ưu tiên món nóng; nóng ưu tiên món mát.
 - Tâm trạng chưa tốt: ưu tiên nhóm việc giúp vui lên, kèm câu động viên. Học theo người dùng: chấm “Vui”/“Đáng nhớ” cộng điểm nhóm việc, bấm “Rút quẻ khác” trừ nhẹ; điểm giảm dần theo ngày.
 
+## Cài như ứng dụng, app Android
+
+- Web cài được như app (PWA): Chrome/Edge hiện hộp cài khi bấm “Cài ứng dụng”; iPhone có hướng dẫn “Thêm vào MH chính”; trong app Zalo/Facebook có hướng dẫn mở bằng trình duyệt. Manifest có phím tắt “Rút quẻ” (`/?mode=lam`), “Ăn gì” (`/?mode=an`) và ảnh chụp màn hình (`tools/make-shots.mjs`).
+- App Android (Google Play) nằm trong `android/`: Trusted Web Activity mở homnaylamgi.com toàn màn hình, gói `com.homnaylamgi.app`, target API 36. Build chưa ký trên GitHub Actions (nhánh `android-build`), ký bằng khóa tải lên giữ ngoài repo. Chi tiết: `android/README.md`.
+- `/.well-known/assetlinks.json` sinh từ `tools/android.json`. Sau khi tải lên Google Play phải thêm dấu vân tay khóa ký của Google vào đó.
+- Hồ sơ Google Play (ảnh, nội dung, khai báo nháp, hướng dẫn): `store/android/`.
+- Trang `/rieng-tu`: Chính sách quyền riêng tư đứng tên công ty, bắt buộc khi đưa lên Google Play.
+
 ## Ghi chú kỹ thuật
 
 - Một trang duy nhất, không cần máy chủ. Sao, huy hiệu, lịch sử lưu trong `localStorage` của từng người (khóa `hnlg.v1`).
