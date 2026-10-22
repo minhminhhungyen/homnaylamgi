@@ -16,6 +16,11 @@ ErrorDocument 404 /404.html
   RewriteRule (^|/)\.git(/|$) - [F,L]
   # Link rủ từng quẻ: /q/12 → q/12.html, /an/5 → an/5.html
   RewriteRule ^(q|an)/([0-9]+)/?$ $1/$2.html [L]
+  # Trang không đuôi: /rieng-tu → rieng-tu.html
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.+)$ $1.html [L]
 </IfModule>
 
 <IfModule mod_mime.c>
