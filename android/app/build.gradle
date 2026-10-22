@@ -193,7 +193,7 @@ task generateShorcutsFile {
                             'android:action': 'android.intent.action.MAIN',
                             'android:targetPackage': twaManifest.applicationId,
                             'android:targetClass': 'com.homnaylamgi.app.LauncherActivity',
-                            'android:data': s.url)
+                            'android:data': 'https://' + twaManifest.hostName + s.url)
                     'categories'('android:name': 'android.intent.category.LAUNCHER')
                 }
             }
