@@ -136,7 +136,7 @@ const fmtTime = a => {
 };
 
 /* ---------- trạng thái (lưu trên máy người dùng) ---------- */
-const DEF = () => ({ v: 1, stars: 0, best: 0, done: [], saved: [], recent: [], got: [], cur: 0, curDay: '', acc: 0, accAt: 0, mood: 'all', moodDay: '', chAccDay: '', mode: 'lam', food: 0, foodDay: '', frecent: [], meal: '', mealDay: '', ftype: '', fmt: 'story', pref: {}, prefDay: '', wxOn: false, wxLoc: null, wx: null, aq: null, f: { who: '', budget: '', dur: '', place: '', level: '', when: 'now' } });
+const DEF = () => ({ v: 1, stars: 0, best: 0, done: [], saved: [], recent: [], got: [], cur: 0, curDay: '', acc: 0, accAt: 0, mood: 'all', moodDay: '', chAccDay: '', mode: 'lam', food: 0, foodDay: '', frecent: [], meal: '', mealDay: '', ftype: '', fmt: 'story', name: '', pref: {}, prefDay: '', wxOn: false, wxLoc: null, wx: null, aq: null, f: { who: '', budget: '', dur: '', place: '', level: '', when: 'now' } });
 let S = (() => {
   try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw), d = DEF(); return Object.assign(d, s, { f: Object.assign(d.f, s.f || {}) }); } } catch (e) { /* bỏ qua */ }
   return DEF();
@@ -262,6 +262,7 @@ function renderHeader() {
   const part = { s: 'Sáng', c: 'Chiều', t: 'Tối', k: 'Khuya' }[SLOT];
   const wd = WD[NOW.getDay()].replace('Thứ', 'thứ');
   let g = SLOT === 'k' ? 'Khuya rồi đấy' : `${part} ${wd}`;
+  if (S.name) g += `, ${S.name}`;
   if (TODAY_EVENTS.length) g += ` · Hôm nay là ${TODAY_EVENTS[0].ev.name}`;
   $('#greet').textContent = g;
   $('#nightHint').hidden = !(SLOT === 'k' && S.f.when === 'now');
@@ -671,7 +672,6 @@ $('#btnReset').addEventListener('click', () => {
     setTimeout(() => { if (resetAt && Date.now() - resetAt >= 5000) { resetAt = 0; b.textContent = 'Xóa dữ liệu'; } }, 5100);
   }
 });
-$('#btnHotline').addEventListener('click', () => copyText('0963061414').then(ok => toast(ok ? 'Đã chép số 096 306 1414.' : 'Máy chưa cho chép tự động. Bạn bôi đen số giúp mình nhé.')));
 
 /* ---------- thời tiết: chỉ hỏi vị trí khi người dùng bấm ----------
    Thời tiết: MET Norway (miễn phí, cho dùng thương mại, CC BY 4.0).
@@ -1104,6 +1104,221 @@ async function drawCard() {
   });
 }
 
+/* ---------- nhật ký riêng tư: mã hóa AES-GCM 256 ngay trên máy, khóa sinh từ mật khẩu (PBKDF2-SHA256) ----------
+   Không gửi đi đâu. Máy chủ, công ty không đọc được. Quên mật khẩu là mất nhật ký. */
+const DKEY = 'hnlg.diary', D_ITER = 600000;
+const HAS_CRYPTO = !!(window.crypto && crypto.subtle && window.TextEncoder && window.TextDecoder);
+const te = HAS_CRYPTO ? new TextEncoder() : null, td = HAS_CRYPTO ? new TextDecoder() : null;
+const toB64 = buf => { const a = new Uint8Array(buf); let s = ''; for (let i = 0; i < a.length; i++) s += String.fromCharCode(a[i]); return btoa(s); };
+const fromB64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const randId = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('');
+let DK = null, DE = [], dEdit = '', dLinkQ = 0, dLockT = 0;
+function dLoad() { try { const d = JSON.parse(localStorage.getItem(DKEY) || 'null'); return d && d.v === 1 && d.kdf && d.check && Array.isArray(d.entries) ? d : null; } catch (e) { return null; } }
+function dStore(d) { try { localStorage.setItem(DKEY, JSON.stringify(d)); return true; } catch (e) { toast('Bộ nhớ trình duyệt đã đầy hoặc bị chặn, chưa lưu được.'); return false; } }
+async function dDerive(pass, salt, iter) {
+  const base = await crypto.subtle.importKey('raw', te.encode(pass.normalize('NFC')), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: iter }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function seal(key, obj) { const iv = crypto.getRandomValues(new Uint8Array(12)); return { iv: toB64(iv), ct: toB64(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, te.encode(JSON.stringify(obj)))) }; }
+async function unseal(key, box) { return JSON.parse(td.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromB64(box.iv) }, key, fromB64(box.ct)))); }
+async function newVault(pass, entries) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), key = await dDerive(pass, salt, D_ITER);
+  const boxes = [];
+  for (const e of entries) { const { id, ...rest } = e; boxes.push({ id, box: await seal(key, rest) }); }
+  return { key, vault: { v: 1, kdf: { alg: 'PBKDF2-SHA256', iter: D_ITER, salt: toB64(salt) }, cipher: 'AES-GCM-256', check: await seal(key, { app: 'hnlg' }), entries: boxes } };
+}
+async function dUnlock(pass) {
+  const d = dLoad(); if (!d) return false;
+  const key = await dDerive(pass, fromB64(d.kdf.salt), d.kdf.iter);
+  try { const c = await unseal(key, d.check); if (!c || c.app !== 'hnlg') return false; } catch (e) { return false; }
+  const out = [];
+  for (const e of d.entries) { try { out.push(Object.assign({ id: e.id }, await unseal(key, e.box))); } catch (err) { /* trang hỏng thì bỏ qua */ } }
+  DK = key; DE = out.sort((a, b) => b.at - a.at);
+  return true;
+}
+function dLock(quiet) {
+  const had = !!DK; DK = null; DE = []; dEdit = ''; clearTimeout(dLockT);
+  ['#diText', '#diPass', '#diNew1', '#diNew2', '#diCh1', '#diCh2'].forEach(s => { const el = $(s); if (el) el.value = ''; });
+  $('#diList').innerHTML = '';
+  if (had && !quiet) toast('Đã khóa nhật ký.');
+}
+const dTouch = () => { clearTimeout(dLockT); if (DK) dLockT = setTimeout(() => { dLock(true); renderDiary(); }, 10 * 60e3); };
+const fmtWhen = ms => { const d = new Date(ms); return `${WD[d.getDay()]}, ${dm(d)}/${d.getFullYear()} · ${hm(ms)}`; };
+function renderDiary() {
+  const ok = HAS_CRYPTO, d = ok ? dLoad() : null;
+  $('#diNoCrypto').hidden = ok;
+  $('#diSetup').hidden = !ok || !!d;
+  $('#diLocked').hidden = !ok || !d || !!DK;
+  $('#diOpen').hidden = !ok || !d || !DK;
+  if (!DK) return;
+  const a = byId.get(dLinkQ);
+  $('#diLinkWrap').hidden = !a || !!dEdit;
+  if (a) { $('#diLinkTxt').textContent = `Gắn với quẻ “${a.t}”`; }
+  $('#diFormLbl').textContent = dEdit ? 'Sửa trang nhật ký' : 'Hôm nay của bạn thế nào?';
+  $('#diSave').textContent = dEdit ? 'Lưu thay đổi' : 'Lưu trang nhật ký';
+  $('#diCancel').hidden = !dEdit;
+  $('#diCount').textContent = DE.length ? `${DE.length} trang · đang mở, tự khóa sau 10 phút không dùng` : 'Chưa có trang nào. Viết trang đầu tiên nhé.';
+  $('#diList').innerHTML = DE.map(e => {
+    const q = byId.get(e.q);
+    return `<li class="entry"><div class="entry-head"><span>${esc(fmtWhen(e.at))}</span>${e.u ? `<span>đã sửa ${esc(hm(e.u))} ${esc(dm(new Date(e.u)))}</span>` : ''}</div>${q ? `<p class="entry-q">Quẻ: ${esc(q.t)}</p>` : ''}<p class="entry-t">${esc(e.text)}</p><div class="acts"><button class="link" type="button" data-de="${e.id}">Sửa</button><button class="link muted" type="button" data-dx="${e.id}">Xóa</button></div></li>`;
+  }).join('');
+  dTouch();
+}
+$('#diSetup').addEventListener('submit', async e => {
+  e.preventDefault();
+  const p1 = $('#diNew1').value, p2 = $('#diNew2').value, err = $('#diSetupErr');
+  if (p1.length < 6) { err.textContent = 'Mật khẩu cần ít nhất 6 ký tự.'; return; }
+  if (p1 !== p2) { err.textContent = 'Hai lần nhập chưa giống nhau.'; return; }
+  err.textContent = '';
+  const btn = $('button[type="submit"]', e.currentTarget); btn.disabled = true;
+  try { const v = await newVault(p1, []); if (dStore(v.vault)) { DK = v.key; DE = []; toast('Đã tạo nhật ký. Nhớ kỹ mật khẩu nhé!'); } }
+  catch (x) { err.textContent = 'Chưa tạo được nhật ký trên trình duyệt này.'; }
+  btn.disabled = false; $('#diNew1').value = ''; $('#diNew2').value = ''; renderDiary(); renderMe();
+});
+$('#diLocked').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('button[type="submit"]', e.currentTarget), err = $('#diLockErr');
+  if (!$('#diPass').value) { err.textContent = 'Bạn nhập mật khẩu nhật ký nhé.'; return; }
+  btn.disabled = true; $('span', btn).textContent = 'Đang mở khóa…'; err.textContent = '';
+  let ok = false; try { ok = await dUnlock($('#diPass').value); } catch (x) { ok = false; }
+  btn.disabled = false; $('span', btn).textContent = 'Mở khóa';
+  if (!ok) { err.textContent = 'Mật khẩu chưa đúng.'; $('#diPass').select(); return; }
+  $('#diPass').value = ''; renderDiary(); $('#diText').focus();
+});
+let forgetAt = 0;
+$('#diForget').addEventListener('click', e => {
+  if (Date.now() - forgetAt < 5000) { forgetAt = 0; try { localStorage.removeItem(DKEY); } catch (x) { /* bỏ qua */ } dLock(true); renderDiary(); renderMe(); toast('Đã xóa nhật ký cũ. Bạn đặt mật khẩu mới để viết lại nhé.'); e.target.textContent = 'Xóa nhật ký để làm lại'; return; }
+  forgetAt = Date.now(); e.target.textContent = 'Bấm lần nữa để xóa vĩnh viễn toàn bộ nhật ký';
+});
+$('#diForm').addEventListener('submit', async e => {
+  e.preventDefault(); if (!DK) { renderDiary(); return; }
+  const text = $('#diText').value.trim(); if (!text) return;
+  const d = dLoad(); if (!d) { dLock(true); renderDiary(); return; }
+  if (dEdit) {
+    const cur = DE.find(x => x.id === dEdit); if (!cur) { dEdit = ''; renderDiary(); return; }
+    cur.text = text; cur.u = Date.now();
+    const { id, ...rest } = cur, box = await seal(DK, rest);
+    d.entries = d.entries.map(x => (x.id === id ? { id, box } : x));
+    if (dStore(d)) toast('Đã lưu thay đổi.');
+    dEdit = '';
+  } else {
+    const q = !$('#diLinkWrap').hidden && $('#diLink').checked ? dLinkQ : 0;
+    const entry = { at: Date.now(), d: ymd(new Date()), text, q }, id = randId();
+    d.entries.push({ id, box: await seal(DK, entry) });
+    if (dStore(d)) { DE.unshift(Object.assign({ id }, entry)); toast('Đã lưu vào nhật ký.'); }
+    dLinkQ = 0;
+  }
+  $('#diText').value = ''; renderDiary(); renderMe();
+});
+$('#diCancel').addEventListener('click', () => { dEdit = ''; $('#diText').value = ''; renderDiary(); });
+let delId = '', delAt = 0;
+$('#diList').addEventListener('click', e => {
+  const ed = e.target.closest('[data-de]'), dx = e.target.closest('[data-dx]');
+  if (ed) { const cur = DE.find(x => x.id === ed.dataset.de); if (!cur) return; dEdit = cur.id; $('#diText').value = cur.text; renderDiary(); $('#diText').focus(); window.scrollTo({ top: $('#diForm').getBoundingClientRect().top + scrollY - 80, behavior: reduced ? 'auto' : 'smooth' }); }
+  if (dx) {
+    const id = dx.dataset.dx;
+    if (delId === id && Date.now() - delAt < 5000) {
+      const d = dLoad(); if (d) { d.entries = d.entries.filter(x => x.id !== id); dStore(d); }
+      DE = DE.filter(x => x.id !== id); delId = ''; if (dEdit === id) dEdit = '';
+      renderDiary(); renderMe(); toast('Đã xóa trang nhật ký.');
+    } else { delId = id; delAt = Date.now(); dx.textContent = 'Bấm lần nữa để xóa'; }
+  }
+});
+$('#diLockBtn').addEventListener('click', () => { dLock(); renderDiary(); });
+$('#diChangeBtn').addEventListener('click', () => { const f = $('#diChange'); f.hidden = !f.hidden; if (!f.hidden) $('#diCh1').focus(); });
+$('#diChange').addEventListener('submit', async e => {
+  e.preventDefault(); if (!DK) { renderDiary(); return; }
+  const p1 = $('#diCh1').value, p2 = $('#diCh2').value, err = $('#diChErr');
+  if (p1.length < 6) { err.textContent = 'Mật khẩu cần ít nhất 6 ký tự.'; return; }
+  if (p1 !== p2) { err.textContent = 'Hai lần nhập chưa giống nhau.'; return; }
+  err.textContent = '';
+  try { const v = await newVault(p1, DE); if (dStore(v.vault)) { DK = v.key; toast('Đã đổi mật khẩu nhật ký.'); } } catch (x) { err.textContent = 'Chưa đổi được mật khẩu.'; return; }
+  $('#diCh1').value = ''; $('#diCh2').value = ''; $('#diChange').hidden = true; renderDiary();
+});
+['input', 'keydown', 'pointerdown'].forEach(t => $('#viewDiary').addEventListener(t, dTouch, { passive: true }));
+$('#btnJournal').addEventListener('click', () => { dLinkQ = S.mode !== 'an' && recToday(S.cur) ? S.cur : 0; $('#diLink').checked = !!dLinkQ; });
+
+/* ---------- trang của bạn: tên gọi, thành tích, sao lưu, hỗ trợ, xóa dữ liệu ---------- */
+function renderMe() {
+  $('#meName').textContent = S.name || 'Tôi';
+  if ($('#viewMe').hidden) return;
+  if (document.activeElement !== $('#nameInput')) $('#nameInput').value = S.name || '';
+  const lv = LEVELS.filter(l => S.stars >= l[0]).pop();
+  $('#meStats').innerHTML = [['Sao đã gom', S.stars], ['Chuỗi ngày', streak()], ['Quẻ đã làm', S.done.length], ['Danh hiệu', lv ? lv[1] : '']]
+    .map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+  const d = HAS_CRYPTO ? dLoad() : null;
+  $('#meDiary').textContent = !HAS_CRYPTO ? 'Trình duyệt này chưa hỗ trợ nhật ký mã hóa.' : d ? `${d.entries.length} trang, đã khóa bằng mật khẩu của bạn.` : 'Chưa có nhật ký. Đặt một mật khẩu là viết được ngay.';
+}
+$('#nameForm').addEventListener('submit', e => {
+  e.preventDefault();
+  S.name = $('#nameInput').value.replace(/\s+/g, ' ').trim().slice(0, 30); save();
+  renderHeader(); renderMe(); toast(S.name ? `Chào ${S.name}!` : 'Đã bỏ tên gọi.');
+});
+$('#btnBackup').addEventListener('click', () => {
+  const data = { app: 'homnaylamgi', v: 1, at: new Date().toISOString(), state: S, diary: dLoad() };
+  try {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' })), a = document.createElement('a');
+    a.href = url; a.download = `homnaylamgi-sao-luu-${TODAY}.json`; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    toast('Đã tạo file sao lưu. Cất file ở nơi an toàn nhé.');
+  } catch (x) { toast('Trình duyệt này chưa cho tải file.'); }
+});
+let restoreData = null;
+$('#restoreFile').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0], msg = $('#restoreMsg'); restoreData = null; $('#btnRestore').hidden = true;
+  if (!f) return;
+  if (f.size > 5 * 1048576) { msg.textContent = 'File quá lớn, không phải file sao lưu của Hôm nay làm gì?.'; return; }
+  const r = new FileReader();
+  r.onload = () => {
+    let o = null; try { o = JSON.parse(r.result); } catch (x) { o = null; }
+    const okState = o && o.app === 'homnaylamgi' && o.state && typeof o.state === 'object' && Array.isArray(o.state.done);
+    const okDiary = !o || !o.diary || (o.diary.v === 1 && o.diary.kdf && Array.isArray(o.diary.entries));
+    if (!okState || !okDiary) { msg.textContent = 'File này không phải bản sao lưu của Hôm nay làm gì?.'; e.target.value = ''; return; }
+    restoreData = o;
+    msg.textContent = `Bản sao lưu ngày ${new Date(o.at).toLocaleDateString('vi-VN')}: ${o.state.stars || 0} sao, ${o.state.done.length} quẻ đã làm, ${o.diary ? o.diary.entries.length : 0} trang nhật ký. Dữ liệu hiện tại trên máy này sẽ bị thay.`;
+    $('#btnRestore').hidden = false;
+  };
+  r.readAsText(f);
+});
+$('#btnRestore').addEventListener('click', () => {
+  if (!restoreData) return;
+  try {
+    localStorage.setItem(KEY, JSON.stringify(restoreData.state));
+    if (restoreData.diary) localStorage.setItem(DKEY, JSON.stringify(restoreData.diary)); else localStorage.removeItem(DKEY);
+  } catch (x) { toast('Chưa ghi được dữ liệu vào trình duyệt.'); return; }
+  location.hash = ''; location.reload();
+});
+$('#helpForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const text = $('#helpText').value.trim(), mail = $('#helpMail').value.trim();
+  if (!text) return;
+  const body = `${text}\n\n—\nEmail để trả lời: ${mail || '(không để lại)'}\nGửi từ: ${location.host}`;
+  location.href = `mailto:hotro@homnaylamgi.com?subject=${encodeURIComponent('[Hôm nay làm gì?] Hỗ trợ, góp ý')}&body=${encodeURIComponent(body)}`;
+  toast('Đang mở ứng dụng email của bạn…');
+});
+let wipeAt = 0;
+$('#btnWipe').addEventListener('click', e => {
+  const b = e.currentTarget;
+  if (Date.now() - wipeAt < 5000) { try { localStorage.removeItem(KEY); localStorage.removeItem(DKEY); } catch (x) { /* bỏ qua */ } location.hash = ''; location.reload(); return; }
+  wipeAt = Date.now(); b.textContent = 'Bấm lần nữa để xóa sạch, không lấy lại được';
+  setTimeout(() => { if (Date.now() - wipeAt >= 5000) b.textContent = 'Xóa toàn bộ dữ liệu'; }, 5100);
+});
+
+/* điều hướng giữa trang chính và các trang con (#toi, #nhat-ky) */
+function route() {
+  const h = location.hash, v = h === '#toi' ? 'me' : h === '#nhat-ky' ? 'diary' : '';
+  const was = document.body.classList.contains('view-on');
+  document.body.classList.toggle('view-on', !!v);
+  $('#viewMe').hidden = v !== 'me'; $('#viewDiary').hidden = v !== 'diary';
+  if (v !== 'diary' && DK) dLock(true);
+  if (v === 'me') renderMe();
+  if (v === 'diary') renderDiary();
+  if (v) { window.scrollTo(0, 0); (v === 'me' ? $('#meTitle') : $('#diTitle')).focus({ preventScroll: true }); }
+  else if (was) { renderSlip(); }
+}
+window.addEventListener('hashchange', route);
+window.addEventListener('pagehide', () => dLock(true));
+
 /* ---------- cài ứng dụng (web cài được như app: Android, máy tính, iPhone) ---------- */
 const UA = navigator.userAgent || '';
 const IS_IOS = /iP(hone|ad|od)/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
@@ -1202,7 +1417,8 @@ if (!start) { const r = choose(0); lastRelax = r.relaxed; setCur(r.a.id); }
 else if (S.curDay !== TODAY) S.acc = 0;
 if (S.mealDay !== TODAY) { S.meal = ''; S.mealDay = ''; }
 if (window.matchMedia && matchMedia('(min-width: 960px)').matches) $('#tune').open = true;
-renderAll(); renderSoon(); setMode(S.mode); save();
+renderAll(); renderSoon(); setMode(S.mode); save(); renderMe();
+if (location.hash === '#toi' || location.hash === '#nhat-ky') route();
 if (startMsg) toast(startMsg);
 if (S.wxOn && S.wxLoc) getWx(false);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && refreshClock() && S.wxOn && S.wxLoc) getWx(false); });
@@ -1211,5 +1427,5 @@ window.addEventListener('pageshow', e => { if (e.persisted) refreshClock(); });
 if (DEPLOY && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* không có service worker thì trang vẫn chạy */ }); });
 }
-window.__hnlg = { canInstall, installGuide, START_MODE, choose, buildPool, eligible, chooseFood, setMode, state: () => S, CH, EVS, SLOT, A, F, sunSet, parseMet, wxNow, nearCity, wx: () => WX, weight, INV };
+window.__hnlg = { dLoad, diary: () => ({ open: !!DK, n: DE.length }), canInstall, installGuide, START_MODE, choose, buildPool, eligible, chooseFood, setMode, state: () => S, CH, EVS, SLOT, A, F, sunSet, parseMet, wxNow, nearCity, wx: () => WX, weight, INV };
 })();

@@ -17,6 +17,10 @@
   <symbol id="i-send" viewBox="0 0 24 24"><path d="M20.5 3.5 3.5 10.6l6.6 2.8 2.8 6.6z"/><path d="m10.1 13.4 10.4-9.9"/></symbol>
   <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></symbol>
   <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 10 12 14.5 16.5 10M5 19.5h14"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4.5h11.5A2.5 2.5 0 0 1 19 7v12.5H7.5A2.5 2.5 0 0 1 5 17V4.5z"/><path d="M5 17a2.5 2.5 0 0 1 2.5-2.5H19M9 8.5h6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15.5v-11M7.5 9 12 4.5 16.5 9M5 19.5h14"/></symbol>
   <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7.5 18.5h9.5a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7 9.7a4.4 4.4 0 0 0 .5 8.8z"/></symbol>
 </svg>
 
@@ -24,6 +28,7 @@
   <div class="wrap top-in">
     <a class="brand" href="#" aria-label="Hôm nay làm gì? Về đầu trang"><span class="brand-seal" aria-hidden="true">?</span><span class="brand-name">homnaylamgi</span></a>
     <p class="today" id="today"></p>
+    <a class="me-btn needs-js" href="#toi" id="meBtn" aria-label="Trang của bạn"><svg class="ico"><use href="#i-user"/></svg><span class="me-name" id="meName">Tôi</span></a>
   </div>
 </header>
 
@@ -151,6 +156,7 @@
         <button class="chip" type="button" data-feel="thuong" aria-pressed="false">Bình thường</button>
         <button class="chip" type="button" data-feel="nho" aria-pressed="false">Đáng nhớ</button>
         <button class="btn btn-soft btn-sm" id="btnCard" type="button"><svg class="ico"><use href="#i-image"/></svg><span>Tạo ảnh khoe</span></button>
+        <a class="btn btn-soft btn-sm" href="#nhat-ky" id="btnJournal"><svg class="ico"><use href="#i-book"/></svg><span>Ghi nhật ký</span></a>
       </div>
       <div class="nudge" id="installNudge" hidden>
         <p>Mai rút quẻ tiếp nhé! Cài app lên màn hình chính để mở một chạm.</p>
@@ -160,7 +166,7 @@
         </div>
       </div>
       <p class="relax" id="relaxNote" hidden></p>
-      <p class="care" id="careNote" hidden>Nếu nỗi buồn kéo dài nhiều ngày, bạn không phải chịu một mình. Đường dây <b>Ngày Mai</b> lắng nghe miễn phí, thứ Tư đến Chủ nhật, 13:00–20:30: <b>096 306 1414</b>.</p>
+      <p class="care" id="careNote" hidden>Nếu nỗi buồn kéo dài nhiều ngày, bạn không phải chịu một mình: hãy kể với người bạn tin tưởng hoặc gặp bác sĩ. Khi thấy mình không an toàn, gọi ngay cấp cứu <b>115</b>.</p>
       <p class="sr" id="live" aria-live="polite"></p>
     </div>
   </section>
@@ -248,12 +254,110 @@
     </div>
     <p class="local">Sao, huy hiệu và lịch sử được lưu ngay trên trình duyệt của bạn, không cần đăng nhập. Xóa dữ liệu trình duyệt thì chúng cũng mất. <button class="link muted" id="btnReset" type="button">Xóa dữ liệu</button></p>
   </section>
+
+  <section class="view needs-js" id="viewMe" hidden aria-labelledby="meTitle">
+    <a class="back" href="#">← Về quẻ hôm nay</a>
+    <h2 id="meTitle" tabindex="-1">Trang của bạn</h2>
+    <p class="sub">Mọi thứ ở đây chỉ nằm trên máy này. Không cần đăng ký tài khoản.</p>
+    <div class="cards">
+      <div class="card">
+        <h3>Tên gọi</h3>
+        <form class="row-form" id="nameForm"><label class="sr" for="nameInput">Tên gọi</label><input id="nameInput" maxlength="30" autocomplete="nickname" placeholder="Bạn muốn được gọi là gì?"><button class="btn btn-soft btn-sm" type="submit">Lưu</button></form>
+        <p class="note">Chỉ dùng để chào bạn trên trang.</p>
+      </div>
+      <div class="card">
+        <h3>Thành tích</h3>
+        <dl class="me-stats" id="meStats"></dl>
+      </div>
+      <div class="card">
+        <h3>Nhật ký riêng tư</h3>
+        <p id="meDiary"></p>
+        <a class="btn btn-main btn-sm" href="#nhat-ky"><svg class="ico"><use href="#i-book"/></svg><span>Mở nhật ký</span></a>
+      </div>
+      <div class="card">
+        <h3>Sao lưu, chuyển sang máy khác</h3>
+        <p class="note">File sao lưu gồm sao, huy hiệu, lịch sử và nhật ký. Nhật ký trong file vẫn được mã hóa bằng mật khẩu của bạn.</p>
+        <div class="acts">
+          <button class="btn btn-soft btn-sm" id="btnBackup" type="button"><svg class="ico"><use href="#i-download"/></svg><span>Tải bản sao lưu</span></button>
+          <label class="btn btn-soft btn-sm file-btn"><svg class="ico"><use href="#i-upload"/></svg><span>Khôi phục từ file</span><input type="file" id="restoreFile" accept="application/json,.json"></label>
+        </div>
+        <p class="note" id="restoreMsg" role="status"></p>
+        <button class="btn btn-main btn-sm" id="btnRestore" type="button" hidden>Thay dữ liệu trên máy này</button>
+      </div>
+      <div class="card">
+        <h3>Hỗ trợ, góp ý</h3>
+        <form class="stack" id="helpForm">
+          <label class="lbl" for="helpText">Bạn cần giúp gì?</label>
+          <textarea id="helpText" rows="4" maxlength="1500" required></textarea>
+          <label class="lbl" for="helpMail">Email của bạn (nếu muốn được trả lời)</label>
+          <input id="helpMail" type="email" maxlength="120" autocomplete="email">
+          <button class="btn btn-main btn-sm" type="submit">Gửi tới hotro@homnaylamgi.com</button>
+          <p class="note">Nút này mở ứng dụng email trên máy bạn với lời nhắn soạn sẵn. Cần gấp thì gọi Admin: <a href="tel:0919391060">0919 391 060</a>.</p>
+        </form>
+      </div>
+      <div class="card">
+        <h3>Dữ liệu trên máy này</h3>
+        <p class="note">Xóa sạch sao, huy hiệu, lịch sử, nhật ký và các lựa chọn. Không lấy lại được, trừ khi bạn có file sao lưu.</p>
+        <div class="acts"><button class="btn btn-soft btn-sm" id="btnWipe" type="button">Xóa toàn bộ dữ liệu</button><a class="link" href="/rieng-tu">Chính sách quyền riêng tư</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view needs-js" id="viewDiary" hidden aria-labelledby="diTitle">
+    <a class="back" href="#toi">← Trang của bạn</a>
+    <h2 id="diTitle" tabindex="-1">Nhật ký riêng tư</h2>
+    <p class="sub">Viết gì cũng được: cảm nhận sau một quẻ, điều làm bạn vui, điều đang lo. Nhật ký được mã hóa ngay trên máy bằng mật khẩu của bạn. Không ai khác đọc được, kể cả người làm ra trang này.</p>
+    <p class="note" id="diNoCrypto" hidden>Trình duyệt này không hỗ trợ mã hóa nên chưa dùng được nhật ký. Bạn mở bằng Chrome, Safari hoặc Edge bản mới nhé.</p>
+    <form class="card stack" id="diSetup" hidden novalidate>
+      <h3>Đặt mật khẩu cho nhật ký</h3>
+      <label class="lbl" for="diNew1">Mật khẩu (ít nhất 6 ký tự)</label>
+      <input id="diNew1" type="password" minlength="6" maxlength="200" autocomplete="new-password" required>
+      <label class="lbl" for="diNew2">Nhập lại mật khẩu</label>
+      <input id="diNew2" type="password" minlength="6" maxlength="200" autocomplete="new-password" required>
+      <p class="warn">Mật khẩu không được gửi đi đâu. Quên mật khẩu thì không ai mở lại được nhật ký, kể cả chúng tôi.</p>
+      <button class="btn btn-main btn-sm" type="submit"><svg class="ico"><use href="#i-lock"/></svg><span>Tạo nhật ký</span></button>
+      <p class="err" id="diSetupErr" role="alert"></p>
+    </form>
+    <form class="card stack" id="diLocked" hidden novalidate>
+      <h3>Nhật ký đang khóa</h3>
+      <label class="lbl" for="diPass">Mật khẩu nhật ký</label>
+      <input id="diPass" type="password" maxlength="200" autocomplete="current-password" required>
+      <button class="btn btn-main btn-sm" type="submit"><svg class="ico"><use href="#i-lock"/></svg><span>Mở khóa</span></button>
+      <p class="err" id="diLockErr" role="alert"></p>
+      <p class="note">Quên mật khẩu? <button class="link muted" id="diForget" type="button">Xóa nhật ký để làm lại</button></p>
+    </form>
+    <div id="diOpen" hidden>
+      <form class="card stack" id="diForm">
+        <label class="lbl" for="diText" id="diFormLbl">Hôm nay của bạn thế nào?</label>
+        <textarea id="diText" rows="5" maxlength="5000" required></textarea>
+        <label class="check" id="diLinkWrap" hidden><input type="checkbox" id="diLink"><span id="diLinkTxt"></span></label>
+        <div class="acts">
+          <button class="btn btn-main btn-sm" type="submit" id="diSave">Lưu trang nhật ký</button>
+          <button class="link muted" type="button" id="diCancel" hidden>Hủy sửa</button>
+        </div>
+      </form>
+      <div class="di-bar">
+        <p class="note" id="diCount"></p>
+        <div class="acts"><button class="btn btn-soft btn-sm" id="diLockBtn" type="button"><svg class="ico"><use href="#i-lock"/></svg><span>Khóa lại</span></button><button class="link muted" id="diChangeBtn" type="button">Đổi mật khẩu</button></div>
+      </div>
+      <form class="card stack" id="diChange" hidden novalidate>
+        <h3>Đổi mật khẩu nhật ký</h3>
+        <label class="lbl" for="diCh1">Mật khẩu mới (ít nhất 6 ký tự)</label>
+        <input id="diCh1" type="password" minlength="6" maxlength="200" autocomplete="new-password" required>
+        <label class="lbl" for="diCh2">Nhập lại mật khẩu mới</label>
+        <input id="diCh2" type="password" minlength="6" maxlength="200" autocomplete="new-password" required>
+        <button class="btn btn-main btn-sm" type="submit">Đổi mật khẩu</button>
+        <p class="err" id="diChErr" role="alert"></p>
+      </form>
+      <ul class="entries" id="diList"></ul>
+    </div>
+  </section>
 </main>
 
 <footer class="foot">
   <div class="wrap foot-in">
     <p class="about"><b>Hôm nay làm gì?</b> gợi ý mỗi ngày một việc nhỏ cho người trẻ 16–40 tuổi: vận động, khám phá, kết nối, học hỏi, chăm sóc bản thân, và cả hôm nay ăn gì. Có {{count}} quẻ việc và {{foods}} món ăn, lọc theo tâm trạng, thời gian và túi tiền, không cần đăng ký.</p>
-    <p class="help">Có những ngày nặng lòng hơn bình thường. Nếu bạn cần ai đó lắng nghe, đường dây <b>Ngày Mai</b> hỗ trợ tâm lý miễn phí, thứ Tư đến Chủ nhật, 13:00–20:30: <a href="tel:0963061414">096 306 1414</a> <button class="link needs-js" id="btnHotline" type="button">Chép số</button></p>
+    <p class="help">Có những ngày nặng lòng hơn bình thường. Hãy kể với một người bạn tin tưởng, đừng giữ một mình. Nếu bạn thấy mình không an toàn, gọi ngay cấp cứu <a href="tel:115">115</a>.</p>
     <p class="contact">Cần hỗ trợ hoặc góp ý? Gửi email tới <a href="mailto:hotro@homnaylamgi.com">hotro@homnaylamgi.com</a> hoặc gọi Admin: <a href="tel:0919391060">0919 391 060</a>.</p>
     <p class="tiny">Thời gian, chi phí và túi tiền trên mỗi quẻ là ước tính. Ngày âm lịch tính theo giờ Việt Nam. Thời tiết: <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a>. Chất lượng không khí, UV: <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">Copernicus Atmosphere Monitoring Service</a> qua <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0).</p>
     <p class="tiny">© 2026 homnaylamgi.com · <a href="/rieng-tu">Chính sách quyền riêng tư</a></p>

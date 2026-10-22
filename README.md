@@ -60,6 +60,12 @@ Món ăn (`FOODS`) có thêm khóa `w`: `n` món nóng, ấm bụng (ưu tiên k
 - Trời mưa, dông, không khí xấu: chỉ gợi ý quẻ trong nhà hoặc đâu cũng được (trừ khi người dùng tự chọn “Ra ngoài” ở Tinh chỉnh); trời đẹp: ưu tiên ra ngoài, vận động; nắng gắt, UV cao: tránh ra ngoài buổi trưa; gần giờ mặt trời lặn mà trời quang: gợi ý ngắm hoàng hôn; tối trời quang: ngắm sao. Món ăn: mưa, lạnh ưu tiên món nóng; nóng ưu tiên món mát.
 - Tâm trạng chưa tốt: ưu tiên nhóm việc giúp vui lên, kèm câu động viên. Học theo người dùng: chấm “Vui”/“Đáng nhớ” cộng điểm nhóm việc, bấm “Rút quẻ khác” trừ nhẹ; điểm giảm dần theo ngày.
 
+## Trang của bạn, nhật ký riêng tư
+
+- `#toi` (nút người ở đầu trang): tên gọi, thành tích, sao lưu ra file JSON và khôi phục sang máy khác, form hỗ trợ (mở ứng dụng email, gửi tới hotro@homnaylamgi.com), xóa toàn bộ dữ liệu.
+- `#nhat-ky`: nhật ký mã hóa ngay trên máy (AES-GCM 256, khóa sinh từ mật khẩu bằng PBKDF2-SHA256 600.000 vòng, mỗi trang một IV). Lưu ở `localStorage` khóa `hnlg.diary`; chỉ có bản mã hóa, không lưu mật khẩu. Quên mật khẩu thì không mở lại được. Rời trang nhật ký hoặc 10 phút không dùng thì tự khóa.
+- Chưa có đăng nhập, đồng bộ nhiều máy (chờ Firebase) và gửi thư tự động (chờ Hostinger + hộp thư hotro@).
+
 ## Cài như ứng dụng, app Android
 
 - Web cài được như app (PWA): Chrome/Edge hiện hộp cài khi bấm “Cài ứng dụng”; iPhone có hướng dẫn “Thêm vào MH chính”; trong app Zalo/Facebook có hướng dẫn mở bằng trình duyệt. Manifest có phím tắt “Rút quẻ” (`/?mode=lam`), “Ăn gì” (`/?mode=an`) và ảnh chụp màn hình (`tools/make-shots.mjs`).

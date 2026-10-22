@@ -204,31 +204,36 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <div class="sum"><ul>
 <li>Không cần tài khoản, không thu tên, email hay số điện thoại.</li>
 <li>Sao, huy hiệu, lịch sử và lựa chọn của bạn chỉ lưu trên thiết bị của bạn.</li>
+<li>Nhật ký riêng tư được mã hóa trên thiết bị bằng mật khẩu của bạn; không ai khác đọc được, kể cả công ty.</li>
 <li>Vị trí chỉ dùng khi bạn tự bật gợi ý theo thời tiết, và được làm tròn khoảng 1 km.</li>
 <li>Không quảng cáo, không công cụ theo dõi, không bán dữ liệu.</li>
 </ul></div>
 <h2>1. Dữ liệu lưu trên thiết bị của bạn</h2>
 <p>Các thông tin sau được lưu trong bộ nhớ trình duyệt trên thiết bị của bạn (localStorage): quẻ đang làm, số sao, huy hiệu, lịch sử quẻ đã làm và cảm nhận, danh sách để dành, tâm trạng, bữa ăn, các lựa chọn ở phần Tinh chỉnh. Nếu bạn bật thời tiết, có thêm vị trí đã làm tròn hoặc tỉnh, thành bạn chọn và bản dự báo gần nhất.</p>
 <p>Các dữ liệu này không được gửi về máy chủ của công ty. Bạn xóa được bất cứ lúc nào bằng nút “Xóa dữ liệu” ở phần Hành trình, bằng cách xóa dữ liệu trang web trong trình duyệt, hoặc gỡ ứng dụng.</p>
-<h2>2. Vị trí và thời tiết (tùy chọn)</h2>
+<h2>2. Nhật ký riêng tư</h2>
+<p>Nhật ký được mã hóa ngay trên thiết bị của bạn (AES-GCM 256 bit, khóa sinh từ mật khẩu bằng PBKDF2-SHA256 với 600.000 vòng lặp) trước khi lưu vào bộ nhớ trình duyệt. Mật khẩu nhật ký không được lưu và không được gửi đi đâu. Vì vậy công ty và bất kỳ ai không có mật khẩu đều không đọc được nhật ký của bạn. Điều này cũng có nghĩa là nếu quên mật khẩu, không ai khôi phục được nội dung nhật ký.</p>
+<p>Khi bạn tải bản sao lưu, file sao lưu chứa nhật ký ở dạng đã mã hóa cùng sao, huy hiệu và lịch sử. File nằm trên thiết bị của bạn; hãy cất ở nơi an toàn.</p>
+<h2>3. Vị trí và thời tiết (tùy chọn)</h2>
 <p>Dịch vụ chỉ hỏi quyền vị trí khi bạn bấm “Gợi ý theo thời tiết chỗ bạn”. Tọa độ được làm tròn đến 2 chữ số thập phân (khoảng 1 km), rồi gửi thẳng từ thiết bị của bạn tới:</p>
 <ul><li><a href="https://www.met.no/en" rel="noopener">MET Norway</a> (Viện Khí tượng Na Uy, api.met.no) để lấy dự báo thời tiết;</li>
 <li><a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a> (air-quality-api.open-meteo.com) để lấy chất lượng không khí và chỉ số UV.</li></ul>
 <p>Như mọi dịch vụ trên mạng, các nhà cung cấp này cũng nhận địa chỉ IP của bạn khi trả dữ liệu và xử lý theo chính sách của họ. Bạn có thể không cho phép vị trí mà chọn tỉnh, thành thay thế, hoặc bấm “Tắt thời tiết” để xóa vị trí đã lưu.</p>
-<h2>3. Chia sẻ</h2>
+<h2>4. Chia sẻ, hỗ trợ</h2>
 <p>Khi bạn bấm chia sẻ, lời rủ và đường link được chuyển tới ứng dụng bạn chọn (Zalo, Messenger, Facebook, Instagram…) hoặc bảng chia sẻ của thiết bị. Dịch vụ không đọc danh bạ và không đăng bài thay bạn. Việc xử lý sau đó theo chính sách của ứng dụng bạn chọn.</p>
-<h2>4. Máy chủ lưu trữ</h2>
+<p>Khi bạn gửi yêu cầu hỗ trợ hoặc góp ý, ứng dụng email trên máy bạn gửi thư tới hotro@homnaylamgi.com. Công ty chỉ dùng nội dung thư và địa chỉ email bạn để lại để trả lời bạn.</p>
+<h2>5. Máy chủ lưu trữ</h2>
 <p>Website được phục vụ qua Hostinger và Vercel. Như mọi trang web, các nhà cung cấp này có thể ghi nhật ký kỹ thuật (địa chỉ IP, thời gian truy cập, loại trình duyệt) để vận hành và chống tấn công. Công ty không dùng nhật ký này để nhận diện cá nhân.</p>
-<h2>5. Không quảng cáo, không theo dõi</h2>
+<h2>6. Không quảng cáo, không theo dõi</h2>
 <p>Website và ứng dụng không hiển thị quảng cáo, không dùng cookie quảng cáo hay công cụ phân tích hành vi, không bán hay cho thuê dữ liệu.</p>
-<h2>6. Độ tuổi</h2>
+<h2>7. Độ tuổi</h2>
 <p>Dịch vụ dành cho người từ 16 tuổi trở lên.</p>
-<h2>7. Quyền của bạn</h2>
-<p>Theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, bạn có quyền được biết về việc xử lý dữ liệu của mình, đồng ý hoặc rút lại đồng ý, và yêu cầu xóa dữ liệu. Vì dữ liệu nằm trên thiết bị của bạn, bạn có thể tự xóa ngay như ở mục 1. Mọi câu hỏi xin gửi về <a href="mailto:${SUPPORT.email}">${SUPPORT.email}</a>.</p>
-<h2>8. Liên hệ</h2>
+<h2>8. Quyền của bạn</h2>
+<p>Theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, bạn có quyền được biết về việc xử lý dữ liệu của mình, đồng ý hoặc rút lại đồng ý, và yêu cầu xóa dữ liệu. Vì dữ liệu nằm trên thiết bị của bạn, bạn có thể tự xóa ngay như ở mục 1, hoặc dùng nút “Xóa toàn bộ dữ liệu” ở Trang của bạn. Mọi câu hỏi xin gửi về <a href="mailto:${SUPPORT.email}">${SUPPORT.email}</a>.</p>
+<h2>9. Liên hệ</h2>
 <p>Hỗ trợ người dùng: email <a href="mailto:${SUPPORT.email}">${SUPPORT.email}</a> hoặc gọi Admin: <a href="tel:${SUPPORT.phone.replace(/ /g, '')}">${SUPPORT.phone}</a>.</p>
 <p>Đơn vị vận hành: ${COMPANY.name}<br>Mã số thuế: ${COMPANY.tax}<br>Địa chỉ: ${COMPANY.addr}<br>Điện thoại: <a href="tel:${COMPANY.phone.replace(/ /g, '')}">${COMPANY.phone}</a> · Email: <a href="mailto:${COMPANY.email}">${COMPANY.email}</a></p>
-<h2>9. Thay đổi chính sách</h2>
+<h2>10. Thay đổi chính sách</h2>
 <p>Khi chính sách thay đổi, trang này được cập nhật và ghi lại ngày cập nhật ở đầu trang.</p>
 </main></body></html>`, htmlOpts);
 privacy = privacy.replace('__H__', sha256(privacy.match(/<style>([\s\S]*?)<\/style>/)[1]));
