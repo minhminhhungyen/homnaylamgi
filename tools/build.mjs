@@ -313,6 +313,8 @@ cpSync(path.join(SRC, 'server'), DIST, { recursive: true });
 out('api/_basemax.php', `<?php\n// Số lớn nhất của thư viện gốc (do tools/build.mjs tạo)\nreturn ['q' => ${Math.max(...ACT.map(a => a.id))}, 'an' => ${Math.max(...FOODS.map(f => f.id))}];\n`);
 mkdirSync(path.join(DIST, 'data'), { recursive: true });
 out('data/library.json', JSON.stringify({ q: ACT, an: FOODS }));
+/* Hostinger đang để website kiểu Node.js lấy thư mục dist/ làm gốc: cần package.json có lệnh build (không làm gì, vì dist đã build sẵn) */
+out('package.json', JSON.stringify({ name: 'homnaylamgi-dist', version: '1.0.0', private: true, description: 'Bản web đã build sẵn (tools/build.mjs). Hostinger chép nguyên thư mục này ra public_html.', scripts: { build: 'echo "dist da build san"' } }, null, 2) + '\n');
 out('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 out('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE}/</loc><lastmod>${TODAY}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>\n  <url><loc>${SITE}/bai-viet</loc><lastmod>${TODAY}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n  <url><loc>${SITE}/rieng-tu</loc><lastmod>${TODAY}</lastmod><changefreq>yearly</changefreq><priority>0.2</priority></url>\n</urlset>\n`);
 out('sw.js', await minJs(readFileSync(path.join(SRC, 'sw.js'), 'utf8').replace('__VERSION__', VERSION)));

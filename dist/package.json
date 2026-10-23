@@ -1,0 +1,9 @@
+{
+  "name": "homnaylamgi-dist",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bản web đã build sẵn (tools/build.mjs). Hostinger chép nguyên thư mục này ra public_html.",
+  "scripts": {
+    "build": "echo \"dist da build san\""
+  }
+}
