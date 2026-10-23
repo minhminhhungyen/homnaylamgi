@@ -17,6 +17,7 @@ ErrorDocument 404 /404.html
   # Chặn file ẩn, file cấu hình, sao lưu
   RewriteRule (^|/)\.(?!well-known/) - [F,L]
   RewriteRule \.(sql|bak|log|ini|env|sh)$ - [F,L]
+  RewriteRule ^(package(-lock)?\.json|node_modules/) - [F,L]
   # Ảnh tải lên (lưu ngoài public_html): /uploads/2026/10/abc.jpg → api/img.php
   RewriteRule ^uploads/([0-9]{4}/[0-9]{2}/[a-f0-9]{16}\.jpg)$ api/img.php?f=$1 [L]
   # Bài viết: /bai-viet/<đường-dẫn> → bai-viet/index.php

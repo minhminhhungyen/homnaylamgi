@@ -31,7 +31,17 @@ function showLogin(err) {
   <p><button class="btn" type="submit">Đăng nhập</button></p><p class="muted"><a href="/#toi">Quên mật khẩu?</a></p></form>`;
   $('#lf').addEventListener('submit', async e => {
     e.preventDefault();
-    try { const j = await api('/api/auth.php?action=login', { email: $('#le').value, password: $('#lp').value }); if (j.user.role !== 'admin') { showLogin('Tài khoản này không có quyền quản trị.'); return; } start(); } catch (x) { showLogin(x.message); }
+    try { const j = await api('/api/auth.php?action=login', { email: $('#le').value, password: $('#lp').value }); if (j.need2fa) { show2fa(); return; } if (j.user.role !== 'admin') { showLogin('Tài khoản này không có quyền quản trị.'); return; } start(); } catch (x) { showLogin(x.message); }
+  });
+}
+function show2fa(err) {
+  app.innerHTML = `<form class="card login" id="tf"><h1>Xác thực 2 bước</h1>${err ? `<p class="err">${esc(err)}</p>` : ''}<p class="muted">Mở ứng dụng Google Authenticator (hoặc ứng dụng tương tự) và nhập mã 6 số của Hôm nay làm gì?.</p>
+  <label for="tc">Mã 6 số</label><input id="tc" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required>
+  <p><button class="btn" type="submit">Xác nhận</button></p></form>`;
+  $('#tc').focus();
+  $('#tf').addEventListener('submit', async e => {
+    e.preventDefault();
+    try { const j = await api('/api/auth.php?action=2fa', { code: $('#tc').value }); if (j.user.role !== 'admin') { showLogin('Tài khoản này không có quyền quản trị.'); return; } start(); } catch (x) { if (/đăng nhập lại|từ đầu/.test(x.message)) showLogin(x.message); else show2fa(x.message); }
   });
 }
 async function start() {
@@ -222,8 +232,25 @@ async function settings() {
   app.innerHTML = `<h1>Cài đặt</h1><form class="card" id="sf"><label for="sg">Google Client ID (đăng nhập bằng Google)</label><input id="sg" type="text" value="${esc(s.google_client_id)}" placeholder="…apps.googleusercontent.com">
   <p class="muted">Tạo trong Google Cloud Console → APIs &amp; Services → Credentials → OAuth client ID, loại Web application, thêm “Authorized JavaScript origins”: ${esc(s.site_url)}. Để trống là tắt đăng nhập Google.</p>
   <p class="muted">Thư gửi đi từ: ${esc(s.mail_from)}. Cần tạo hộp thư này (hoặc bật email cho tên miền) trong hPanel để thư xác nhận và quên mật khẩu không bị vào Spam.</p>
-  <p><button class="btn" type="submit">Lưu</button></p><p class="err" id="serr"></p></form>`;
+  <p><button class="btn" type="submit">Lưu</button></p><p class="err" id="serr"></p></form>
+  <div class="card" id="tfa"><h2>Xác thực 2 bước cho tài khoản của bạn</h2>${s.twofa
+    ? `<p><span class="pill ok">Đang bật</span> Mỗi lần đăng nhập cần thêm mã 6 số từ điện thoại.</p><details><summary>Tắt xác thực 2 bước</summary><form id="tfOff"><label for="tfp">Mật khẩu</label><input id="tfp" type="password" autocomplete="current-password" required><label for="tfc">Mã 6 số hiện tại</label><input id="tfc" type="text" inputmode="numeric" maxlength="7" required><p><button class="btn ghost" type="submit">Tắt</button></p><p class="err" id="tferr"></p></form></details>`
+    : `<p><span class="pill">Chưa bật</span> Nên bật: kể cả khi lộ mật khẩu, người khác vẫn không vào được trang quản trị nếu không có điện thoại của bạn.</p><p><button class="btn" type="button" id="tfOn">Bật xác thực 2 bước</button></p><div id="tfSetup"></div>`}
+  ${s.admins_no2fa ? `<p class="muted">Hiện có ${s.admins_no2fa} tài khoản quản trị chưa bật xác thực 2 bước.</p>` : ''}</div>`;
   $('#sf').addEventListener('submit', async e => { e.preventDefault(); try { await api('/api/admin.php?action=settings', { google_client_id: $('#sg').value.trim() }); toast('Đã lưu cài đặt.'); } catch (x) { $('#serr').textContent = x.message; } });
+  const on = $('#tfOn');
+  if (on) on.addEventListener('click', async () => {
+    try {
+      const j = await api('/api/admin.php?action=totp-begin', {});
+      let img = '';
+      try { const qr = qrcode(0, 'M'); qr.addData(j.uri); qr.make(); img = `<img src="${qr.createDataURL(5, 8)}" alt="Mã QR để quét bằng ứng dụng xác thực" width="240" height="240">`; } catch (e) { img = ''; }
+      $('#tfSetup').innerHTML = `<ol><li>Cài ứng dụng Google Authenticator (hoặc Microsoft Authenticator) trên điện thoại.</li><li>Quét mã QR này, hoặc nhập tay khóa: <code>${esc(j.secret.replace(/(.{4})/g, '$1 ').trim())}</code></li><li>Nhập mã 6 số ứng dụng hiện ra.</li></ol>${img}
+        <form id="tfEn"><label for="tfn">Mã 6 số</label><input id="tfn" type="text" inputmode="numeric" maxlength="7" required><p><button class="btn" type="submit">Xác nhận và bật</button></p><p class="err" id="tfnerr"></p></form>`;
+      $('#tfEn').addEventListener('submit', async e => { e.preventDefault(); try { await api('/api/admin.php?action=totp-enable', { code: $('#tfn').value }); toast('Đã bật xác thực 2 bước.'); route(); } catch (x) { $('#tfnerr').textContent = x.message; } });
+    } catch (x) { fail(x); }
+  });
+  const off = $('#tfOff');
+  if (off) off.addEventListener('submit', async e => { e.preventDefault(); try { await api('/api/admin.php?action=totp-disable', { password: $('#tfp').value, code: $('#tfc').value }); toast('Đã tắt xác thực 2 bước.'); route(); } catch (x) { $('#tferr').textContent = x.message; } });
 }
 
 start().catch(e => { app.innerHTML = `<div class="card"><p class="err">${esc(e.message)}</p></div>`; });

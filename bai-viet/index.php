@@ -5,7 +5,7 @@ require dirname(__DIR__) . '/api/_lib.php';
 require dirname(__DIR__) . '/api/_content.php';
 require dirname(__DIR__) . '/api/_page.php';
 $slug = (string) ($_GET['slug'] ?? '');
-if (!installed()) { http_response_code(503); page_head('Bài viết | Hôm nay làm gì?'); echo '<div class="card"><h1>Bài viết</h1><p>Mục bài viết sắp có.</p></div>'; page_foot(); exit; }
+if (!installed()) { page_head('Bài viết | Hôm nay làm gì?'); echo '<div class="card"><h1>Bài viết</h1><p>Mục bài viết sắp có.</p></div>'; page_foot(); exit; }
 header('Cache-Control: public, max-age=120');
 if ($slug !== '') {
   if (!preg_match('/^[a-z0-9-]{1,120}$/', $slug)) { http_response_code(404); }
