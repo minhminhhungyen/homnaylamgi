@@ -231,7 +231,7 @@ function weight(a) {
   if (ss.length) w *= ss.includes(SEASON) ? 1.5 : 0.4;
   if (S.mood === 'h' && a.d >= 5) w *= 1.6;
   if (S.mood === 'm' && a.d >= 6) w *= 0.4;
-  if (LIFT[S.mood] && LIFT[S.mood].includes(a.c)) w *= 1.5;
+  if (LIFT[S.mood] && LIFT[S.mood].includes(a.c)) w *= 1.8;
   w *= 1 + 0.08 * (S.pref[a.c] || 0);
   if (WX && S.f.when === 'now') w *= wxWeight(a, tags);
   if (SLOT === 'k' && S.f.when === 'now' && a.id === 97) w *= 5;
@@ -825,12 +825,12 @@ function wxWeight(a, tags) {
   if (WX.airSens && a.c === 'vd' && o === 'o') w *= 0.5;
   if (WX.uvHigh && o === 'o') w *= 0.6;
   if (tags.includes('sao')) w *= WX.clearNight ? 4 : 0.05;
-  if (tags.includes('hoanghon')) w *= WX.golden ? 6 : (WX.cls === 'rain' || WX.cls === 'storm' ? 0.1 : 1);
+  if (tags.includes('hoanghon')) w *= WX.golden ? 25 : (WX.cls === 'rain' || WX.cls === 'storm' ? 0.1 : 1);
   return w;
 }
 function wxFood(f) {
   if (!WX) return 1;
-  if (WX.cls === 'rain' || WX.cls === 'storm' || WX.cls === 'cold') return (f.w === 'n' ? 2.5 : f.w === 'm' ? 0.4 : 1) * (f.o === 'h' && WX.cls !== 'cold' ? 1.2 : 1);
+  if (WX.cls === 'rain' || WX.cls === 'storm' || WX.cls === 'cold') return (f.w === 'n' ? 3 : f.w === 'm' ? 0.3 : 1) * (f.o === 'h' && WX.cls !== 'cold' ? 1.2 : 1);
   if (WX.cls === 'hot') return f.w === 'm' ? 2.2 : f.w === 'n' ? 0.5 : 1;
   return 1;
 }

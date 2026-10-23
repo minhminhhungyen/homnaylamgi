@@ -6,7 +6,7 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 
 | Đường dẫn | Nội dung |
 |---|---|
-| `src/data.js` | Thư viện: 400 quẻ (`ACTIVITIES`), 80 món (`FOODS`), 12 thử thách 7 ngày (`CHALLENGES`). Sửa hoặc thêm ở đây. |
+| `src/data.js` | Thư viện: 1000 quẻ (`ACTIVITIES`, mỗi nhóm 100), 80 món (`FOODS`), 12 thử thách 7 ngày (`CHALLENGES`). Sửa hoặc thêm ở đây. |
 | `src/app.js` | Logic trang: rút quẻ, lọc, sao, huy hiệu, âm lịch, thời tiết, chia sẻ. |
 | `src/style.css`, `src/body.html` | Giao diện. |
 | `src/sw.js` | Service worker để trang mở được khi mất mạng. |
@@ -61,6 +61,7 @@ Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên,
 - Lời quẻ cũng in lên ảnh story nên mỗi câu `n` phải đọc riêng vẫn an toàn. Nhãn `ai` (đi cùng ai) chỉ lọc khi người dùng tự chọn, nên việc cần có người đi cùng phải ghi rõ trong lời `s`.
 - Ngày 23/10/2026 đã rà độc lập toàn bộ 299 quẻ, 80 món, 12 thử thách: sửa 43 quẻ (bỏ hình ảnh chỗ cao, nước, đêm khuya một mình, thư từ biệt, cho đi đồ quý; thêm lưu ý an toàn khi gặp người lạ, đi xa, chạy bộ, tuổi lái xe, tuổi hiến máu).
 - Cùng ngày, rà độc lập 101 quẻ mới (300–400): sửa 29 quẻ (cảnh báo app VssID giả, dây điện đứt gọi điện lực, an toàn khi thắng đường, đi xa dưới 18 tuổi, dán đầu pin cũ, bỏ quẻ trùng ý). Số khẩn cấp 113, 114, 115 (quẻ 327) cần kiểm lại khi gộp đầu số (dự kiến 2027).
+- Cùng ngày, thêm 600 quẻ (401–1000, mỗi nhóm lên 100; thử thách chung 176 quẻ). Ba lượt rà độc lập toàn bộ 600 quẻ: không có nội dung về tự tử, tự làm hại; sửa 23 quẻ (khuya không gây ồn, thêm đường gọi 115 cho quẻ người buồn, bỏ kiểu “trả nợ, thu xếp”, độ tuổi xem kịch, phí SMS ngân hàng, quẻ cần người đi cùng). Tăng trọng số gợi ý hoàng hôn (×25), món nóng khi mưa (×3), nhóm việc giúp vui lên khi buồn (×1,8) để giữ tỉ lệ khi thư viện lớn hơn.
 - Chọn Buồn hoặc Cô đơn thì hiện lời nhắn: kể với người bạn tin tưởng, người nhà, thầy cô hoặc gặp bác sĩ; thấy không an toàn thì gọi cấp cứu 115. Trang nhật ký và chân trang có lời nhắn tương tự. Số Admin ghi rõ là để báo lỗi trang. Trang không tư vấn tâm lý.
 
 ## Chia sẻ và link rủ
