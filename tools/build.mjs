@@ -38,7 +38,11 @@ if (BAD.length) throw new Error('Nội dung bị chặn vì an toàn người d�
 /* quy tắc theo nhãn: việc cho người đang buồn, cô đơn phải nhẹ (độ khó ≤ 6); việc lúc khuya (22–5h) không bắt ra ngoài */
 const RULE = [
   ...ACT.filter(a => /[bl]/.test(a.m) && a.d > 6).map(a => `Quẻ ${a.id}: gắn tâm trạng buồn/cô đơn nhưng độ khó ${a.d} > 6`),
-  ...ACT.filter(a => a.g.includes('k') && a.o === 'o').map(a => `Quẻ ${a.id}: gợi ý ra ngoài lúc khuya`)
+  ...ACT.filter(a => a.g.includes('k') && a.o === 'o').map(a => `Quẻ ${a.id}: gợi ý ra ngoài lúc khuya`),
+  /* thử thách chung: ai cũng nhận, mọi giờ, mọi tâm trạng → phải nhẹ, rẻ, có cả khung sáng và tối */
+  ...ACT.filter(a => a.ch && (a.d > 5 || a.k > 1 || !a.g.includes('s') || !a.g.includes('t'))).map(a => `Quẻ ${a.id}: thử thách chung phải độ khó ≤ 5, chi phí dưới 100k, có khung sáng và tối`),
+  /* việc chỉ làm cùng người yêu thì không gợi ý cho người đang buồn, cô đơn */
+  ...ACT.filter(a => !/[abg]/.test(a.ai) && /[bl]/.test(a.m)).map(a => `Quẻ ${a.id}: chỉ dành cho người yêu nhưng gắn tâm trạng buồn/cô đơn`)
 ];
 if (RULE.length) throw new Error('Nội dung bị chặn vì an toàn người dùng:\n' + RULE.join('\n'));
 const dup = (list, key) => list.map(x => x[key]).filter((v, i, a) => a.indexOf(v) !== i);

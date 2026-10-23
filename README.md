@@ -6,7 +6,7 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 
 | Đường dẫn | Nội dung |
 |---|---|
-| `src/data.js` | Thư viện: 299 quẻ (`ACTIVITIES`), 80 món (`FOODS`), 12 thử thách 7 ngày (`CHALLENGES`). Sửa hoặc thêm ở đây. |
+| `src/data.js` | Thư viện: 400 quẻ (`ACTIVITIES`), 80 món (`FOODS`), 12 thử thách 7 ngày (`CHALLENGES`). Sửa hoặc thêm ở đây. |
 | `src/app.js` | Logic trang: rút quẻ, lọc, sao, huy hiệu, âm lịch, thời tiết, chia sẻ. |
 | `src/style.css`, `src/body.html` | Giao diện. |
 | `src/sw.js` | Service worker để trang mở được khi mất mạng. |
@@ -20,7 +20,7 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 ## Sửa nội dung rồi đưa lên
 
 1. Sửa file trong `src/`.
-2. Thêm hoặc sửa quẻ thì tạo lại ảnh xem trước: `cd tools && npm run og` (cần `npm i -D playwright && npx playwright install chromium`). Quẻ chưa có ảnh riêng sẽ dùng ảnh chung.
+2. Thêm hoặc sửa quẻ thì tạo lại ảnh xem trước: `cd tools && npm run og` (cần `npm i -D playwright && npx playwright install chromium`). Lệnh chỉ vẽ ảnh có chữ thay đổi, ghi nhớ trong `tools/og-manifest.json`; `-- --all` để vẽ lại hết. Quẻ chưa có ảnh riêng sẽ dùng ảnh chung.
 3. Build: `cd tools && npm ci && npm run build`
 4. Commit và push nhánh `main` → Vercel tự deploy.
 5. Chạy `bash tools/deploy-hostinger.sh` → cập nhật nhánh `deploy` → Hostinger tự kéo về `public_html` (nếu đã bật Auto Deployment trong hPanel).
@@ -50,12 +50,17 @@ Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên,
 ## Chốt chặn nội dung an toàn
 
 - `tools/build.mjs` rà mọi quẻ, món, thử thách trước khi build. Gặp lời lẽ về tự tử, tự làm hại bản thân, nhịn ăn, nhịn ngủ, chỗ cao nguy hiểm, rượu bia, thuốc lá, vape, bóng cười, cờ bạc, cá độ, đua xe, vượt đèn đỏ thì build dừng và in ra quẻ vi phạm. Trùng số quẻ, trùng tiêu đề cũng dừng.
-- Build cũng dừng nếu quẻ gắn tâm trạng Buồn/Cô đơn (`m` có `b` hoặc `l`) mà độ khó trên 6, hoặc quẻ lúc khuya (`g` có `k`) mà phải ra ngoài (`o:'o'`).
+- Build cũng dừng nếu:
+  - quẻ gắn tâm trạng Buồn/Cô đơn (`m` có `b` hoặc `l`) mà độ khó trên 6;
+  - quẻ lúc khuya (`g` có `k`) mà phải ra ngoài (`o:'o'`);
+  - quẻ thử thách chung (`ch:1`) khó trên 5, tốn từ 100k, hoặc thiếu khung sáng hay tối;
+  - quẻ chỉ làm cùng người yêu (`ai:'y'`) mà gắn tâm trạng Buồn/Cô đơn.
 - Muốn thêm từ cấm: sửa mảng `BANNED` trong `tools/build.mjs`. Không gỡ chốt chặn để build cho qua; sửa lời quẻ.
 - Người chọn tâm trạng Buồn hoặc Cô đơn chỉ được gợi ý việc nhẹ (độ khó tối đa 6).
-- Khuya (22–5h), ai cũng chỉ được gợi ý việc nhẹ nhàng (độ khó tối đa 3), không phải ra ngoài. Mở link rủ hoặc thử thách chung có việc ra ngoài lúc khuya thì hiện lời nhắc để trời sáng hãy làm. Trời đẹp lúc khuya không khuyên ra ngoài. Ăn khuya thì gợi ý gọi giao tận nhà hoặc tự làm nhanh.
+- Khuya (22–5h), ai cũng chỉ được gợi ý việc nhẹ nhàng (độ khó tối đa 3), không phải ra ngoài. Mở link rủ hoặc thử thách chung lúc khuya mà việc đó phải ra ngoài, khó hoặc không hợp giờ khuya thì hiện lời nhắc để trời sáng, để mai hãy làm. Trời đẹp lúc khuya không khuyên ra ngoài. Ăn khuya thì gợi ý gọi giao tận nhà hoặc tự làm nhanh.
 - Lời quẻ cũng in lên ảnh story nên mỗi câu `n` phải đọc riêng vẫn an toàn. Nhãn `ai` (đi cùng ai) chỉ lọc khi người dùng tự chọn, nên việc cần có người đi cùng phải ghi rõ trong lời `s`.
 - Ngày 23/10/2026 đã rà độc lập toàn bộ 299 quẻ, 80 món, 12 thử thách: sửa 43 quẻ (bỏ hình ảnh chỗ cao, nước, đêm khuya một mình, thư từ biệt, cho đi đồ quý; thêm lưu ý an toàn khi gặp người lạ, đi xa, chạy bộ, tuổi lái xe, tuổi hiến máu).
+- Cùng ngày, rà độc lập 101 quẻ mới (300–400): sửa 29 quẻ (cảnh báo app VssID giả, dây điện đứt gọi điện lực, an toàn khi thắng đường, đi xa dưới 18 tuổi, dán đầu pin cũ, bỏ quẻ trùng ý). Số khẩn cấp 113, 114, 115 (quẻ 327) cần kiểm lại khi gộp đầu số (dự kiến 2027).
 - Chọn Buồn hoặc Cô đơn thì hiện lời nhắn: kể với người bạn tin tưởng, người nhà, thầy cô hoặc gặp bác sĩ; thấy không an toàn thì gọi cấp cứu 115. Trang nhật ký và chân trang có lời nhắn tương tự. Số Admin ghi rõ là để báo lỗi trang. Trang không tư vấn tâm lý.
 
 ## Chia sẻ và link rủ

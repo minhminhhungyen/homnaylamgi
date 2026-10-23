@@ -1,7 +1,13 @@
 // Ảnh xem trước 1200×630 cho từng quẻ và từng món (hiện khi dán link /q/12, /an/5 lên Facebook, Zalo, Threads…)
 // Chạy lại khi thêm hoặc sửa quẻ: cd tools && npm run og   (cần Playwright + Chromium: npx playwright install chromium)
 // Kết quả: src/og/q-<số>.png, src/og/an-<số>.png — build.mjs tự chép sang dist/og/
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+// Chỉ vẽ lại ảnh có nội dung đổi (so với tools/og-manifest.json), vì mỗi lần vẽ ra PNG hơi khác nhau dù nội dung y hệt.
+//   --all            vẽ lại toàn bộ
+//   --keep-from=REF  ảnh nào nội dung giống ở commit REF (vd HEAD) thì lấy lại đúng file PNG của REF, không vẽ lại
+//                    (chỉ dùng khi mẫu ảnh trong file này không đổi so với REF)
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import sharp from 'sharp';
@@ -12,7 +18,11 @@ let chromium;
 try { const m = await import(process.env.PLAYWRIGHT_MODULE || 'playwright'); chromium = m.chromium || (m.default && m.default.chromium); } catch (e) { chromium = null; }
 if (!chromium) { console.error('Cần Playwright: npm i -D playwright && npx playwright install chromium'); process.exit(1); }
 
-const [ACT, FOODS] = new Function(`${readFileSync(path.join(SRC, 'data.js'), 'utf8')}\nreturn [ACTIVITIES, FOODS];`)();
+const loadData = src => new Function(`${src}\nreturn [ACTIVITIES, FOODS];`)();
+const [ACT, FOODS] = loadData(readFileSync(path.join(SRC, 'data.js'), 'utf8'));
+const ARGS = process.argv.slice(2), FORCE = ARGS.includes('--all');
+const FROM = (ARGS.find(a => a.startsWith('--keep-from=')) || '').slice('--keep-from='.length);
+const MAN = path.join(ROOT, 'tools', 'og-manifest.json');
 const font = (fam, w, st, f) => `@font-face{font-family:"${fam}";font-weight:${w};font-style:${st};src:url(data:font/woff2;base64,${readFileSync(path.join(SRC, 'fonts', f)).toString('base64')}) format("woff2")}`;
 const FONTS = [font('Be Vietnam Pro', 400, 'normal', 'be-vietnam-pro-400.woff2'), font('Be Vietnam Pro', 600, 'normal', 'be-vietnam-pro-600.woff2'),
   font('Bricolage Grotesque', 800, 'normal', 'bricolage-grotesque-800.woff2'), font('Fraunces', 400, 'italic', 'fraunces-400-italic.woff2')].join('');
@@ -49,17 +59,34 @@ h1{font:800 72px/1.06 "Bricolage Grotesque";letter-spacing:-.025em;text-wrap:bal
 <div class="mid"><h1 id="t"></h1><p class="po" id="po"></p></div>
 <div class="bot"><div id="left"></div><p class="site"><small>Rút quẻ của bạn tại</small>homnaylamgi.com</p></div></div></body></html>`;
 
-mkdirSync(OUT, { recursive: true });
-const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
-const pg = await b.newPage({ viewport: { width: 1200, height: 630 } });
-await pg.setContent(html);
-await pg.evaluate(() => document.fonts.ready);
-const jobs = ACT.map(a => ({ file: `q-${a.id}.png`, lab: 'HÔM NAY LÀM GÌ?', no: `Quẻ số ${String(a.id).padStart(3, '0')} <span>· ${LVL(a.d)}</span>`, seal: SEAL[a.c], t: a.t, po: a.n,
+const buildJobs = (ACT, FOODS) => ACT.map(a => ({ file: `q-${a.id}.png`, lab: 'HÔM NAY LÀM GÌ?', no: `Quẻ số ${String(a.id).padStart(3, '0')} <span>· ${LVL(a.d)}</span>`, seal: SEAL[a.c], t: a.t, po: a.n,
   left: `<div class="stars">${Array.from({ length: 10 }, (_, i) => `<svg viewBox="0 0 24 24"><path fill="${i < a.d ? '#E0A100' : '#EADBD5'}" d="${STAR}"/></svg>`).join('')}</div><p class="dk">Độ khó ${a.d}/10 · nhận ${a.d} sao</p>` }))
   .concat(FOODS.map(f => ({ file: `an-${f.id}.png`, lab: 'HÔM NAY ĂN GÌ?', no: `Quẻ ăn số ${String(f.id).padStart(3, '0')} <span>· ${KIND[f.o]}</span>`, seal: FSEAL[f.o], t: f.t, po: f.n,
     left: `<p class="meta">Bữa ${f.b.split('').map(c => MEAL[c]).join(', ')}<br>${REGION[f.r]} · ${PURSE[f.k]}</p>` })));
+const jobs = buildJobs(ACT, FOODS);
+/* khóa nội dung của từng ảnh: mẫu ảnh + chữ trên ảnh */
+const TPL = createHash('sha1').update(html).digest('hex').slice(0, 12);
+const inputs = j => JSON.stringify([j.lab, j.no, j.seal, j.t, j.po, j.left]);
+const keyOf = j => createHash('sha1').update(TPL + inputs(j)).digest('hex').slice(0, 16);
+let man = {};
+try { man = JSON.parse(readFileSync(MAN, 'utf8')); } catch (e) { man = {}; }
+mkdirSync(OUT, { recursive: true });
+let kept = 0;
+if (FROM) {
+  const git = (...a) => execFileSync('git', a, { cwd: ROOT, maxBuffer: 1 << 28 });
+  const old = new Map(buildJobs(...loadData(git('show', `${FROM}:src/data.js`).toString())).map(j => [j.file, j]));
+  for (const j of jobs) {
+    const o = old.get(j.file);
+    if (!o || inputs(o) !== inputs(j)) continue;
+    try { writeFileSync(path.join(OUT, j.file), git('show', `${FROM}:src/og/${j.file}`)); man[j.file] = keyOf(j); kept++; } catch (e) { /* REF chưa có ảnh này */ }
+  }
+}
+const todo = jobs.filter(j => FORCE || man[j.file] !== keyOf(j) || !existsSync(path.join(OUT, j.file)));
 let n = 0, bytes = 0;
-for (const j of jobs) {
+const b = todo.length ? await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined }) : null;
+const pg = b && await b.newPage({ viewport: { width: 1200, height: 630 } });
+if (pg) { await pg.setContent(html); await pg.evaluate(() => document.fonts.ready); }
+for (const j of todo) {
   await pg.evaluate(j => {
     const $ = s => document.querySelector(s);
     $('#lab').textContent = j.lab; $('#no').innerHTML = j.no; $('#po').textContent = j.po; $('#left').innerHTML = j.left;
@@ -71,7 +98,9 @@ for (const j of jobs) {
   }, j);
   const png = await pg.screenshot({ type: 'png' });
   const small = await sharp(png).png({ palette: true, colours: 96, effort: 8, compressionLevel: 9 }).toBuffer();
-  writeFileSync(path.join(OUT, j.file), small); n++; bytes += small.length;
+  writeFileSync(path.join(OUT, j.file), small); man[j.file] = keyOf(j); n++; bytes += small.length;
 }
-await b.close();
-console.log(`Đã tạo ${n} ảnh xem trước trong src/og (tổng ${(bytes / 1048576).toFixed(1)} MB)`);
+if (b) await b.close();
+const live = new Set(jobs.map(j => j.file));
+writeFileSync(MAN, JSON.stringify(Object.fromEntries(Object.entries(man).filter(([k]) => live.has(k)).sort(([a], [b]) => a.localeCompare(b, 'en', { numeric: true }))), null, 0) + '\n');
+console.log(`Ảnh xem trước: vẽ mới ${n} (${(bytes / 1048576).toFixed(1)} MB)${kept ? `, lấy lại ${kept} ảnh từ ${FROM}` : ''}, giữ nguyên ${jobs.length - n - kept}, tổng ${jobs.length}`);

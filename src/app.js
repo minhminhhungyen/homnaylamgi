@@ -194,6 +194,9 @@ const MOOD_NOTE = {
   h: 'Đang hứng thì thử việc khó hơn một chút xem sao.'
 };
 const NIGHT_OUT = 'Khuya rồi, việc ra ngoài này để trời sáng hãy làm nhé.';
+const NIGHT_LATER = 'Khuya rồi, việc này để mai hãy làm nhé.';
+/* việc không hợp lúc khuya: ra ngoài, khó, hoặc không có khung giờ khuya */
+const notForNight = a => a.o === 'o' || a.d > 3 || !a.g.includes('k');
 const RELAX = ['place', 'level', 'dur', 'budget', 'who', 'when'];
 const RELAX_NAME = { place: 'nơi chốn', level: 'mức thử thách', dur: 'thời gian', budget: 'ngân sách', who: 'đi cùng ai', when: 'khung giờ' };
 const isSet = k => (k === 'when' ? S.f.when === 'now' : !!S.f[k]);
@@ -318,7 +321,7 @@ function renderSlip() {
   if (rec) $$('#feel [data-feel]').forEach(b => b.setAttribute('aria-pressed', String(rec.f === b.dataset.feel)));
   const rn = $('#relaxNote'), notes = [];
   if (lastRelax.length) notes.push(`Không có quẻ nào khớp hết lựa chọn của bạn lúc này, nên mình nới bớt phần ${lastRelax.map(k => RELAX_NAME[k]).join(', ')}.`);
-  if (SLOT === 'k' && a.o === 'o' && !rec) notes.push(NIGHT_OUT);
+  if (SLOT === 'k' && !rec) { if (a.o === 'o') notes.push(NIGHT_OUT); else if (S.f.when === 'now' && notForNight(a)) notes.push(NIGHT_LATER); }
   rn.hidden = !notes.length;
   rn.textContent = notes.join(' ');
   $('#careNote').hidden = !(S.mood === 'b' || S.mood === 'l');
@@ -430,7 +433,9 @@ function renderDaily() {
   $('#dTitle').textContent = CH.t;
   $('#dWhy').textContent = CH.n;
   $('#dStep').textContent = CH.s;
-  $('#dNight').hidden = !(SLOT === 'k' && CH.o === 'o' && !doneToday(CH.id));
+  const dn = $('#dNight');
+  dn.hidden = !(SLOT === 'k' && notForNight(CH) && !doneToday(CH.id));
+  if (!dn.hidden) dn.textContent = CH.o === 'o' ? NIGHT_OUT : 'Khuya rồi, thử thách này để mai hãy làm nhé.';
   const b = $('#dBtn');
   if (doneToday(CH.id)) { b.disabled = true; b.className = 'btn btn-main is-go btn-sm'; b.innerHTML = `${icon('check')}<span>Đã hoàn thành</span>`; }
   else if (S.chAccDay === TODAY) { b.disabled = false; b.className = 'btn btn-main is-go btn-sm'; b.innerHTML = `${icon('check')}<span>Mình làm xong rồi</span>`; }
