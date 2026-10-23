@@ -96,6 +96,9 @@ Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên,
 - Trang quản trị `/quan-tri/`: tổng quan, bài viết (soạn kiểu Markdown đơn giản, ảnh bìa, hẹn giờ đăng), thông báo đầu trang, thêm/sửa/ẩn quẻ và món (qua cùng chốt an toàn), người dùng (khóa, cấp quyền, xóa), cài đặt Google Client ID.
 - Người dùng: đăng ký email + mật khẩu (Argon2id), xác nhận email, quên mật khẩu, Google (Google Identity Services, kiểm ID token qua tokeninfo), đổi tên, đổi mật khẩu, tự xóa tài khoản. Phải xác nhận từ đủ 16 tuổi.
 - Bảo mật: câu lệnh SQL chuẩn bị sẵn, CSRF, phiên HttpOnly + Secure + SameSite, khóa/đổi mật khẩu thì đăng xuất mọi thiết bị, giới hạn số lần thử (chỉ đếm lần sai, theo email + IP), thời gian trả lời không lộ email có tồn tại, ảnh tải lên được vẽ lại bằng GD.
+- Quản trị viên nên bật xác thực 2 bước (Cài đặt → Xác thực 2 bước, mã TOTP như Google Authenticator; khóa bí mật được mã hóa AES-256-GCM bằng `app_key` trong file cấu hình). Phiên quản trị tối đa 12 giờ. Mỗi lần quản trị viên đăng nhập được ghi nhật ký kèm IP.
+- Mật khẩu mới được đối chiếu với danh sách mật khẩu đã lộ (Have I Been Pwned, chỉ gửi 5 ký tự đầu của mã SHA-1; lỗi mạng thì bỏ qua).
+- Hostinger đang để website kiểu Node.js, gốc là thư mục `dist` (có `dist/package.json` với lệnh build không làm gì): mỗi lần push `main`, Hostinger tự chép `dist/` ra public_html. Đừng đổi gốc về `tools`.
 - Thư (xác nhận, quên mật khẩu) gửi bằng `mail()` từ noreply@homnaylamgi.com: cần bật email cho tên miền trong hPanel để thư không vào Spam.
 - Vercel không chạy PHP: `/api`, `/quan-tri`, `/bai-viet` trên Vercel chuyển về homnaylamgi.com.
 

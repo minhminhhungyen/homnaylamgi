@@ -4,6 +4,16 @@ declare(strict_types=1);
 require __DIR__ . '/_lib.php';
 
 $act = (string) ($_GET['action'] ?? '');
+/* tài khoản bật xác thực 2 bước: chưa đăng nhập ngay, chờ mã 6 số */
+function finish_login(array $u): never {
+  if (!empty($u['totp_secret'])) {
+    start_session(); session_regenerate_id(true);
+    $_SESSION['pending2fa'] = ['uid' => (int) $u['id'], 'at' => time()];
+    out(['ok' => true, 'need2fa' => true, 'csrf' => csrf()]);
+  }
+  login_now($u);
+  out(['ok' => true, 'user' => public_user(me()), 'csrf' => csrf()]);
+}
 if (!installed()) out(['ok' => true, 'installed' => false, 'user' => null, 'google' => '', 'csrf' => '']);
 start_session();
 
@@ -43,6 +53,19 @@ switch ($act) {
     limit_clear($kIp);
     if ($u['status'] !== 'active') fail('Tài khoản đang bị khóa. Liên hệ hotro@homnaylamgi.com.', 403);
     if (password_needs_rehash($u['pass_hash'], defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT)) q('UPDATE users SET pass_hash = ? WHERE id = ?', [hash_pass($pass), $u['id']]);
+    finish_login($u);
+
+  case '2fa':
+    need_post(); check_csrf();
+    $p = $_SESSION['pending2fa'] ?? null;
+    if (!$p || time() - (int) $p['at'] > 300) { unset($_SESSION['pending2fa']); fail('Hết thời gian nhập mã, hãy đăng nhập lại.', 401); }
+    limit('2fa:' . $p['uid'], 6, 600);
+    $u = one('SELECT * FROM users WHERE id = ?', [$p['uid']]);
+    $sec = $u ? open_secret($u['totp_secret']) : null;
+    if (!$u || $u['status'] !== 'active' || !$sec) { unset($_SESSION['pending2fa']); fail('Không đăng nhập được, thử lại từ đầu.', 401); }
+    $c = totp_check($sec, str_in('code', 12), $u['totp_last'] !== null ? (int) $u['totp_last'] : null);
+    if ($c === null) fail('Mã xác thực chưa đúng hoặc đã dùng.', 401);
+    q('UPDATE users SET totp_last = ? WHERE id = ?', [$c, $u['id']]);
     login_now($u);
     out(['ok' => true, 'user' => public_user(me()), 'csrf' => csrf()]);
 
@@ -83,8 +106,7 @@ switch ($act) {
       $u = one('SELECT * FROM users WHERE id = ?', [(int) db()->lastInsertId()]);
     }
     if ($u['status'] !== 'active') fail('Tài khoản đang bị khóa. Liên hệ hotro@homnaylamgi.com.', 403);
-    login_now($u);
-    out(['ok' => true, 'user' => public_user(me()), 'csrf' => csrf()]);
+    finish_login($u);
 
   case 'logout':
     need_post(); check_csrf();

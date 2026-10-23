@@ -45,7 +45,7 @@ if (installed() || is_file(cfg_path())) {
     $pdo->prepare('INSERT INTO users (email, name, pass_hash, role, email_verified, age_ok, created_at) VALUES (?, ?, ?, \'admin\', 1, 1, ?) ON DUPLICATE KEY UPDATE role = \'admin\', pass_hash = VALUES(pass_hash), name = VALUES(name)')
         ->execute([$aemail, $aname, hash_pass($apass), now()]);
     $conf = ['db_host' => $host, 'db_port' => $port, 'db_name' => $name, 'db_user' => $user, 'db_pass' => $pass, 'google_client_id' => $gid, 'site_url' => $site,
-             'mail_from' => 'noreply@' . (parse_url($site, PHP_URL_HOST) ?: 'homnaylamgi.com'), 'mail_reply' => 'hotro@homnaylamgi.com', 'installed_at' => now()];
+             'mail_from' => 'noreply@' . (parse_url($site, PHP_URL_HOST) ?: 'homnaylamgi.com'), 'mail_reply' => 'hotro@homnaylamgi.com', 'app_key' => bin2hex(random_bytes(32)), 'installed_at' => now()];
     $path = cfg_path();
     if (@file_put_contents($path, "<?php\n// Cấu hình Hôm nay làm gì? — KHÔNG đưa file này lên Git, không chia sẻ.\nreturn " . var_export($conf, true) . ";\n", LOCK_EX) === false) throw new RuntimeException('Không ghi được file cấu hình ở ' . e($path) . '.');
     @chmod($path, 0600);

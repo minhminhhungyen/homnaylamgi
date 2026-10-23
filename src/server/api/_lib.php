@@ -39,6 +39,8 @@ function db(): PDO {
   try {
     $pdo = new PDO($dsn, cfg('db_user'), cfg('db_pass'), [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]);
     $pdo->exec("SET time_zone = '+07:00'");
+    $flag = dirname(cfg_path()) . '/hnlg-schema-v2';
+    if (!is_file($flag)) { require_once __DIR__ . '/_schema.php'; migrate($pdo); @file_put_contents($flag, now()); }
   } catch (Throwable $e) { error_log('hnlg db: ' . $e->getMessage()); fail('Không kết nối được cơ sở dữ liệu.', 503); }
   return $pdo;
 }
@@ -90,7 +92,7 @@ function me(): ?array {
   start_session();
   $id = $_SESSION['uid'] ?? 0;
   if (!$id) return null;
-  $u = one('SELECT id, email, name, role, status, email_verified, google_sub, pass_hash IS NOT NULL AS has_pass, sess_ver, created_at FROM users WHERE id = ?', [$id]);
+  $u = one('SELECT id, email, name, role, status, email_verified, google_sub, pass_hash IS NOT NULL AS has_pass, totp_secret IS NOT NULL AS twofa, sess_ver, created_at FROM users WHERE id = ?', [$id]);
   if (!$u || $u['status'] !== 'active' || (int) ($_SESSION['ver'] ?? -1) !== (int) $u['sess_ver']) { logout_now(); return null; }
   return $u;
 }
@@ -100,7 +102,10 @@ function login_now(array $u): void {
   $_SESSION['uid'] = (int) $u['id'];
   $_SESSION['ver'] = (int) (one('SELECT sess_ver FROM users WHERE id = ?', [$u['id']])['sess_ver'] ?? 0);
   $_SESSION['csrf'] = bin2hex(random_bytes(16));
+  $_SESSION['auth_at'] = time();
+  unset($_SESSION['pending2fa']);
   q('UPDATE users SET last_login = ? WHERE id = ?', [now(), $u['id']]);
+  if ($u['role'] === 'admin') audit((int) $u['id'], 'admin-login', client_ip());
 }
 function logout_now(): void {
   start_session();
@@ -109,9 +114,15 @@ function logout_now(): void {
   $_SESSION['csrf'] = bin2hex(random_bytes(16));
 }
 function need_user(): array { $u = me(); if (!$u) fail('Bạn cần đăng nhập.', 401); return $u; }
-function need_admin(): array { $u = need_user(); if ($u['role'] !== 'admin') fail('Chỉ quản trị viên mới làm được việc này.', 403); return $u; }
+function need_admin(): array {
+  $u = need_user();
+  if ($u['role'] !== 'admin') fail('Chỉ quản trị viên mới làm được việc này.', 403);
+  /* phiên quản trị chỉ dùng tối đa 12 giờ kể từ lúc đăng nhập */
+  if (time() - (int) ($_SESSION['auth_at'] ?? 0) > 12 * 3600) { logout_now(); fail('Phiên quản trị đã quá 12 giờ, hãy đăng nhập lại.', 401); }
+  return $u;
+}
 function public_user(array $u): array {
-  return ['id' => (int) $u['id'], 'email' => $u['email'], 'name' => $u['name'], 'role' => $u['role'], 'verified' => (bool) $u['email_verified'], 'google' => !empty($u['google_sub']), 'hasPass' => (bool) $u['has_pass'], 'since' => substr((string) $u['created_at'], 0, 10)];
+  return ['id' => (int) $u['id'], 'email' => $u['email'], 'name' => $u['name'], 'role' => $u['role'], 'verified' => (bool) $u['email_verified'], 'google' => !empty($u['google_sub']), 'hasPass' => (bool) $u['has_pass'], 'twofa' => (bool) ($u['twofa'] ?? false), 'since' => substr((string) $u['created_at'], 0, 10)];
 }
 function audit(int $uid, string $action, string $detail = ''): void {
   try { q('INSERT INTO audit (user_id, action, detail, at, ip) VALUES (?, ?, ?, ?, ?)', [$uid, $action, mb_substr($detail, 0, 300), now(), client_ip()]); } catch (Throwable $e) { error_log('hnlg audit: ' . $e->getMessage()); }
@@ -146,8 +157,41 @@ function pass_ok(string $p): ?string {
   if (mb_strlen($p) < 8) return 'Mật khẩu cần ít nhất 8 ký tự.';
   if (mb_strlen($p) > 200) return 'Mật khẩu quá dài.';
   if (!preg_match('/\pL/u', $p) || !preg_match('/\d/', $p)) return 'Mật khẩu cần có cả chữ và số.';
+  if (pwned($p)) return 'Mật khẩu này đã xuất hiện trong các vụ lộ dữ liệu trên mạng. Hãy chọn mật khẩu khác.';
   return null;
 }
+/* kiểm mật khẩu có trong danh sách bị lộ (Have I Been Pwned, chỉ gửi 5 ký tự đầu của mã SHA-1; lỗi mạng thì bỏ qua) */
+function pwned(string $p): bool {
+  if (getenv('HNLG_NO_PWNED')) return false;
+  $h = strtoupper(sha1($p)); $pre = substr($h, 0, 5); $suf = substr($h, 5);
+  $ch = curl_init('https://api.pwnedpasswords.com/range/' . $pre);
+  curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 4, CURLOPT_CONNECTTIMEOUT => 3, CURLOPT_HTTPHEADER => ['Add-Padding: true', 'User-Agent: homnaylamgi.com']]);
+  $res = curl_exec($ch); $code = curl_getinfo($ch, CURLINFO_HTTP_CODE); curl_close($ch);
+  if ($code !== 200 || !is_string($res)) return false;
+  foreach (explode("\n", $res) as $line) { [$s, $n] = array_pad(explode(':', trim($line)), 2, '0'); if ($s === $suf && (int) $n > 0) return true; }
+  return false;
+}
+
+/* ---------- xác thực 2 bước (TOTP, chuẩn Google Authenticator) ---------- */
+function b32_encode(string $bin): string { $al = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; $bits = ''; foreach (str_split($bin) as $c) $bits .= str_pad(decbin(ord($c)), 8, '0', STR_PAD_LEFT); $out = ''; foreach (str_split($bits, 5) as $chunk) $out .= $al[bindec(str_pad($chunk, 5, '0'))]; return $out; }
+function b32_decode(string $s): string { $al = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'; $bits = ''; foreach (str_split(strtoupper(preg_replace('/[^A-Z2-7]/i', '', $s) ?? '')) as $c) $bits .= str_pad(decbin(strpos($al, $c)), 5, '0', STR_PAD_LEFT); $out = ''; foreach (str_split($bits, 8) as $b) if (strlen($b) === 8) $out .= chr(bindec($b)); return $out; }
+function totp_at(string $secret, int $counter): string {
+  $h = hash_hmac('sha1', pack('J', $counter), b32_decode($secret), true); $o = ord($h[19]) & 0xf;
+  $v = ((ord($h[$o]) & 0x7f) << 24) | (ord($h[$o + 1]) << 16) | (ord($h[$o + 2]) << 8) | ord($h[$o + 3]);
+  return str_pad((string) ($v % 1000000), 6, '0', STR_PAD_LEFT);
+}
+/* trả về bước thời gian khớp (để chặn dùng lại mã), hoặc null */
+function totp_check(string $secret, string $code, ?int $last): ?int {
+  $code = preg_replace('/\D/', '', $code) ?? ''; if (strlen($code) !== 6) return null;
+  $now = intdiv(time(), 30);
+  for ($d = -1; $d <= 1; $d++) { $c = $now + $d; if ($last !== null && $c <= $last) continue; if (hash_equals(totp_at($secret, $c), $code)) return $c; }
+  return null;
+}
+/* mã bí mật TOTP được mã hóa bằng khóa trong file cấu hình trước khi lưu vào CSDL */
+function app_key(): string { $k = (string) cfg('app_key', ''); if (strlen($k) < 32) $k = hash('sha256', 'hnlg|' . cfg('db_pass', '') . '|' . cfg('db_name', '')); return hash('sha256', $k, true); }
+function seal_secret(string $plain): string { $iv = random_bytes(12); $ct = openssl_encrypt($plain, 'aes-256-gcm', app_key(), OPENSSL_RAW_DATA, $iv, $tag); return 'v1:' . base64_encode($iv . $tag . $ct); }
+function open_secret(?string $s): ?string { if (!$s || !str_starts_with($s, 'v1:')) return null; $r = base64_decode(substr($s, 3), true); if ($r === false || strlen($r) < 29) return null; $p = openssl_decrypt(substr($r, 28), 'aes-256-gcm', app_key(), OPENSSL_RAW_DATA, substr($r, 0, 12), substr($r, 12, 16)); return $p === false ? null : $p; }
+
 function clean_name(string $n): string { $n = preg_replace('/[\x00-\x1F\x7F<>]/u', '', $n) ?? ''; return mb_substr(trim(preg_replace('/\s+/u', ' ', $n) ?? ''), 0, 60); }
 function hash_pass(string $p): string { return password_hash($p, defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT); }
 

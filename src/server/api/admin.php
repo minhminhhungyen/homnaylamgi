@@ -181,9 +181,43 @@ switch ($act) {
     audit((int) $me['id'], 'lib-revert', "$kind#$id");
     out(['ok' => true]);
 
+  /* ---------- xác thực 2 bước cho chính quản trị viên ---------- */
+  case 'totp-begin':
+    if (!$post) fail('Sai phương thức.', 405);
+    if (!empty(one('SELECT totp_secret FROM users WHERE id = ?', [$me['id']])['totp_secret'])) fail('Bạn đã bật xác thực 2 bước rồi.', 409);
+    $sec = b32_encode(random_bytes(20));
+    $_SESSION['totp_new'] = ['s' => $sec, 'at' => time()];
+    $label = rawurlencode('Hôm nay làm gì?:' . ($me['email'] ?: $me['name']));
+    out(['ok' => true, 'secret' => $sec, 'uri' => "otpauth://totp/{$label}?secret={$sec}&issuer=" . rawurlencode('Hôm nay làm gì?') . '&algorithm=SHA1&digits=6&period=30']);
+
+  case 'totp-enable':
+    if (!$post) fail('Sai phương thức.', 405);
+    $n = $_SESSION['totp_new'] ?? null;
+    if (!$n || time() - (int) $n['at'] > 900) fail('Hết thời gian, bấm bật lại từ đầu.', 409);
+    limit('totp-en:' . $me['id'], 10, 900);
+    $c = totp_check($n['s'], str_in('code', 12), null);
+    if ($c === null) fail('Mã chưa đúng. Kiểm tra giờ trên điện thoại rồi thử lại.');
+    q('UPDATE users SET totp_secret = ?, totp_last = ?, sess_ver = sess_ver + 1 WHERE id = ?', [seal_secret($n['s']), $c, $me['id']]);
+    unset($_SESSION['totp_new']);
+    login_now(one('SELECT * FROM users WHERE id = ?', [$me['id']]));
+    audit((int) $me['id'], 'totp-on', '#' . $me['id']);
+    out(['ok' => true, 'csrf' => csrf()]);
+
+  case 'totp-disable':
+    if (!$post) fail('Sai phương thức.', 405);
+    limit('totp-off:' . $me['id'], 6, 900);
+    $row = one('SELECT pass_hash, totp_secret, totp_last FROM users WHERE id = ?', [$me['id']]);
+    $sec = open_secret($row['totp_secret']);
+    if (!$sec) fail('Bạn chưa bật xác thực 2 bước.', 409);
+    if (!$row['pass_hash'] || !password_verify((string) (input()['password'] ?? ''), $row['pass_hash'])) fail('Mật khẩu chưa đúng.', 401);
+    if (totp_check($sec, str_in('code', 12), $row['totp_last'] !== null ? (int) $row['totp_last'] : null) === null) fail('Mã xác thực chưa đúng.', 401);
+    q('UPDATE users SET totp_secret = NULL, totp_last = NULL WHERE id = ?', [$me['id']]);
+    audit((int) $me['id'], 'totp-off', '#' . $me['id']);
+    out(['ok' => true]);
+
   /* ---------- cài đặt ---------- */
   case 'settings':
-    if (!$post) out(['ok' => true, 'google_client_id' => (string) cfg('google_client_id', ''), 'site_url' => site_url(), 'mail_from' => (string) cfg('mail_from', '')]);
+    if (!$post) out(['ok' => true, 'google_client_id' => (string) cfg('google_client_id', ''), 'site_url' => site_url(), 'mail_from' => (string) cfg('mail_from', ''), 'twofa' => !empty(one('SELECT totp_secret FROM users WHERE id = ?', [$me['id']])['totp_secret']), 'admins_no2fa' => (int) one("SELECT COUNT(*) n FROM users WHERE role = 'admin' AND totp_secret IS NULL")['n']]);
     $gid = str_in('google_client_id', 200);
     if ($gid !== '' && !preg_match('/^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/', $gid)) fail('Google Client ID không đúng dạng.');
     $c = cfg(); $c['google_client_id'] = $gid;

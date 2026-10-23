@@ -15,6 +15,8 @@ const SCHEMA = [
     email_verified TINYINT(1) NOT NULL DEFAULT 0,
     sess_ver INT UNSIGNED NOT NULL DEFAULT 0,
     age_ok TINYINT(1) NOT NULL DEFAULT 0,
+    totp_secret VARCHAR(255) NULL,
+    totp_last BIGINT NULL,
     created_at DATETIME NOT NULL,
     last_login DATETIME NULL,
     INDEX (created_at)
@@ -75,4 +77,10 @@ const SCHEMA = [
     INDEX (at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 ];
-function migrate(PDO $pdo): void { foreach (SCHEMA as $sql) $pdo->exec($sql); }
+const SCHEMA_VERSION = 2;
+/* nâng cấp cơ sở dữ liệu đã cài từ bản cũ: thêm cột nếu chưa có (chạy được trên cả MySQL và MariaDB) */
+function migrate(PDO $pdo): void {
+  foreach (SCHEMA as $sql) $pdo->exec($sql);
+  $has = fn(string $t, string $c) => (bool) $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '$t' AND COLUMN_NAME = '$c'")->fetchColumn();
+  if (!$has('users', 'totp_secret')) $pdo->exec('ALTER TABLE users ADD COLUMN totp_secret VARCHAR(255) NULL, ADD COLUMN totp_last BIGINT NULL');
+}

@@ -1432,18 +1432,19 @@ function renderAcc() {
   const forms = {
     login: `<form class="stack" id="accLogin" novalidate><label class="lbl" for="accEm">Email</label><input id="accEm" type="email" autocomplete="username" maxlength="190"><label class="lbl" for="accPw1">Mật khẩu</label><input id="accPw1" type="password" autocomplete="current-password"><button class="btn btn-main btn-sm" type="submit">Đăng nhập</button><button class="link muted" type="button" data-acc="forgot">Quên mật khẩu?</button></form>`,
     reg: `<form class="stack" id="accReg" novalidate><label class="lbl" for="accRn">Tên gọi</label><input id="accRn" maxlength="60" autocomplete="nickname" value="${esc(S.name || '')}"><label class="lbl" for="accRe">Email</label><input id="accRe" type="email" autocomplete="email" maxlength="190"><label class="lbl" for="accRp">Mật khẩu (ít nhất 8 ký tự, có chữ và số)</label><input id="accRp" type="password" autocomplete="new-password">${consent}<button class="btn btn-main btn-sm" type="submit">Tạo tài khoản</button></form>`,
+    '2fa': `<form class="stack" id="acc2fa" novalidate><p class="note">Tài khoản này bật xác thực 2 bước. Nhập mã 6 số trong ứng dụng xác thực trên điện thoại.</p><label class="lbl" for="accCode">Mã 6 số</label><input id="accCode" inputmode="numeric" autocomplete="one-time-code" maxlength="7"><button class="btn btn-main btn-sm" type="submit">Xác nhận</button></form>`,
     forgot: `<form class="stack" id="accForgot" novalidate><label class="lbl" for="accFe">Email đã đăng ký</label><input id="accFe" type="email" autocomplete="email" maxlength="190"><button class="btn btn-main btn-sm" type="submit">Gửi thư đặt lại mật khẩu</button></form>`
   };
   box.innerHTML = `<p class="note">Không bắt buộc. Có tài khoản để nhận tin, bài viết mới và giữ liên lạc với chúng tôi.</p><div class="acct-tabs" role="tablist">${tab('login', 'Đăng nhập')}${tab('reg', 'Đăng ký')}</div>${forms[accTab]}<p id="accMsg" role="status"></p>
-    ${ACC.google && accTab !== 'forgot' ? `<p class="or">hoặc</p>${accTab === 'login' ? consent.replace('accAge', 'accAgeG') : ''}<div id="gBtn"></div><p class="note">Lần đầu đăng nhập bằng Google cần đánh dấu ô xác nhận độ tuổi.</p>` : ''}`;
-  if (ACC.google && accTab !== 'forgot') gis();
+    ${ACC.google && (accTab === 'login' || accTab === 'reg') ? `<p class="or">hoặc</p>${accTab === 'login' ? consent.replace('accAge', 'accAgeG') : ''}<div id="gBtn"></div><p class="note">Lần đầu đăng nhập bằng Google cần đánh dấu ô xác nhận độ tuổi.</p>` : ''}`;
+  if (ACC.google && (accTab === 'login' || accTab === 'reg')) gis();
 }
 function gis() {
   const draw = () => {
     if (!window.google || !google.accounts || !$('#gBtn')) return;
     google.accounts.id.initialize({ client_id: ACC.google, callback: async r => {
       const age = ($('#accAge') && $('#accAge').checked) || ($('#accAgeG') && $('#accAgeG').checked);
-      try { const j = await sx('/api/auth.php?action=google', { credential: r.credential, age }); ACC.user = j.user; renderAcc(); toast('Đã đăng nhập.'); } catch (e) { accMsg(e.message); }
+      try { const j = await sx('/api/auth.php?action=google', { credential: r.credential, age }); if (j.need2fa) { accTab = '2fa'; renderAcc(); return; } ACC.user = j.user; renderAcc(); toast('Đã đăng nhập.'); } catch (e) { accMsg(e.message); }
     } });
     google.accounts.id.renderButton($('#gBtn'), { theme: 'outline', size: 'large', text: 'continue_with', locale: 'vi', shape: 'pill' });
   };
@@ -1460,7 +1461,8 @@ $('#acctBody').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target, btn = $('button[type="submit"]', f); if (btn) btn.disabled = true;
   try {
-    if (f.id === 'accLogin') { const j = await sx('/api/auth.php?action=login', { email: $('#accEm').value.trim(), password: $('#accPw1').value }); ACC.user = j.user; renderAcc(); toast('Đã đăng nhập.'); }
+    if (f.id === 'accLogin') { const j = await sx('/api/auth.php?action=login', { email: $('#accEm').value.trim(), password: $('#accPw1').value }); if (j.need2fa) { accTab = '2fa'; renderAcc(); $('#accCode').focus(); return; } ACC.user = j.user; renderAcc(); toast('Đã đăng nhập.'); }
+    else if (f.id === 'acc2fa') { const j = await sx('/api/auth.php?action=2fa', { code: $('#accCode').value }); ACC.user = j.user; accTab = 'login'; renderAcc(); toast('Đã đăng nhập.'); }
     else if (f.id === 'accReg') {
       if (!$('#accAge').checked) throw new Error('Đánh dấu ô xác nhận từ đủ 16 tuổi và đồng ý chính sách nhé.');
       const j = await sx('/api/auth.php?action=register', { name: $('#accRn').value.trim(), email: $('#accRe').value.trim(), password: $('#accRp').value, age: true, agree: true });
