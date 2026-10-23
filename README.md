@@ -94,7 +94,11 @@ Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên,
 
 ## Tài khoản, quản trị, bài viết (PHP + MySQL, chỉ chạy trên Hostinger)
 
-- Mã nằm trong `src/server/` (build chép sang `dist/`): `api/` (auth, admin, public, setup…), `bai-viet/`, `quan-tri/`.
+- Mã nằm trong `src/server/` (build chép sang `dist/`): `api/` (auth, admin, public, setup, sync…), `bai-viet/`, `quan-tri/`.
+- Đồng bộ theo tài khoản (`api/sync.php`, bảng `user_data`): sao, lịch sử, huy hiệu, thử thách, tên gọi và nhật ký đã mã hóa trên máy. Không đồng bộ vị trí, thời tiết, bộ lọc.
+  - Gộp: lịch sử hợp theo (quẻ, ngày); sao lấy bên cao hơn cộng quẻ chỉ có ở bên kia; huy hiệu hợp lại; bấm "Xóa dữ liệu" hoặc khôi phục sao lưu tạo `epoch` mới, bản đó thắng.
+  - Nhật ký: cả khối mã hóa, cùng mật khẩu gốc thì bản sửa sau thắng; khác mật khẩu thì không ghi đè, hiện nút cho người dùng chọn.
+  - Ghi theo `rev`: bản cũ nhận 409 và tự gộp lại. Người khác đăng nhập trên cùng máy thì không mang dữ liệu người trước sang.
 - File cấu hình `hnlg-config.php`, thư mục phiên `hnlg-sessions/` và ảnh tải lên `hnlg-uploads/` nằm NGOÀI public_html (thư mục cha). Không đưa lên Git, đưa bản web mới lên không mất ảnh.
 - Cài lần đầu:
   1. Tạo CSDL MySQL trong hPanel.

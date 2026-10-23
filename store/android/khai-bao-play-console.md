@@ -16,8 +16,12 @@
     - Mục đích: Quản lý tài khoản (Account management), Liên lạc với nhà phát triển (Developer communications).
     - Người dùng xóa được tài khoản ngay trong app (Trang của bạn → Xóa tài khoản).
   - **Mã định danh khác (User IDs):** mã tài khoản Google khi đăng nhập bằng Google. Mục đích: Quản lý tài khoản.
+  - **Hoạt động trong ứng dụng → Lịch sử tương tác trong ứng dụng (App interactions) và Nội dung khác do người dùng tạo (Other user-generated content):**
+    - Thu thập: Có, chỉ khi người dùng đăng nhập (đồng bộ sao, lịch sử quẻ, huy hiệu, nhật ký ĐÃ MÃ HÓA trên máy). Chia sẻ: Không.
+    - Bắt buộc hay tùy chọn: Tùy chọn. Mục đích: Chức năng ứng dụng (App functionality).
+    - Nhật ký được mã hóa đầu cuối bằng mật khẩu riêng; máy chủ không đọc được.
 - Không thu thập: số điện thoại, danh bạ, ảnh, tệp, lịch sử duyệt web, định danh thiết bị, dữ liệu tài chính, sức khỏe.
-- Tên gọi, tâm trạng, nhật ký (đã mã hóa) chỉ lưu và xử lý trên máy người dùng, không gửi đi đâu, nên không tính là thu thập. Form hỗ trợ chỉ mở ứng dụng email của người dùng; họ tự bấm gửi.
+- Người không đăng nhập: tên gọi, tâm trạng, nhật ký chỉ lưu trên máy, không gửi đi đâu. Tâm trạng, vị trí thời tiết và bộ lọc không bao giờ được đồng bộ. Form hỗ trợ chỉ mở ứng dụng email của người dùng; họ tự bấm gửi.
 - **Dữ liệu có được mã hóa khi truyền không?** Có (HTTPS).
 - **Người dùng có thể yêu cầu xóa dữ liệu không?** Có. Dữ liệu chỉ nằm trên máy: nút “Xóa dữ liệu” trong app, nút “Tắt thời tiết” hoặc gỡ app.
 - Lưu ý: nhà cung cấp máy chủ (Vercel, Hostinger) ghi nhật ký kỹ thuật có địa chỉ IP. Điều này đã nêu trong chính sách quyền riêng tư; không có mục riêng trong Data safety.

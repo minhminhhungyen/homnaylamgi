@@ -48,6 +48,7 @@ switch ($act) {
     if ($id === (int) $me['id']) fail('Không xóa chính mình ở đây được.', 409);
     $u = one('SELECT email, name FROM users WHERE id = ?', [$id]);
     if (!$u) fail('Không tìm thấy người dùng.', 404);
+    q('DELETE FROM user_data WHERE user_id = ?', [$id]);
     q('DELETE FROM users WHERE id = ?', [$id]);
     audit((int) $me['id'], 'user-delete', "#$id");
     out(['ok' => true]);

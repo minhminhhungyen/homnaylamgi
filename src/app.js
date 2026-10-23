@@ -154,7 +154,15 @@ let S = (() => {
   try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw), d = DEF(); return Object.assign(d, s, { f: Object.assign(d.f, s.f || {}) }); } } catch (e) { /* bỏ qua */ }
   return DEF();
 })();
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* trình duyệt chặn lưu: trang vẫn chạy */ } };
+/* dấu vân tay các trường được đồng bộ: chỉ khi chúng thật sự đổi mới đánh dấu giờ sửa và gửi lên tài khoản */
+const syFp = s => JSON.stringify(['stars', 'best', 'done', 'saved', 'got', 'wk', 'wkDone', 'pref', 'name', 'epoch'].map(k => s[k]));
+let syQuiet = false, syFpLast = syFp(S);
+const save = () => {
+  const fp = syFp(S), changed = fp !== syFpLast; syFpLast = fp;
+  if (changed && !syQuiet) S.mt = Date.now();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* trình duyệt chặn lưu: trang vẫn chạy */ }
+  if (changed && !syQuiet) syKick();
+};
 /* mở từ link rủ: trang /q/12 và /an/5 chuyển về /?q=12 và /?m=5 */
 const INV = (() => {
   const none = { k: '', id: 0 };
@@ -728,7 +736,7 @@ let resetAt = 0;
 $('#btnReset').addEventListener('click', () => {
   const b = $('#btnReset');
   if (Date.now() - resetAt < 5000) {
-    resetAt = 0; S = DEF(); save(); lastRelax = [];
+    resetAt = 0; S = DEF(); S.epoch = Date.now(); save(); lastRelax = [];
     setCur(choose(0).a.id); renderAll(); setMode('lam');
     b.textContent = 'Xóa dữ liệu'; toast('Đã xóa sạch. Bắt đầu lại từ một quẻ mới.');
   } else {
@@ -1181,7 +1189,7 @@ const fromB64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const randId = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, '0')).join('');
 let DK = null, DE = [], dEdit = '', dLinkQ = 0, dLockT = 0;
 function dLoad() { try { const d = JSON.parse(localStorage.getItem(DKEY) || 'null'); return d && d.v === 1 && d.kdf && d.check && Array.isArray(d.entries) ? d : null; } catch (e) { return null; } }
-function dStore(d) { try { localStorage.setItem(DKEY, JSON.stringify(d)); return true; } catch (e) { toast('Bộ nhớ trình duyệt đã đầy hoặc bị chặn, chưa lưu được.'); return false; } }
+function dStore(d) { d.mt = Date.now(); try { localStorage.setItem(DKEY, JSON.stringify(d)); syKick(); return true; } catch (e) { toast('Bộ nhớ trình duyệt đã đầy hoặc bị chặn, chưa lưu được.'); return false; } }
 async function dDerive(pass, salt, iter) {
   const base = await crypto.subtle.importKey('raw', te.encode(pass.normalize('NFC')), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: iter }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
@@ -1254,7 +1262,7 @@ $('#diLocked').addEventListener('submit', async e => {
 });
 let forgetAt = 0;
 $('#diForget').addEventListener('click', e => {
-  if (Date.now() - forgetAt < 5000) { forgetAt = 0; try { localStorage.removeItem(DKEY); } catch (x) { /* bỏ qua */ } dLock(true); renderDiary(); renderMe(); toast('Đã xóa nhật ký cũ. Bạn đặt mật khẩu mới để viết lại nhé.'); e.target.textContent = 'Xóa nhật ký để làm lại'; return; }
+  if (Date.now() - forgetAt < 5000) { forgetAt = 0; try { localStorage.removeItem(DKEY); } catch (x) { /* bỏ qua */ } syKick(); dLock(true); renderDiary(); renderMe(); toast('Đã xóa nhật ký cũ. Bạn đặt mật khẩu mới để viết lại nhé.'); e.target.textContent = 'Xóa nhật ký để làm lại'; return; }
   forgetAt = Date.now(); e.target.textContent = 'Bấm lần nữa để xóa vĩnh viễn toàn bộ nhật ký';
 });
 $('#diForm').addEventListener('submit', async e => {
@@ -1350,8 +1358,8 @@ $('#restoreFile').addEventListener('change', e => {
 $('#btnRestore').addEventListener('click', () => {
   if (!restoreData) return;
   try {
-    localStorage.setItem(KEY, JSON.stringify(restoreData.state));
-    if (restoreData.diary) localStorage.setItem(DKEY, JSON.stringify(restoreData.diary)); else localStorage.removeItem(DKEY);
+    localStorage.setItem(KEY, JSON.stringify(Object.assign({}, restoreData.state, { epoch: Date.now(), mt: Date.now() })));
+    if (restoreData.diary) localStorage.setItem(DKEY, JSON.stringify(Object.assign({}, restoreData.diary, { mt: Date.now() }))); else localStorage.removeItem(DKEY);
   } catch (x) { toast('Chưa ghi được dữ liệu vào trình duyệt.'); return; }
   location.hash = ''; location.reload();
 });
@@ -1364,9 +1372,12 @@ $('#helpForm').addEventListener('submit', e => {
   toast('Đang mở ứng dụng email của bạn…');
 });
 let wipeAt = 0;
-$('#btnWipe').addEventListener('click', e => {
+$('#btnWipe').addEventListener('click', async e => {
   const b = e.currentTarget;
-  if (Date.now() - wipeAt < 5000) { try { localStorage.removeItem(KEY); localStorage.removeItem(DKEY); } catch (x) { /* bỏ qua */ } location.hash = ''; location.reload(); return; }
+  if (Date.now() - wipeAt < 5000) {
+    if (SERVER && ACC.user) { try { await sx('/api/sync.php?action=clear', {}); } catch (x) { toast('Chưa xóa được bản trong tài khoản, thử lại khi có mạng.'); return; } }
+    try { localStorage.removeItem(KEY); localStorage.removeItem(DKEY); localStorage.removeItem(SYK); } catch (x) { /* bỏ qua */ } location.hash = ''; location.reload(); return;
+  }
   wipeAt = Date.now(); b.textContent = 'Bấm lần nữa để xóa sạch, không lấy lại được';
   setTimeout(() => { if (Date.now() - wipeAt >= 5000) b.textContent = 'Xóa toàn bộ dữ liệu'; }, 5100);
 });
@@ -1381,9 +1392,105 @@ async function sx(path, body) {
   let j;
   try { const r = await fetch(path, opt); if (!/json/.test(r.headers.get('content-type') || '')) throw new Error(); j = await r.json(); } catch (e) { throw new Error('Không kết nối được máy chủ. Thử lại sau nhé.'); }
   if (j.csrf) ACC.csrf = j.csrf;
-  if (!j.ok) throw new Error(j.error || 'Có lỗi xảy ra.');
+  if (!j.ok) { const er = new Error(j.error || 'Có lỗi xảy ra.'); er.data = j; throw er; }
   return j;
 }
+/* ---------- đồng bộ theo tài khoản: sao, lịch sử, huy hiệu, thử thách, tên gọi và nhật ký ĐÃ MÃ HÓA ----------
+   Không đồng bộ vị trí thời tiết và các lựa chọn lọc. Mỗi máy gộp với bản trên máy chủ rồi gửi lại theo số phiên bản (rev). */
+const SYK = 'hnlg.sync', SK = ['stars', 'best', 'done', 'saved', 'got', 'wk', 'wkDone', 'pref', 'name', 'epoch', 'mt'];
+let SY = (() => { try { return JSON.parse(localStorage.getItem(SYK) || 'null') || {}; } catch (e) { return {}; } })();
+const sySave = () => { try { localStorage.setItem(SYK, JSON.stringify(SY)); } catch (e) { /* bỏ qua */ } };
+let syBusy = false, syAgain = false, syT = 0, syLast = 0, syConflict = false, syForce = '', syErr = '';
+var SY_ON = false; // var: gọi được an toàn trước khi phần đồng bộ được nạp
+function syKick() { if (!SY_ON || !SERVER || !ACC.user) return; clearTimeout(syT); syT = setTimeout(() => { syT = 0; syncNow(); }, 4000); }
+/* PHP trả {} rỗng thành [] nên chuẩn hóa lại để so sánh không lệch */
+const syPick = s => { const o = {}; SK.forEach(k => { if (s && s[k] !== undefined) o[k] = s[k]; }); if (Array.isArray(o.pref) || (o.pref !== undefined && typeof o.pref !== 'object')) o.pref = {}; if (Array.isArray(o.wk)) o.wk = null; return o; };
+const syKey = x => x.id + '|' + x.day;
+function mergeState(l, r) {
+  if (!r) return l;
+  const le = l.epoch || 0, re = r.epoch || 0;
+  if (le !== re) return le > re ? l : r; // một máy vừa xóa làm lại hoặc khôi phục sao lưu: bản đó thắng
+  const newer = (l.mt || 0) >= (r.mt || 0) ? l : r, older = newer === l ? r : l;
+  const m = new Map();
+  for (const x of older.done || []) m.set(syKey(x), x);
+  for (const x of newer.done || []) { const o = m.get(syKey(x)); if (!o || x.f || !o.f) m.set(syKey(x), x); }
+  const done = [...m.values()].sort((a, b) => b.ts - a.ts).slice(0, 600);
+  const hi = (l.stars || 0) >= (r.stars || 0) ? l : r, lo = hi === l ? r : l, hk = new Set((hi.done || []).map(syKey));
+  const extra = (lo.done || []).filter(x => !hk.has(syKey(x))).reduce((n, x) => n + (x.d || 0), 0);
+  const uni = (a, b) => [...new Set([...(a || []), ...(b || [])])];
+  return { stars: (hi.stars || 0) + extra, best: Math.max(l.best || 0, r.best || 0), done, saved: newer.saved || [], got: uni(l.got, r.got), wk: newer.wk || null, wkDone: uni(l.wkDone, r.wkDone), pref: newer.pref || {}, name: newer.name || older.name || '', epoch: le, mt: Math.max(l.mt || 0, r.mt || 0) };
+}
+/* nhật ký: cả khối đã mã hóa; cùng mật khẩu gốc (cùng salt) thì bản sửa sau thắng */
+function diaryPlan(l, r) {
+  if (syForce) return syForce;
+  const ls = l && l.kdf.salt, rs = r && r.kdf.salt;
+  if (!l && !r) return 'same';
+  if (l && !r) return 'local';
+  if (!l) return SY.dsalt && SY.dsalt === rs ? 'local' : 'remote'; // máy này vừa xóa nhật ký thì xóa luôn bản trên tài khoản
+  if (ls === rs) return JSON.stringify(l) === JSON.stringify(r) ? 'same' : ((l.mt || 0) >= (r.mt || 0) ? 'local' : 'remote');
+  if (SY.dsalt && SY.dsalt === rs) return 'local'; // máy này đổi mật khẩu nhật ký
+  if (SY.dsalt && SY.dsalt === ls) return 'remote'; // máy khác đổi mật khẩu nhật ký
+  return 'conflict';
+}
+async function dReload(oldSalt) {
+  const d = dLoad();
+  if (!DK) return;
+  if (!d || d.kdf.salt !== oldSalt) { dLock(true); return; }
+  const out = [];
+  for (const e of d.entries) { try { out.push(Object.assign({ id: e.id }, await unseal(DK, e.box))); } catch (err) { /* bỏ qua */ } }
+  DE = out.sort((a, b) => b.at - a.at);
+}
+async function syRound(R) {
+  const uid = ACC.user.id, other = !!SY.uid && SY.uid !== uid;
+  const rs = R.state ? syPick(R.state) : null, ls = syPick(S), ld = dLoad();
+  const ns = other ? (rs || syPick(DEF())) : mergeState(ls, rs);
+  const plan = other ? (R.diary ? 'remote' : 'clear') : (HAS_CRYPTO ? diaryPlan(ld, R.diary) : 'same');
+  syConflict = plan === 'conflict';
+  if (JSON.stringify(ns) !== JSON.stringify(ls)) {
+    syQuiet = true; if (other) { const keep = {}; ['mode', 'wxOn', 'wxLoc', 'wx', 'aq', 'f', 'fmt'].forEach(k => { keep[k] = S[k]; }); S = Object.assign(DEF(), keep); } Object.assign(S, ns); save(); syQuiet = false;
+    renderAll(); renderMe();
+  }
+  let pushD = R.diary || null;
+  if (plan === 'local') pushD = ld;
+  else if (plan === 'remote' || plan === 'clear') {
+    const oldSalt = ld && ld.kdf.salt;
+    try { if (plan === 'remote') localStorage.setItem(DKEY, JSON.stringify(R.diary)); else localStorage.removeItem(DKEY); } catch (e) { throw new Error('Bộ nhớ trình duyệt đã đầy, chưa nhận được nhật ký.'); }
+    await dReload(oldSalt); renderDiary(); renderMe();
+  }
+  if (JSON.stringify(ns) !== JSON.stringify(rs) || JSON.stringify(pushD) !== JSON.stringify(R.diary || null)) {
+    try { const j = await sx('/api/sync.php?action=put', { rev: R.rev, state: ns, diary: pushD }); R.rev = j.rev; }
+    catch (e) { if (e.data && e.data.conflict) return false; throw e; }
+  }
+  SY = { uid, rev: R.rev, dsalt: syConflict ? (SY.dsalt || '') : (pushD ? pushD.kdf.salt : ''), at: Date.now() };
+  sySave(); syForce = '';
+  return true;
+}
+async function syncNow() {
+  if (!SERVER || !ACC.user) return;
+  if (syBusy) { syAgain = true; return; }
+  syBusy = true; clearTimeout(syT); syT = 0;
+  try { for (let i = 0; i < 3; i++) { const R = await sx('/api/sync.php?action=get'); if (await syRound(R)) break; } syErr = ''; }
+  catch (e) { syErr = e.message || 'Chưa đồng bộ được.'; }
+  syBusy = false; syLast = Date.now(); renderSync();
+  if (syAgain) { syAgain = false; syncNow(); }
+}
+let syPickAt = '', syPickT = 0;
+function renderSync() {
+  const el = $('#accSync'); if (!el) return;
+  const when = SY.at && SY.uid === (ACC.user && ACC.user.id) ? `Đã đồng bộ lúc ${hm(SY.at)} ${dm(new Date(SY.at))}.` : 'Đang đồng bộ…';
+  el.innerHTML = `<p class="note">${esc(syErr ? `Chưa đồng bộ được: ${syErr}` : when)} Sao, lịch sử, huy hiệu và nhật ký (đã mã hóa) được giữ trong tài khoản.</p>${syConflict ? `<p class="err">Nhật ký trên máy này dùng mật khẩu khác với nhật ký trong tài khoản nên chưa gộp được. Chọn một bản để giữ, bản còn lại sẽ bị thay. Nên tải file sao lưu trước.</p><div class="acts"><button class="btn btn-soft btn-sm" type="button" data-sy="remote">Lấy nhật ký từ tài khoản</button><button class="btn btn-soft btn-sm" type="button" data-sy="local">Đưa nhật ký máy này lên</button></div>` : ''}`;
+}
+$('#acctBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-sy]'); if (!b) return;
+  const k = b.dataset.sy;
+  if (syPickAt === k && Date.now() - syPickT < 5000) { syPickAt = ''; syForce = k; syncNow(); return; }
+  syPickAt = k; syPickT = Date.now(); b.textContent = 'Bấm lần nữa để xác nhận';
+});
+document.addEventListener('visibilitychange', () => {
+  if (!SERVER || !ACC.user) return;
+  if (document.hidden) { if (syT) syncNow(); }
+  else if (Date.now() - syLast > 60e3) syncNow();
+});
 async function boot() {
   if (!SERVER) return;
   try {
@@ -1406,6 +1513,7 @@ async function accLoad() {
   if (!SERVER) return;
   try { const j = await sx('/api/auth.php?action=me'); ACC = { ready: true, installed: j.installed !== false, user: j.user, google: j.google || '', csrf: j.csrf || ACC.csrf }; } catch (e) { ACC.ready = false; }
   renderAcc();
+  if (ACC.user) syncNow();
 }
 const accMsg = (m, ok) => { const p = $('#accMsg'); if (p) { p.textContent = m || ''; p.className = ok ? 'note' : 'err'; } };
 function renderAcc() {
@@ -1417,9 +1525,11 @@ function renderAcc() {
     box.innerHTML = `<div class="acct-who"><b>${esc(u.name)}</b><span class="note">${esc(u.email || 'Đăng nhập bằng Google')}${u.email && !u.verified ? ' · chưa xác nhận email' : ''}</span></div>
       <div class="acts">${u.role === 'admin' ? '<a class="btn btn-main btn-sm" href="/quan-tri/">Vào trang quản trị</a>' : ''}<a class="btn btn-soft btn-sm" href="/bai-viet">Bài viết</a><button class="btn btn-soft btn-sm" type="button" id="accOut">Đăng xuất</button>${u.email && !u.verified ? '<button class="link muted" type="button" id="accResend">Gửi lại thư xác nhận</button>' : ''}</div>
       <p id="accMsg" role="status"></p>
+      <div class="acct-sync" id="accSync"></div>
       <details><summary>Đổi tên hiển thị</summary><form class="row-form" id="accName"><input id="accNameIn" maxlength="60" value="${esc(u.name)}" aria-label="Tên hiển thị"><button class="btn btn-soft btn-sm" type="submit">Lưu</button></form></details>
       <details><summary>${u.hasPass ? 'Đổi mật khẩu' : 'Đặt mật khẩu'}</summary><form class="stack" id="accPw" novalidate>${u.hasPass ? '<label class="lbl" for="accOld">Mật khẩu hiện tại</label><input id="accOld" type="password" autocomplete="current-password">' : ''}<label class="lbl" for="accNew">Mật khẩu mới (ít nhất 8 ký tự, có chữ và số)</label><input id="accNew" type="password" autocomplete="new-password"><button class="btn btn-soft btn-sm" type="submit">Lưu mật khẩu</button></form></details>
-      <details><summary>Xóa tài khoản</summary><form class="stack" id="accDel"><p class="note">Xóa tên, email và mọi thông tin tài khoản trên máy chủ. Sao, lịch sử và nhật ký trên máy này vẫn giữ nguyên. Gõ <b>XÓA</b> để xác nhận.</p><input id="accDelIn" autocomplete="off" aria-label="Gõ XÓA để xác nhận"><button class="btn btn-soft btn-sm" type="submit">Xóa tài khoản</button></form></details>`;
+      <details><summary>Xóa tài khoản</summary><form class="stack" id="accDel"><p class="note">Xóa tên, email và bản sao lưu sao, lịch sử, nhật ký trong tài khoản trên máy chủ. Dữ liệu trên máy này vẫn giữ nguyên. Gõ <b>XÓA</b> để xác nhận.</p><input id="accDelIn" autocomplete="off" aria-label="Gõ XÓA để xác nhận"><button class="btn btn-soft btn-sm" type="submit">Xóa tài khoản</button></form></details>`;
+    renderSync();
     return;
   }
   const tab = (k, t) => `<button type="button" role="tab" data-acc="${k}" aria-selected="${accTab === k}">${t}</button>`;
@@ -1430,7 +1540,7 @@ function renderAcc() {
     '2fa': `<form class="stack" id="acc2fa" novalidate><p class="note">Tài khoản này bật xác thực 2 bước. Nhập mã 6 số trong ứng dụng xác thực trên điện thoại.</p><label class="lbl" for="accCode">Mã 6 số</label><input id="accCode" inputmode="numeric" autocomplete="one-time-code" maxlength="7"><button class="btn btn-main btn-sm" type="submit">Xác nhận</button></form>`,
     forgot: `<form class="stack" id="accForgot" novalidate><label class="lbl" for="accFe">Email đã đăng ký</label><input id="accFe" type="email" autocomplete="email" maxlength="190"><button class="btn btn-main btn-sm" type="submit">Gửi thư đặt lại mật khẩu</button></form>`
   };
-  box.innerHTML = `<p class="note">Không bắt buộc. Có tài khoản để nhận tin, bài viết mới và giữ liên lạc với chúng tôi.</p><div class="acct-tabs" role="tablist">${tab('login', 'Đăng nhập')}${tab('reg', 'Đăng ký')}</div>${forms[accTab]}<p id="accMsg" role="status"></p>
+  box.innerHTML = `<p class="note">Không bắt buộc. Đăng nhập để giữ sao, lịch sử và nhật ký khi đổi máy hoặc dùng nhiều máy. Nhật ký vẫn được khóa bằng mật khẩu riêng của bạn trước khi gửi lên.</p><div class="acct-tabs" role="tablist">${tab('login', 'Đăng nhập')}${tab('reg', 'Đăng ký')}</div>${forms[accTab]}<p id="accMsg" role="status"></p>
     ${ACC.google && (accTab === 'login' || accTab === 'reg') ? `<p class="or">hoặc</p>${accTab === 'login' ? consent.replace('accAge', 'accAgeG') : ''}<div id="gBtn"></div><p class="note">Lần đầu đăng nhập bằng Google cần đánh dấu ô xác nhận độ tuổi.</p>` : ''}`;
   if (ACC.google && (accTab === 'login' || accTab === 'reg')) gis();
 }
@@ -1439,7 +1549,7 @@ function gis() {
     if (!window.google || !google.accounts || !$('#gBtn')) return;
     google.accounts.id.initialize({ client_id: ACC.google, callback: async r => {
       const age = ($('#accAge') && $('#accAge').checked) || ($('#accAgeG') && $('#accAgeG').checked);
-      try { const j = await sx('/api/auth.php?action=google', { credential: r.credential, age }); if (j.need2fa) { accTab = '2fa'; renderAcc(); return; } ACC.user = j.user; renderAcc(); toast('Đã đăng nhập.'); } catch (e) { accMsg(e.message); }
+      try { const j = await sx('/api/auth.php?action=google', { credential: r.credential, age }); if (j.need2fa) { accTab = '2fa'; renderAcc(); return; } ACC.user = j.user; renderAcc(); toast('Đã đăng nhập.'); syncNow(); } catch (e) { accMsg(e.message); }
     } });
     google.accounts.id.renderButton($('#gBtn'), { theme: 'outline', size: 'large', text: 'continue_with', locale: 'vi', shape: 'pill' });
   };
@@ -1456,17 +1566,17 @@ $('#acctBody').addEventListener('submit', async e => {
   e.preventDefault();
   const f = e.target, btn = $('button[type="submit"]', f); if (btn) btn.disabled = true;
   try {
-    if (f.id === 'accLogin') { const j = await sx('/api/auth.php?action=login', { email: $('#accEm').value.trim(), password: $('#accPw1').value }); if (j.need2fa) { accTab = '2fa'; renderAcc(); $('#accCode').focus(); return; } ACC.user = j.user; renderAcc(); toast('Đã đăng nhập.'); }
-    else if (f.id === 'acc2fa') { const j = await sx('/api/auth.php?action=2fa', { code: $('#accCode').value }); ACC.user = j.user; accTab = 'login'; renderAcc(); toast('Đã đăng nhập.'); }
+    if (f.id === 'accLogin') { const j = await sx('/api/auth.php?action=login', { email: $('#accEm').value.trim(), password: $('#accPw1').value }); if (j.need2fa) { accTab = '2fa'; renderAcc(); $('#accCode').focus(); return; } ACC.user = j.user; renderAcc(); toast('Đã đăng nhập.'); syncNow(); }
+    else if (f.id === 'acc2fa') { const j = await sx('/api/auth.php?action=2fa', { code: $('#accCode').value }); ACC.user = j.user; accTab = 'login'; renderAcc(); toast('Đã đăng nhập.'); syncNow(); }
     else if (f.id === 'accReg') {
       if (!$('#accAge').checked) throw new Error('Đánh dấu ô xác nhận từ đủ 16 tuổi và đồng ý chính sách nhé.');
       const j = await sx('/api/auth.php?action=register', { name: $('#accRn').value.trim(), email: $('#accRe').value.trim(), password: $('#accRp').value, age: true, agree: true });
-      ACC.user = j.user; renderAcc(); accMsg('Đã tạo tài khoản. Thư xác nhận email đang trên đường tới hộp thư của bạn.', true);
+      ACC.user = j.user; renderAcc(); accMsg('Đã tạo tài khoản. Sao, lịch sử và nhật ký trên máy này đang được đưa vào tài khoản.', true); syncNow();
     }
     else if (f.id === 'accForgot') { const j = await sx('/api/auth.php?action=forgot', { email: $('#accFe').value.trim() }); accMsg(j.message, true); }
     else if (f.id === 'accName') { const j = await sx('/api/auth.php?action=profile', { name: $('#accNameIn').value.trim() }); ACC.user = j.user; renderAcc(); accMsg('Đã đổi tên.', true); }
     else if (f.id === 'accPw') { await sx('/api/auth.php?action=password', { old: $('#accOld') ? $('#accOld').value : '', new: $('#accNew').value }); accMsg('Đã đổi mật khẩu. Các thiết bị khác đã được đăng xuất.', true); f.reset(); }
-    else if (f.id === 'accDel') { await sx('/api/auth.php?action=delete', { confirm: $('#accDelIn').value.trim().toUpperCase() }); ACC.user = null; accTab = 'login'; renderAcc(); toast('Đã xóa tài khoản.'); }
+    else if (f.id === 'accDel') { await sx('/api/auth.php?action=delete', { confirm: $('#accDelIn').value.trim().toUpperCase() }); ACC.user = null; accTab = 'login'; SY = {}; sySave(); renderAcc(); toast('Đã xóa tài khoản.'); }
   } catch (x) { accMsg(x.message); }
   if (btn && document.contains(btn)) btn.disabled = false;
 });
@@ -1477,7 +1587,7 @@ function route() {
   document.body.classList.toggle('view-on', !!v);
   $('#viewMe').hidden = v !== 'me'; $('#viewDiary').hidden = v !== 'diary';
   if (v !== 'diary' && DK) dLock(true);
-  if (v === 'me') { renderMe(); if (SERVER && !ACC.ready) accLoad(); else renderAcc(); }
+  if (v === 'me') { renderMe(); renderAcc(); if (SERVER) accLoad(); } // luôn hỏi lại máy chủ: phiên có thể đã hết hạn hoặc bị khóa
   if (v === 'diary') renderDiary();
   if (v) { window.scrollTo(0, 0); (v === 'me' ? $('#meTitle') : $('#diTitle')).focus({ preventScroll: true }); }
   else if (was) { renderSlip(); }
@@ -1584,7 +1694,9 @@ else if (S.curDay !== TODAY) S.acc = 0;
 if (S.mealDay !== TODAY) { S.meal = ''; S.mealDay = ''; }
 if (window.matchMedia && matchMedia('(min-width: 960px)').matches) $('#tune').open = true;
 renderAll(); renderSoon(); setMode(S.mode); save(); renderMe();
+SY_ON = true;
 boot();
+if (SERVER && SY.uid) accLoad();
 if (location.hash === '#toi' || location.hash === '#nhat-ky') route();
 if (startMsg) toast(startMsg);
 if (S.wxOn && S.wxLoc) getWx(false);

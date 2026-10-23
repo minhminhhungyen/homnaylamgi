@@ -231,16 +231,17 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <p>“Hôm nay làm gì?” gồm website homnaylamgi.com và ứng dụng cùng tên trên điện thoại, máy tính. Dịch vụ do ${COMPANY.name} vận hành. Trang này nói rõ dịch vụ xử lý dữ liệu nào và vì sao.</p>
 <div class="sum"><ul>
 <li>Dùng được ngay không cần tài khoản. Tài khoản là tùy chọn: nếu đăng ký, công ty lưu tên gọi, email và mật khẩu đã băm một chiều.</li>
-<li>Sao, huy hiệu, lịch sử và lựa chọn của bạn chỉ lưu trên thiết bị của bạn.</li>
-<li>Nhật ký riêng tư được mã hóa trên thiết bị bằng mật khẩu của bạn; không ai khác đọc được, kể cả công ty.</li>
+<li>Sao, huy hiệu, lịch sử và lựa chọn của bạn lưu trên thiết bị của bạn. Nếu bạn đăng nhập, sao, huy hiệu, lịch sử và nhật ký đã mã hóa được đồng bộ vào tài khoản để dùng trên nhiều máy.</li>
+<li>Nhật ký riêng tư được mã hóa trên thiết bị bằng mật khẩu của bạn; không ai khác đọc được, kể cả công ty, kể cả khi nhật ký được đồng bộ vào tài khoản.</li>
 <li>Vị trí chỉ dùng khi bạn tự bật gợi ý theo thời tiết, và được làm tròn khoảng 1 km.</li>
 <li>Không quảng cáo, không công cụ theo dõi, không bán dữ liệu.</li>
 </ul></div>
 <h2>1. Dữ liệu lưu trên thiết bị của bạn</h2>
 <p>Các thông tin sau được lưu trong bộ nhớ trình duyệt trên thiết bị của bạn (localStorage): quẻ đang làm, số sao, huy hiệu, lịch sử quẻ đã làm và cảm nhận, danh sách để dành, tâm trạng, bữa ăn, các lựa chọn ở phần Tinh chỉnh. Nếu bạn bật thời tiết, có thêm vị trí đã làm tròn hoặc tỉnh, thành bạn chọn và bản dự báo gần nhất.</p>
-<p>Các dữ liệu này không được gửi về máy chủ của công ty. Bạn xóa được bất cứ lúc nào bằng nút “Xóa dữ liệu” ở phần Hành trình, bằng cách xóa dữ liệu trang web trong trình duyệt, hoặc gỡ ứng dụng.</p>
+<p>Nếu bạn không đăng nhập, các dữ liệu này không được gửi về máy chủ của công ty. Nếu bạn đăng nhập, xem mục 4b về đồng bộ. Bạn xóa được bất cứ lúc nào bằng nút “Xóa dữ liệu” ở phần Hành trình, bằng cách xóa dữ liệu trang web trong trình duyệt, hoặc gỡ ứng dụng.</p>
 <h2>2. Nhật ký riêng tư</h2>
 <p>Nhật ký được mã hóa ngay trên thiết bị của bạn (AES-GCM 256 bit, khóa sinh từ mật khẩu bằng PBKDF2-SHA256 với 600.000 vòng lặp) trước khi lưu vào bộ nhớ trình duyệt. Mật khẩu nhật ký không được lưu và không được gửi đi đâu. Vì vậy công ty và bất kỳ ai không có mật khẩu đều không đọc được nhật ký của bạn. Điều này cũng có nghĩa là nếu quên mật khẩu, không ai khôi phục được nội dung nhật ký.</p>
+<p>Nếu bạn đăng nhập, nhật ký ở dạng đã mã hóa được đồng bộ vào tài khoản. Máy chủ chỉ giữ dữ liệu đã mã hóa và không có mật khẩu để mở.</p>
 <p>Khi bạn tải bản sao lưu, file sao lưu chứa nhật ký ở dạng đã mã hóa cùng sao, huy hiệu và lịch sử. File nằm trên thiết bị của bạn; hãy cất ở nơi an toàn.</p>
 <h2>3. Vị trí và thời tiết (tùy chọn)</h2>
 <p>Dịch vụ chỉ hỏi quyền vị trí khi bạn bấm “Gợi ý theo thời tiết chỗ bạn”. Tọa độ được làm tròn đến 2 chữ số thập phân (khoảng 1 km), rồi gửi thẳng từ thiết bị của bạn tới:</p>
@@ -255,8 +256,9 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <ul><li>Tên gọi và email bạn nhập; mật khẩu chỉ được lưu dưới dạng băm một chiều (Argon2id), không ai đọc được mật khẩu gốc.</li>
 <li>Nếu đăng nhập bằng Google: mã định danh tài khoản Google, tên và email mà Google cung cấp sau khi bạn đồng ý. Công ty không nhận mật khẩu Google của bạn.</li>
 <li>Thời điểm tạo tài khoản, lần đăng nhập gần nhất, xác nhận bạn từ đủ 16 tuổi; địa chỉ IP được dùng tạm thời để chống dò mật khẩu và ghi nhật ký thao tác quản trị.</li>
-<li>Một cookie đăng nhập (hnlg_s), chỉ dùng để giữ phiên đăng nhập, không dùng để theo dõi hay quảng cáo.</li></ul>
-<p>Dữ liệu tài khoản lưu trên máy chủ của Hostinger mà công ty thuê, không bán, không chia sẻ cho bên thứ ba để quảng cáo. Sao, lịch sử và nhật ký vẫn chỉ nằm trên thiết bị của bạn, không gửi lên tài khoản. Bạn xóa tài khoản bất cứ lúc nào trong Trang của bạn; dữ liệu tài khoản bị xóa khỏi cơ sở dữ liệu ngay khi bạn bấm.</p>
+<li>Một cookie đăng nhập (hnlg_s), chỉ dùng để giữ phiên đăng nhập, không dùng để theo dõi hay quảng cáo.</li>
+<li>Dữ liệu đồng bộ: số sao, danh hiệu, huy hiệu, lịch sử quẻ đã làm và cảm nhận, danh sách để dành, thử thách 7 ngày, tên gọi, mức ưa thích các nhóm việc, và nhật ký ở dạng đã mã hóa. Vị trí, thời tiết và các lựa chọn lọc không được đồng bộ.</li></ul>
+<p>Dữ liệu tài khoản lưu trên máy chủ của Hostinger mà công ty thuê, không bán, không chia sẻ cho bên thứ ba để quảng cáo. Máy chủ có thể đặt ngoài Việt Nam tùy trung tâm dữ liệu của Hostinger; khi tạo tài khoản, bạn đồng ý cho dữ liệu nêu trên được lưu ở đó. Bạn xóa tài khoản bất cứ lúc nào trong Trang của bạn; dữ liệu tài khoản và dữ liệu đồng bộ bị xóa khỏi cơ sở dữ liệu ngay khi bạn bấm. Nút “Xóa toàn bộ dữ liệu” khi đang đăng nhập cũng xóa bản đồng bộ trong tài khoản.</p>
 <h2>5. Máy chủ lưu trữ</h2>
 <p>Website được phục vụ qua Hostinger và Vercel. Như mọi trang web, các nhà cung cấp này có thể ghi nhật ký kỹ thuật (địa chỉ IP, thời gian truy cập, loại trình duyệt) để vận hành và chống tấn công. Công ty không dùng nhật ký này để nhận diện cá nhân.</p>
 <h2>6. Không quảng cáo, không theo dõi</h2>

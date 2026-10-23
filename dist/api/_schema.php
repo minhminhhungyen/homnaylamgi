@@ -75,9 +75,18 @@ const SCHEMA = [
     ip VARCHAR(45) NOT NULL DEFAULT '',
     at DATETIME NOT NULL,
     INDEX (at)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+  /* dữ liệu đồng bộ của người dùng: sao, lịch sử, huy hiệu (JSON) và nhật ký ĐÃ MÃ HÓA trên máy người dùng (máy chủ không đọc được) */
+  "CREATE TABLE IF NOT EXISTS user_data (
+    user_id INT UNSIGNED NOT NULL PRIMARY KEY,
+    state MEDIUMTEXT NOT NULL,
+    diary MEDIUMTEXT NULL,
+    rev INT UNSIGNED NOT NULL DEFAULT 0,
+    updated_at DATETIME NOT NULL,
+    CONSTRAINT fk_user_data_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 ];
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 /* nâng cấp cơ sở dữ liệu đã cài từ bản cũ: thêm cột nếu chưa có (chạy được trên cả MySQL và MariaDB) */
 function migrate(PDO $pdo): void {
   foreach (SCHEMA as $sql) $pdo->exec($sql);

@@ -157,6 +157,7 @@ switch ($act) {
     need_post(); check_csrf(); $u = need_user();
     if ($u['role'] === 'admin' && (int) one("SELECT COUNT(*) n FROM users WHERE role = 'admin' AND status = 'active'")['n'] <= 1) fail('Bạn là quản trị viên duy nhất nên chưa xóa được tài khoản.', 409);
     if (str_in('confirm', 20) !== 'XÓA') fail('Gõ chữ XÓA để xác nhận.');
+    q('DELETE FROM user_data WHERE user_id = ?', [$u['id']]);
     q('DELETE FROM users WHERE id = ?', [$u['id']]);
     audit((int) $u['id'], 'self-delete', '#' . $u['id']);
     logout_now();
