@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'">
+<title>Quản trị | Hôm nay làm gì?</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/quan-tri/admin.css">
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="/">Hôm nay làm gì<span>?</span></a><span class="tag">Quản trị</span>
+  <nav id="nav" hidden>
+    <button data-tab="tong-quan">Tổng quan</button><button data-tab="bai-viet">Bài viết</button><button data-tab="thong-bao">Thông báo</button><button data-tab="que">Quẻ &amp; món</button><button data-tab="nguoi-dung">Người dùng</button><button data-tab="cai-dat">Cài đặt</button>
+  </nav>
+  <div class="who" id="who" hidden><span id="whoName"></span><button class="link" id="logout">Đăng xuất</button></div>
+</header>
+<main id="app"><p class="muted">Đang tải…</p></main>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script src="/quan-tri/admin.js"></script>
+</body>
+</html>
