@@ -3,7 +3,7 @@
 //   artifact/hom-nay-lam-gi.html  bản xem trên Claude (font Google, không service worker)
 //   vercel.json                   cấu hình Vercel ở gốc repo
 // Chạy: cd tools && npm ci && npm run build
-import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, copyFileSync, readdirSync, cpSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -133,9 +133,11 @@ let index = await minifyHtml(page, htmlOpts);
 const inlineHashes = re => [...index.matchAll(re)].map(m => `'sha256-${sha256(m[1])}'`);
 const scriptHashes = inlineHashes(/<script(?: type="application\/ld\+json")?>([\s\S]*?)<\/script>/g);
 const styleHashes = inlineHashes(/<style>([\s\S]*?)<\/style>/g);
+/* script, style, khung của Google chỉ dùng khi quản trị viên bật đăng nhập Google */
 const CSP = [
-  "default-src 'self'", `script-src 'self' ${scriptHashes.join(' ')}`, `style-src 'self' ${styleHashes.join(' ')}`,
-  "img-src 'self' data: blob:", "font-src 'self'", "connect-src 'self' https://api.met.no https://air-quality-api.open-meteo.com", "manifest-src 'self'", "worker-src 'self'",
+  "default-src 'self'", `script-src 'self' ${scriptHashes.join(' ')} https://accounts.google.com/gsi/client`, `style-src 'self' ${styleHashes.join(' ')} https://accounts.google.com/gsi/style`,
+  "img-src 'self' data: blob: https://*.googleusercontent.com", "font-src 'self'", "connect-src 'self' https://api.met.no https://air-quality-api.open-meteo.com https://accounts.google.com/gsi/", "manifest-src 'self'", "worker-src 'self'",
+  "frame-src https://accounts.google.com/gsi/",
   "object-src 'none'", "base-uri 'none'", "form-action 'none'", 'upgrade-insecure-requests'
 ].join('; ');
 index = index.replace('__CSP__', CSP);
@@ -220,7 +222,7 @@ a{color:var(--do)}a:focus-visible{outline:3px solid var(--ink);outline-offset:2p
 let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'sha256-__H__'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Chính sách quyền riêng tư | Hôm nay làm gì?</title>
-<meta name="description" content="Hôm nay làm gì? không cần tài khoản, không quảng cáo, không theo dõi. Dữ liệu của bạn nằm trên thiết bị của bạn.">
+<meta name="description" content="Hôm nay làm gì? dùng được không cần tài khoản, không quảng cáo, không theo dõi. Tài khoản là tùy chọn; sao, lịch sử, nhật ký nằm trên thiết bị của bạn.">
 <link rel="canonical" href="${SITE}/rieng-tu"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>${cssDoc}</style></head><body><main>
 <a class="back" href="/">← Về trang chính</a>
@@ -228,7 +230,7 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <p class="date">Cập nhật ngày ${PRIV_DATE}</p>
 <p>“Hôm nay làm gì?” gồm website homnaylamgi.com và ứng dụng cùng tên trên điện thoại, máy tính. Dịch vụ do ${COMPANY.name} vận hành. Trang này nói rõ dịch vụ xử lý dữ liệu nào và vì sao.</p>
 <div class="sum"><ul>
-<li>Không cần tài khoản, không thu tên, email hay số điện thoại.</li>
+<li>Dùng được ngay không cần tài khoản. Tài khoản là tùy chọn: nếu đăng ký, công ty lưu tên gọi, email và mật khẩu đã băm một chiều.</li>
 <li>Sao, huy hiệu, lịch sử và lựa chọn của bạn chỉ lưu trên thiết bị của bạn.</li>
 <li>Nhật ký riêng tư được mã hóa trên thiết bị bằng mật khẩu của bạn; không ai khác đọc được, kể cả công ty.</li>
 <li>Vị trí chỉ dùng khi bạn tự bật gợi ý theo thời tiết, và được làm tròn khoảng 1 km.</li>
@@ -248,14 +250,21 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <h2>4. Chia sẻ, hỗ trợ</h2>
 <p>Khi bạn bấm chia sẻ, lời rủ và đường link được chuyển tới ứng dụng bạn chọn (Zalo, Messenger, Facebook, Instagram…) hoặc bảng chia sẻ của thiết bị. Dịch vụ không đọc danh bạ và không đăng bài thay bạn. Việc xử lý sau đó theo chính sách của ứng dụng bạn chọn.</p>
 <p>Khi bạn gửi yêu cầu hỗ trợ hoặc góp ý, ứng dụng email trên máy bạn gửi thư tới hotro@homnaylamgi.com. Công ty chỉ dùng nội dung thư và địa chỉ email bạn để lại để trả lời bạn.</p>
+<h2>4b. Tài khoản (tùy chọn)</h2>
+<p>Bạn có thể dùng toàn bộ trang mà không cần tài khoản. Nếu bạn tạo tài khoản, công ty xử lý các dữ liệu sau để đăng nhập, gửi thư xác nhận và đặt lại mật khẩu, gửi tin và bài viết mới:</p>
+<ul><li>Tên gọi và email bạn nhập; mật khẩu chỉ được lưu dưới dạng băm một chiều (Argon2id), không ai đọc được mật khẩu gốc.</li>
+<li>Nếu đăng nhập bằng Google: mã định danh tài khoản Google, tên và email mà Google cung cấp sau khi bạn đồng ý. Công ty không nhận mật khẩu Google của bạn.</li>
+<li>Thời điểm tạo tài khoản, lần đăng nhập gần nhất, xác nhận bạn từ đủ 16 tuổi; địa chỉ IP được dùng tạm thời để chống dò mật khẩu và ghi nhật ký thao tác quản trị.</li>
+<li>Một cookie đăng nhập (hnlg_s), chỉ dùng để giữ phiên đăng nhập, không dùng để theo dõi hay quảng cáo.</li></ul>
+<p>Dữ liệu tài khoản lưu trên máy chủ của Hostinger mà công ty thuê, không bán, không chia sẻ cho bên thứ ba để quảng cáo. Sao, lịch sử và nhật ký vẫn chỉ nằm trên thiết bị của bạn, không gửi lên tài khoản. Bạn xóa tài khoản bất cứ lúc nào trong Trang của bạn; dữ liệu tài khoản bị xóa khỏi cơ sở dữ liệu ngay khi bạn bấm.</p>
 <h2>5. Máy chủ lưu trữ</h2>
 <p>Website được phục vụ qua Hostinger và Vercel. Như mọi trang web, các nhà cung cấp này có thể ghi nhật ký kỹ thuật (địa chỉ IP, thời gian truy cập, loại trình duyệt) để vận hành và chống tấn công. Công ty không dùng nhật ký này để nhận diện cá nhân.</p>
 <h2>6. Không quảng cáo, không theo dõi</h2>
 <p>Website và ứng dụng không hiển thị quảng cáo, không dùng cookie quảng cáo hay công cụ phân tích hành vi, không bán hay cho thuê dữ liệu.</p>
 <h2>7. Độ tuổi</h2>
-<p>Dịch vụ dành cho người từ 16 tuổi trở lên.</p>
+<p>Dịch vụ dành cho người từ 16 tuổi trở lên. Khi tạo tài khoản, bạn xác nhận mình từ đủ 16 tuổi.</p>
 <h2>8. Quyền của bạn</h2>
-<p>Theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, bạn có quyền được biết về việc xử lý dữ liệu của mình, đồng ý hoặc rút lại đồng ý, và yêu cầu xóa dữ liệu. Vì dữ liệu nằm trên thiết bị của bạn, bạn có thể tự xóa ngay như ở mục 1, hoặc dùng nút “Xóa toàn bộ dữ liệu” ở Trang của bạn. Mọi câu hỏi xin gửi về <a href="mailto:${SUPPORT.email}">${SUPPORT.email}</a>.</p>
+<p>Theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, bạn có quyền được biết về việc xử lý dữ liệu của mình, đồng ý hoặc rút lại đồng ý, và yêu cầu xóa dữ liệu. Vì dữ liệu nằm trên thiết bị của bạn, bạn có thể tự xóa ngay như ở mục 1, hoặc dùng nút “Xóa toàn bộ dữ liệu” ở Trang của bạn. Nếu có tài khoản, bạn xem, sửa tên, đổi mật khẩu và xóa tài khoản ngay trong Trang của bạn. Mọi câu hỏi xin gửi về <a href="mailto:${SUPPORT.email}">${SUPPORT.email}</a>.</p>
 <h2>9. Liên hệ</h2>
 <p>Hỗ trợ người dùng: email <a href="mailto:${SUPPORT.email}">${SUPPORT.email}</a> hoặc gọi Admin: <a href="tel:${SUPPORT.phone.replace(/ /g, '')}">${SUPPORT.phone}</a>.</p>
 <p>Đơn vị vận hành: ${COMPANY.name}<br>Mã số thuế: ${COMPANY.tax}<br>Địa chỉ: ${COMPANY.addr}<br>Điện thoại: <a href="tel:${COMPANY.phone.replace(/ /g, '')}">${COMPANY.phone}</a> · Email: <a href="mailto:${COMPANY.email}">${COMPANY.email}</a></p>
@@ -299,8 +308,13 @@ out('.well-known/assetlinks.json', JSON.stringify(Object.entries(ANDROID.package
   target: { namespace: 'android_app', package_name: pkg, sha256_cert_fingerprints: fps }
 })), null, 2) + '\n');
 out('rieng-tu.html', privacy);
+/* máy chủ PHP (tài khoản, quản trị, bài viết) chỉ chạy trên Hostinger; file cấu hình nằm ngoài public_html */
+cpSync(path.join(SRC, 'server'), DIST, { recursive: true });
+out('api/_basemax.php', `<?php\n// Số lớn nhất của thư viện gốc (do tools/build.mjs tạo)\nreturn ['q' => ${Math.max(...ACT.map(a => a.id))}, 'an' => ${Math.max(...FOODS.map(f => f.id))}];\n`);
+mkdirSync(path.join(DIST, 'data'), { recursive: true });
+out('data/library.json', JSON.stringify({ q: ACT, an: FOODS }));
 out('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
-out('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE}/</loc><lastmod>${TODAY}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>\n  <url><loc>${SITE}/rieng-tu</loc><lastmod>${TODAY}</lastmod><changefreq>yearly</changefreq><priority>0.2</priority></url>\n</urlset>\n`);
+out('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE}/</loc><lastmod>${TODAY}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>\n  <url><loc>${SITE}/bai-viet</loc><lastmod>${TODAY}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n  <url><loc>${SITE}/rieng-tu</loc><lastmod>${TODAY}</lastmod><changefreq>yearly</changefreq><priority>0.2</priority></url>\n</urlset>\n`);
 out('sw.js', await minJs(readFileSync(path.join(SRC, 'sw.js'), 'utf8').replace('__VERSION__', VERSION)));
 
 const SECURITY = [
@@ -309,7 +323,7 @@ const SECURITY = [
 ];
 out('.htaccess', `# homnaylamgi.com — cấu hình cho Hostinger (LiteSpeed/Apache). File này do tools/build.mjs tạo.
 Options -Indexes
-DirectoryIndex index.html
+DirectoryIndex index.html index.php
 ErrorDocument 404 /404.html
 
 <IfModule mod_rewrite.c>
@@ -323,7 +337,17 @@ ErrorDocument 404 /404.html
   RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
   # Chặn thư mục .git do Hostinger Git tạo ra
   RewriteRule (^|/)\\.git(/|$) - [F,L]
-  # Link rủ từng quẻ: /q/12 → q/12.html, /an/5 → an/5.html
+  # Chặn file ẩn, file cấu hình, sao lưu
+  RewriteRule (^|/)\\.(?!well-known/) - [F,L]
+  RewriteRule \\.(sql|bak|log|ini|env|sh)$ - [F,L]
+  # Ảnh tải lên (lưu ngoài public_html): /uploads/2026/10/abc.jpg → api/img.php
+  RewriteRule ^uploads/([0-9]{4}/[0-9]{2}/[a-f0-9]{16}\\.jpg)$ api/img.php?f=$1 [L]
+  # Bài viết: /bai-viet/<đường-dẫn> → bai-viet/index.php
+  RewriteRule ^bai-viet/([a-z0-9-]+)/?$ bai-viet/index.php?slug=$1 [L,QSA]
+  RewriteRule ^bai-viet/?$ bai-viet/index.php [L,QSA]
+  # Link rủ từng quẻ: /q/12 → q/12.html, /an/5 → an/5.html; quẻ do quản trị viên thêm → api/q.php
+  RewriteCond %{DOCUMENT_ROOT}/$1/$2.html !-f
+  RewriteRule ^(q|an)/([0-9]+)/?$ api/q.php?k=$1&id=$2 [L,QSA]
   RewriteRule ^(q|an)/([0-9]+)/?$ $1/$2.html [L]
   # Trang không đuôi: /rieng-tu → rieng-tu.html
   RewriteCond %{REQUEST_FILENAME} !-f
@@ -361,11 +385,20 @@ ${SECURITY.map(([k, v]) => `  Header always set ${k} "${v}"`).join('\n')}
 </IfModule>
 `);
 
+{ const ht = readFileSync(path.join(DIST, '.htaccess'), 'utf8'); if (!ht.includes('RewriteRule (^|/)\\.(?!well-known/)') || !ht.includes('RewriteRule \\.(sql|') || !ht.includes('[a-f0-9]{16}\\.jpg')) throw new Error('.htaccess: mất dấu \\ trong biểu thức chặn'); }
+
 /* ---------- 8. vercel.json ở gốc repo ---------- */
 writeFileSync(path.join(ROOT, 'vercel.json'), JSON.stringify({
   $schema: 'https://openapi.vercel.sh/vercel.json',
   outputDirectory: 'dist',
   cleanUrls: true,
+  /* Vercel không chạy PHP: tài khoản, quản trị, bài viết chỉ có trên homnaylamgi.com */
+  redirects: [
+    { source: '/api/:path*', destination: 'https://homnaylamgi.com/api/:path*', permanent: false },
+    { source: '/quan-tri/:path*', destination: 'https://homnaylamgi.com/quan-tri/:path*', permanent: false },
+    { source: '/bai-viet/:path*', destination: 'https://homnaylamgi.com/bai-viet/:path*', permanent: false },
+    { source: '/bai-viet', destination: 'https://homnaylamgi.com/bai-viet', permanent: false }
+  ],
   trailingSlash: false,
   headers: [
     { source: '/(.*)', headers: SECURITY.map(([key, value]) => ({ key, value })) },

@@ -33,6 +33,7 @@
 </header>
 
 <main class="wrap layout">
+  <p class="site-notice needs-js" id="siteNotice" hidden><span id="siteNoticeText"></span><button class="x" type="button" id="siteNoticeX" aria-label="Ẩn thông báo"><svg class="ico"><use href="#i-x"/></svg></button></p>
   <section class="hero" aria-labelledby="hTitle">
     <div class="hero-head">
       <div>
@@ -264,8 +265,12 @@
   <section class="view needs-js" id="viewMe" hidden aria-labelledby="meTitle">
     <a class="back" href="#">← Về quẻ hôm nay</a>
     <h2 id="meTitle" tabindex="-1">Trang của bạn</h2>
-    <p class="sub">Mọi thứ ở đây chỉ nằm trên máy này. Không cần đăng ký tài khoản.</p>
+    <p class="sub">Sao, lịch sử và nhật ký chỉ nằm trên máy này. Tài khoản là tùy chọn, dùng để nhận tin và bài viết mới.</p>
     <div class="cards">
+      <div class="card acct" id="acctCard" hidden>
+        <h3>Tài khoản</h3>
+        <div id="acctBody"></div>
+      </div>
       <div class="card">
         <h3>Tên gọi</h3>
         <form class="row-form" id="nameForm"><label class="sr" for="nameInput">Tên gọi</label><input id="nameInput" maxlength="30" autocomplete="nickname" placeholder="Bạn muốn được gọi là gì?"><button class="btn btn-soft btn-sm" type="submit">Lưu</button></form>
@@ -363,11 +368,11 @@
 
 <footer class="foot">
   <div class="wrap foot-in">
-    <p class="about"><b>Hôm nay làm gì?</b> gợi ý mỗi ngày một việc nhỏ cho người trẻ 16–40 tuổi: vận động, khám phá, kết nối, học hỏi, chăm sóc bản thân, và cả hôm nay ăn gì. Có {{count}} quẻ việc và {{foods}} món ăn, lọc theo tâm trạng, thời gian và túi tiền, không cần đăng ký.</p>
+    <p class="about"><b>Hôm nay làm gì?</b> gợi ý mỗi ngày một việc nhỏ cho người trẻ 16–40 tuổi: vận động, khám phá, kết nối, học hỏi, chăm sóc bản thân, và cả hôm nay ăn gì. Có {{count}} quẻ việc và {{foods}} món ăn, lọc theo tâm trạng, thời gian và túi tiền. Dùng ngay không cần đăng ký.</p>
     <p class="help">Có những ngày nặng lòng hơn bình thường. Hãy kể với một người bạn hoặc người nhà tin tưởng, đừng giữ một mình. Nếu bạn thấy mình không an toàn, gọi ngay cấp cứu <a href="tel:115">115</a>.</p>
     <p class="contact">Cần hỗ trợ hoặc góp ý? Gửi email tới <a href="mailto:hotro@homnaylamgi.com">hotro@homnaylamgi.com</a> hoặc gọi Admin: <a href="tel:0919391060">0919 391 060</a>.</p>
     <p class="tiny">Thời gian, chi phí và túi tiền trên mỗi quẻ là ước tính. Ngày âm lịch tính theo giờ Việt Nam. Thời tiết: <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a>. Chất lượng không khí, UV: <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">Copernicus Atmosphere Monitoring Service</a> qua <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0).</p>
-    <p class="tiny">© 2026 homnaylamgi.com · <a href="/rieng-tu">Chính sách quyền riêng tư</a></p>
+    <p class="tiny">© 2026 homnaylamgi.com · <a href="/bai-viet">Bài viết</a> · <a href="/rieng-tu">Chính sách quyền riêng tư</a></p>
   </div>
 </footer>
 

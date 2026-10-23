@@ -1,0 +1,9 @@
+# File thư viện (_lib.php, _schema.php…) không được gọi trực tiếp
+<FilesMatch "^_">
+  Require all denied
+</FilesMatch>
+<IfModule mod_headers.c>
+  <FilesMatch "^(auth|admin|setup|reset|verify)\.php$">
+    Header set Cache-Control "no-store"
+  </FilesMatch>
+</IfModule>

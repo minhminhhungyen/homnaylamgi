@@ -450,3 +450,18 @@ body.modal-open{overflow:hidden}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
+/* tài khoản, thông báo đầu trang */
+.acct{grid-column:1/-1}
+.acct-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.acct-tabs button{border:1.5px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:6px 14px;font:600 .9rem/1.2 var(--f-body);cursor:pointer}
+.acct-tabs button[aria-selected="true"]{background:var(--do);border-color:var(--do);color:#fff}
+.acct form{max-width:440px}
+.acct .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem;margin:14px 0 8px}
+.acct .or::before,.acct .or::after{content:"";flex:1;height:1px;background:var(--line)}
+.acct-who{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.acct-who b{font:800 1.15rem/1.2 var(--f-display)}
+.acct details{margin-top:12px}.acct summary{cursor:pointer;color:var(--do);font-weight:600}
+.acct details form{margin-top:8px}
+.site-notice{grid-column:1/-1;display:flex;gap:10px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px 10px 16px;border-radius:10px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--do);font-size:.95rem}
+.site-notice a{color:var(--do);font-weight:600}
+.site-notice .x{flex:0 0 auto}

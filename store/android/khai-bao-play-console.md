@@ -10,7 +10,13 @@
     - Xử lý tạm thời (ephemeral): Không. Không kiểm soát được thời gian lưu của bên thứ ba.
     - Bắt buộc hay tùy chọn: Tùy chọn. Người dùng tự bật; không cho thì chọn tỉnh, thành.
     - Mục đích: Chức năng ứng dụng (App functionality).
-- Không thu thập: tên, email, số điện thoại, danh bạ, ảnh, tệp, lịch sử duyệt web, định danh thiết bị, dữ liệu tài chính, sức khỏe.
+  - **Thông tin cá nhân → Tên, Địa chỉ email (từ 23/10/2026, khi có tài khoản):**
+    - Thu thập: Có, chỉ khi người dùng tự tạo tài khoản (email + mật khẩu hoặc Google). Chia sẻ: Không.
+    - Bắt buộc hay tùy chọn: Tùy chọn. Mọi chức năng chính dùng được không cần tài khoản.
+    - Mục đích: Quản lý tài khoản (Account management), Liên lạc với nhà phát triển (Developer communications).
+    - Người dùng xóa được tài khoản ngay trong app (Trang của bạn → Xóa tài khoản).
+  - **Mã định danh khác (User IDs):** mã tài khoản Google khi đăng nhập bằng Google. Mục đích: Quản lý tài khoản.
+- Không thu thập: số điện thoại, danh bạ, ảnh, tệp, lịch sử duyệt web, định danh thiết bị, dữ liệu tài chính, sức khỏe.
 - Tên gọi, tâm trạng, nhật ký (đã mã hóa) chỉ lưu và xử lý trên máy người dùng, không gửi đi đâu, nên không tính là thu thập. Form hỗ trợ chỉ mở ứng dụng email của người dùng; họ tự bấm gửi.
 - **Dữ liệu có được mã hóa khi truyền không?** Có (HTTPS).
 - **Người dùng có thể yêu cầu xóa dữ liệu không?** Có. Dữ liệu chỉ nằm trên máy: nút “Xóa dữ liệu” trong app, nút “Tắt thời tiết” hoặc gỡ app.
@@ -29,5 +35,6 @@
 
 ## Mục khác
 - Quảng cáo: **Không** chứa quảng cáo.
-- Quyền truy cập ứng dụng (App access): mọi chức năng dùng được ngay, **không cần đăng nhập**.
+- Quyền truy cập ứng dụng (App access): mọi chức năng chính dùng được ngay, **không cần đăng nhập**. Tài khoản là tùy chọn.
+- Xóa tài khoản: Google Play yêu cầu link xóa tài khoản trên web; dùng https://homnaylamgi.com/#toi (mục Xóa tài khoản).
 - Ứng dụng tin tức, sức khỏe, tài chính, chính phủ: **Không**.

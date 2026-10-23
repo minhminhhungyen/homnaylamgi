@@ -2,6 +2,28 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "dist",
   "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://homnaylamgi.com/api/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/quan-tri/:path*",
+      "destination": "https://homnaylamgi.com/quan-tri/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/bai-viet/:path*",
+      "destination": "https://homnaylamgi.com/bai-viet/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/bai-viet",
+      "destination": "https://homnaylamgi.com/bai-viet",
+      "permanent": false
+    }
+  ],
   "trailingSlash": false,
   "headers": [
     {

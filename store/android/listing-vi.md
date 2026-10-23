@@ -37,7 +37,7 @@ Không biết hôm nay làm gì, ăn gì? Mở “Hôm nay làm gì?” là có 
 • Có âm lịch và các dịp lễ Việt Nam như Rằm, Trung thu, Tết, 20/10, 20/11, mỗi dịp có quẻ riêng.
 
 ★ RIÊNG TƯ
-• Không cần đăng ký tài khoản.
+• Dùng ngay không cần tài khoản; tài khoản là tùy chọn để nhận tin, bài viết mới.
 • Sao, huy hiệu, lịch sử chỉ lưu trên điện thoại của bạn.
 • Nhật ký riêng tư khóa bằng mật khẩu của bạn, mã hóa ngay trên máy, không gửi đi đâu.
 • Không quảng cáo, không theo dõi.

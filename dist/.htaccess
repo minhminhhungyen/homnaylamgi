@@ -1,6 +1,6 @@
 # homnaylamgi.com — cấu hình cho Hostinger (LiteSpeed/Apache). File này do tools/build.mjs tạo.
 Options -Indexes
-DirectoryIndex index.html
+DirectoryIndex index.html index.php
 ErrorDocument 404 /404.html
 
 <IfModule mod_rewrite.c>
@@ -14,7 +14,17 @@ ErrorDocument 404 /404.html
   RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
   # Chặn thư mục .git do Hostinger Git tạo ra
   RewriteRule (^|/)\.git(/|$) - [F,L]
-  # Link rủ từng quẻ: /q/12 → q/12.html, /an/5 → an/5.html
+  # Chặn file ẩn, file cấu hình, sao lưu
+  RewriteRule (^|/)\.(?!well-known/) - [F,L]
+  RewriteRule \.(sql|bak|log|ini|env|sh)$ - [F,L]
+  # Ảnh tải lên (lưu ngoài public_html): /uploads/2026/10/abc.jpg → api/img.php
+  RewriteRule ^uploads/([0-9]{4}/[0-9]{2}/[a-f0-9]{16}\.jpg)$ api/img.php?f=$1 [L]
+  # Bài viết: /bai-viet/<đường-dẫn> → bai-viet/index.php
+  RewriteRule ^bai-viet/([a-z0-9-]+)/?$ bai-viet/index.php?slug=$1 [L,QSA]
+  RewriteRule ^bai-viet/?$ bai-viet/index.php [L,QSA]
+  # Link rủ từng quẻ: /q/12 → q/12.html, /an/5 → an/5.html; quẻ do quản trị viên thêm → api/q.php
+  RewriteCond %{DOCUMENT_ROOT}/$1/$2.html !-f
+  RewriteRule ^(q|an)/([0-9]+)/?$ api/q.php?k=$1&id=$2 [L,QSA]
   RewriteRule ^(q|an)/([0-9]+)/?$ $1/$2.html [L]
   # Trang không đuôi: /rieng-tu → rieng-tu.html
   RewriteCond %{REQUEST_FILENAME} !-f

@@ -85,6 +85,20 @@ Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên,
 - `#nhat-ky`: nhật ký mã hóa ngay trên máy (AES-GCM 256, khóa sinh từ mật khẩu bằng PBKDF2-SHA256 600.000 vòng, mỗi trang một IV). Lưu ở `localStorage` khóa `hnlg.diary`; chỉ có bản mã hóa, không lưu mật khẩu. Quên mật khẩu thì không mở lại được. Rời trang nhật ký hoặc 10 phút không dùng thì tự khóa.
 - Chưa có đăng nhập, đồng bộ nhiều máy (chờ Firebase) và gửi thư tự động (chờ Hostinger + hộp thư hotro@).
 
+## Tài khoản, quản trị, bài viết (PHP + MySQL, chỉ chạy trên Hostinger)
+
+- Mã nằm trong `src/server/` (build chép sang `dist/`): `api/` (auth, admin, public, setup…), `bai-viet/`, `quan-tri/`.
+- File cấu hình `hnlg-config.php`, thư mục phiên `hnlg-sessions/` và ảnh tải lên `hnlg-uploads/` nằm NGOÀI public_html (thư mục cha). Không đưa lên Git, đưa bản web mới lên không mất ảnh.
+- Cài lần đầu:
+  1. Tạo CSDL MySQL trong hPanel.
+  2. Tạo file `hnlg-setup-key.txt` (chuỗi ≥ 16 ký tự) cạnh public_html.
+  3. Mở `/api/setup.php`, nhập mã và thông tin CSDL, tạo tài khoản quản trị. File mã tự xóa, trang cài đặt tự khóa.
+- Trang quản trị `/quan-tri/`: tổng quan, bài viết (soạn kiểu Markdown đơn giản, ảnh bìa, hẹn giờ đăng), thông báo đầu trang, thêm/sửa/ẩn quẻ và món (qua cùng chốt an toàn), người dùng (khóa, cấp quyền, xóa), cài đặt Google Client ID.
+- Người dùng: đăng ký email + mật khẩu (Argon2id), xác nhận email, quên mật khẩu, Google (Google Identity Services, kiểm ID token qua tokeninfo), đổi tên, đổi mật khẩu, tự xóa tài khoản. Phải xác nhận từ đủ 16 tuổi.
+- Bảo mật: câu lệnh SQL chuẩn bị sẵn, CSRF, phiên HttpOnly + Secure + SameSite, khóa/đổi mật khẩu thì đăng xuất mọi thiết bị, giới hạn số lần thử (chỉ đếm lần sai, theo email + IP), thời gian trả lời không lộ email có tồn tại, ảnh tải lên được vẽ lại bằng GD.
+- Thư (xác nhận, quên mật khẩu) gửi bằng `mail()` từ noreply@homnaylamgi.com: cần bật email cho tên miền trong hPanel để thư không vào Spam.
+- Vercel không chạy PHP: `/api`, `/quan-tri`, `/bai-viet` trên Vercel chuyển về homnaylamgi.com.
+
 ## Cài như ứng dụng, app Android
 
 - Web cài được như app (PWA): Chrome/Edge hiện hộp cài khi bấm “Cài ứng dụng”; iPhone có hướng dẫn “Thêm vào MH chính”; trong app Zalo/Facebook có hướng dẫn mở bằng trình duyệt. Manifest có phím tắt “Rút quẻ” (`/?mode=lam`), “Ăn gì” (`/?mode=an`) và ảnh chụp màn hình (`tools/make-shots.mjs`).

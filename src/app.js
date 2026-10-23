@@ -91,9 +91,22 @@ const ACTIVE_BOOST = new Set(ACTIVE.flatMap(e => (e.ev.boost ? e.ev.boost.split(
 const TODAY_EVENTS = EVS.filter(e => e.diff === 0);
 
 /* ---------- dữ liệu ---------- */
-const A = ACTIVITIES;
+/* quẻ, món do quản trị viên thêm, sửa hoặc ẩn: tải từ máy chủ ở lần mở trước, áp dụng ngay từ đầu */
+const LIBK = 'hnlg.lib';
+const libOk = x => x && Number.isInteger(x.id) && typeof x.t === 'string' && typeof x.n === 'string';
+function libApply(list, kind) {
+  let L = null; try { L = JSON.parse(localStorage.getItem(LIBK) || 'null'); } catch (e) { L = null; }
+  if (!L || typeof L !== 'object') return list;
+  const hide = new Set(((L.hide || {})[kind] || []).filter(Number.isInteger));
+  const over = new Map((Array.isArray(L[kind]) ? L[kind] : []).filter(x => libOk(x) && (kind === 'an' ? typeof x.b === 'string' && typeof x.o === 'string' : typeof x.s === 'string' && typeof x.g === 'string' && typeof x.m === 'string' && typeof x.ai === 'string')).map(x => [x.id, x]));
+  const out = list.filter(x => !hide.has(x.id)).map(x => over.get(x.id) || x);
+  const have = new Set(list.map(x => x.id));
+  for (const [id, x] of over) if (!have.has(id) && !hide.has(id)) out.push(x);
+  return out;
+}
+const A = libApply(ACTIVITIES, 'q');
 const byId = new Map(A.map(a => [a.id, a]));
-const F = FOODS;
+const F = libApply(FOODS, 'an');
 const foodById = new Map(F.map(f => [f.id, f]));
 const MEAL_OF_SLOT = { s: 's', c: 'c', t: 't', k: 'k' };
 const MEAL_LV = { s: 'Gợi ý bữa sáng', c: 'Gợi ý bữa trưa', t: 'Gợi ý bữa tối', k: 'Gợi ý ăn khuya', v: 'Gợi ý ăn vặt' };
@@ -1364,13 +1377,110 @@ $('#btnWipe').addEventListener('click', e => {
 });
 
 /* điều hướng giữa trang chính và các trang con (#toi, #nhat-ky) */
+/* ---------- máy chủ homnaylamgi.com: thông báo, quẻ mới, tài khoản (tùy chọn) ---------- */
+const SERVER = DEPLOY && /^(homnaylamgi\.com|[\w-]+\.hostingersite\.com|127\.0\.0\.1|localhost)$/.test(location.hostname);
+let ACC = { ready: false, installed: false, user: null, google: '', csrf: '' }, accTab = 'login', gisLoaded = false;
+async function sx(path, body) {
+  const opt = { credentials: 'same-origin', headers: { 'X-CSRF': ACC.csrf } };
+  if (body !== undefined) { opt.method = 'POST'; opt.body = JSON.stringify(body); opt.headers['Content-Type'] = 'application/json'; }
+  let j;
+  try { const r = await fetch(path, opt); if (!/json/.test(r.headers.get('content-type') || '')) throw new Error(); j = await r.json(); } catch (e) { throw new Error('Không kết nối được máy chủ. Thử lại sau nhé.'); }
+  if (j.csrf) ACC.csrf = j.csrf;
+  if (!j.ok) throw new Error(j.error || 'Có lỗi xảy ra.');
+  return j;
+}
+async function boot() {
+  if (!SERVER) return;
+  try {
+    const j = await sx('/api/public.php?action=boot');
+    const n = j.notice; let hid = ''; try { hid = localStorage.getItem('hnlg.noticeX') || ''; } catch (e) { /* bỏ qua */ }
+    if (n && String(n.id) !== hid) {
+      const t = $('#siteNoticeText'); t.textContent = '';
+      if (n.link && /^(https:\/\/|\/(?![\/\\]))/.test(n.link)) { const a = document.createElement('a'); a.href = n.link; a.textContent = n.text; if (new URL(n.link, location.href).origin !== location.origin) { a.target = '_blank'; a.rel = 'noopener'; } t.appendChild(a); } else t.textContent = n.text;
+      $('#siteNotice').hidden = false;
+      $('#siteNoticeX').onclick = () => { $('#siteNotice').hidden = true; try { localStorage.setItem('hnlg.noticeX', String(n.id)); } catch (e) { /* bỏ qua */ } };
+    }
+    let cur = null; try { cur = JSON.parse(localStorage.getItem(LIBK) || 'null'); } catch (e) { cur = null; }
+    if ((j.lib || '') !== ((cur && cur.v) || '')) {
+      if (!j.lib) { try { localStorage.removeItem(LIBK); } catch (e) { /* bỏ qua */ } }
+      else { const L = await sx('/api/public.php?action=library'); try { localStorage.setItem(LIBK, JSON.stringify({ v: L.v, q: L.q, an: L.an, hide: L.hide })); } catch (e) { /* bỏ qua */ } }
+    }
+  } catch (e) { /* máy chủ chưa sẵn sàng: trang vẫn chạy bình thường */ }
+}
+async function accLoad() {
+  if (!SERVER) return;
+  try { const j = await sx('/api/auth.php?action=me'); ACC = { ready: true, installed: j.installed !== false, user: j.user, google: j.google || '', csrf: j.csrf || ACC.csrf }; } catch (e) { ACC.ready = false; }
+  renderAcc();
+}
+const accMsg = (m, ok) => { const p = $('#accMsg'); if (p) { p.textContent = m || ''; p.className = ok ? 'note' : 'err'; } };
+function renderAcc() {
+  const card = $('#acctCard'), box = $('#acctBody');
+  card.hidden = !(SERVER && ACC.ready && ACC.installed);
+  if (card.hidden) return;
+  const u = ACC.user;
+  if (u) {
+    box.innerHTML = `<div class="acct-who"><b>${esc(u.name)}</b><span class="note">${esc(u.email || 'Đăng nhập bằng Google')}${u.email && !u.verified ? ' · chưa xác nhận email' : ''}</span></div>
+      <div class="acts">${u.role === 'admin' ? '<a class="btn btn-main btn-sm" href="/quan-tri/">Vào trang quản trị</a>' : ''}<a class="btn btn-soft btn-sm" href="/bai-viet">Bài viết</a><button class="btn btn-soft btn-sm" type="button" id="accOut">Đăng xuất</button>${u.email && !u.verified ? '<button class="link muted" type="button" id="accResend">Gửi lại thư xác nhận</button>' : ''}</div>
+      <p id="accMsg" role="status"></p>
+      <details><summary>Đổi tên hiển thị</summary><form class="row-form" id="accName"><input id="accNameIn" maxlength="60" value="${esc(u.name)}" aria-label="Tên hiển thị"><button class="btn btn-soft btn-sm" type="submit">Lưu</button></form></details>
+      <details><summary>${u.hasPass ? 'Đổi mật khẩu' : 'Đặt mật khẩu'}</summary><form class="stack" id="accPw" novalidate>${u.hasPass ? '<label class="lbl" for="accOld">Mật khẩu hiện tại</label><input id="accOld" type="password" autocomplete="current-password">' : ''}<label class="lbl" for="accNew">Mật khẩu mới (ít nhất 8 ký tự, có chữ và số)</label><input id="accNew" type="password" autocomplete="new-password"><button class="btn btn-soft btn-sm" type="submit">Lưu mật khẩu</button></form></details>
+      <details><summary>Xóa tài khoản</summary><form class="stack" id="accDel"><p class="note">Xóa tên, email và mọi thông tin tài khoản trên máy chủ. Sao, lịch sử và nhật ký trên máy này vẫn giữ nguyên. Gõ <b>XÓA</b> để xác nhận.</p><input id="accDelIn" autocomplete="off" aria-label="Gõ XÓA để xác nhận"><button class="btn btn-soft btn-sm" type="submit">Xóa tài khoản</button></form></details>`;
+    return;
+  }
+  const tab = (k, t) => `<button type="button" role="tab" data-acc="${k}" aria-selected="${accTab === k}">${t}</button>`;
+  const consent = `<label class="check"><input type="checkbox" id="accAge"><span>Tôi từ đủ 16 tuổi và đồng ý với <a href="/rieng-tu" target="_blank" rel="noopener">chính sách quyền riêng tư</a>.</span></label>`;
+  const forms = {
+    login: `<form class="stack" id="accLogin" novalidate><label class="lbl" for="accEm">Email</label><input id="accEm" type="email" autocomplete="username" maxlength="190"><label class="lbl" for="accPw1">Mật khẩu</label><input id="accPw1" type="password" autocomplete="current-password"><button class="btn btn-main btn-sm" type="submit">Đăng nhập</button><button class="link muted" type="button" data-acc="forgot">Quên mật khẩu?</button></form>`,
+    reg: `<form class="stack" id="accReg" novalidate><label class="lbl" for="accRn">Tên gọi</label><input id="accRn" maxlength="60" autocomplete="nickname" value="${esc(S.name || '')}"><label class="lbl" for="accRe">Email</label><input id="accRe" type="email" autocomplete="email" maxlength="190"><label class="lbl" for="accRp">Mật khẩu (ít nhất 8 ký tự, có chữ và số)</label><input id="accRp" type="password" autocomplete="new-password">${consent}<button class="btn btn-main btn-sm" type="submit">Tạo tài khoản</button></form>`,
+    forgot: `<form class="stack" id="accForgot" novalidate><label class="lbl" for="accFe">Email đã đăng ký</label><input id="accFe" type="email" autocomplete="email" maxlength="190"><button class="btn btn-main btn-sm" type="submit">Gửi thư đặt lại mật khẩu</button></form>`
+  };
+  box.innerHTML = `<p class="note">Không bắt buộc. Có tài khoản để nhận tin, bài viết mới và giữ liên lạc với chúng tôi.</p><div class="acct-tabs" role="tablist">${tab('login', 'Đăng nhập')}${tab('reg', 'Đăng ký')}</div>${forms[accTab]}<p id="accMsg" role="status"></p>
+    ${ACC.google && accTab !== 'forgot' ? `<p class="or">hoặc</p>${accTab === 'login' ? consent.replace('accAge', 'accAgeG') : ''}<div id="gBtn"></div><p class="note">Lần đầu đăng nhập bằng Google cần đánh dấu ô xác nhận độ tuổi.</p>` : ''}`;
+  if (ACC.google && accTab !== 'forgot') gis();
+}
+function gis() {
+  const draw = () => {
+    if (!window.google || !google.accounts || !$('#gBtn')) return;
+    google.accounts.id.initialize({ client_id: ACC.google, callback: async r => {
+      const age = ($('#accAge') && $('#accAge').checked) || ($('#accAgeG') && $('#accAgeG').checked);
+      try { const j = await sx('/api/auth.php?action=google', { credential: r.credential, age }); ACC.user = j.user; renderAcc(); toast('Đã đăng nhập.'); } catch (e) { accMsg(e.message); }
+    } });
+    google.accounts.id.renderButton($('#gBtn'), { theme: 'outline', size: 'large', text: 'continue_with', locale: 'vi', shape: 'pill' });
+  };
+  if (gisLoaded) { draw(); return; }
+  const sc = document.createElement('script'); sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true; sc.onload = () => { gisLoaded = true; draw(); }; document.head.appendChild(sc);
+}
+$('#acctBody').addEventListener('click', async e => {
+  const t = e.target.closest('[data-acc]');
+  if (t) { accTab = t.dataset.acc; renderAcc(); return; }
+  if (e.target.closest('#accOut')) { try { await sx('/api/auth.php?action=logout', {}); ACC.user = null; accTab = 'login'; renderAcc(); toast('Đã đăng xuất.'); } catch (x) { accMsg(x.message); } }
+  if (e.target.closest('#accResend')) { try { await sx('/api/auth.php?action=resend', {}); accMsg('Đã gửi lại thư xác nhận. Nhớ xem cả thư mục Spam.', true); } catch (x) { accMsg(x.message); } }
+});
+$('#acctBody').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, btn = $('button[type="submit"]', f); if (btn) btn.disabled = true;
+  try {
+    if (f.id === 'accLogin') { const j = await sx('/api/auth.php?action=login', { email: $('#accEm').value.trim(), password: $('#accPw1').value }); ACC.user = j.user; renderAcc(); toast('Đã đăng nhập.'); }
+    else if (f.id === 'accReg') {
+      if (!$('#accAge').checked) throw new Error('Đánh dấu ô xác nhận từ đủ 16 tuổi và đồng ý chính sách nhé.');
+      const j = await sx('/api/auth.php?action=register', { name: $('#accRn').value.trim(), email: $('#accRe').value.trim(), password: $('#accRp').value, age: true, agree: true });
+      ACC.user = j.user; renderAcc(); accMsg('Đã tạo tài khoản. Thư xác nhận email đang trên đường tới hộp thư của bạn.', true);
+    }
+    else if (f.id === 'accForgot') { const j = await sx('/api/auth.php?action=forgot', { email: $('#accFe').value.trim() }); accMsg(j.message, true); }
+    else if (f.id === 'accName') { const j = await sx('/api/auth.php?action=profile', { name: $('#accNameIn').value.trim() }); ACC.user = j.user; renderAcc(); accMsg('Đã đổi tên.', true); }
+    else if (f.id === 'accPw') { await sx('/api/auth.php?action=password', { old: $('#accOld') ? $('#accOld').value : '', new: $('#accNew').value }); accMsg('Đã đổi mật khẩu. Các thiết bị khác đã được đăng xuất.', true); f.reset(); }
+    else if (f.id === 'accDel') { await sx('/api/auth.php?action=delete', { confirm: $('#accDelIn').value.trim().toUpperCase() }); ACC.user = null; accTab = 'login'; renderAcc(); toast('Đã xóa tài khoản.'); }
+  } catch (x) { accMsg(x.message); }
+  if (btn && document.contains(btn)) btn.disabled = false;
+});
+
 function route() {
   const h = location.hash, v = h === '#toi' ? 'me' : h === '#nhat-ky' ? 'diary' : '';
   const was = document.body.classList.contains('view-on');
   document.body.classList.toggle('view-on', !!v);
   $('#viewMe').hidden = v !== 'me'; $('#viewDiary').hidden = v !== 'diary';
   if (v !== 'diary' && DK) dLock(true);
-  if (v === 'me') renderMe();
+  if (v === 'me') { renderMe(); if (SERVER && !ACC.ready) accLoad(); else renderAcc(); }
   if (v === 'diary') renderDiary();
   if (v) { window.scrollTo(0, 0); (v === 'me' ? $('#meTitle') : $('#diTitle')).focus({ preventScroll: true }); }
   else if (was) { renderSlip(); }
@@ -1477,6 +1587,7 @@ else if (S.curDay !== TODAY) S.acc = 0;
 if (S.mealDay !== TODAY) { S.meal = ''; S.mealDay = ''; }
 if (window.matchMedia && matchMedia('(min-width: 960px)').matches) $('#tune').open = true;
 renderAll(); renderSoon(); setMode(S.mode); save(); renderMe();
+boot();
 if (location.hash === '#toi' || location.hash === '#nhat-ky') route();
 if (startMsg) toast(startMsg);
 if (S.wxOn && S.wxLoc) getWx(false);
