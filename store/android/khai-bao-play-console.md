@@ -11,13 +11,14 @@
     - Bắt buộc hay tùy chọn: Tùy chọn. Người dùng tự bật; không cho thì chọn tỉnh, thành.
     - Mục đích: Chức năng ứng dụng (App functionality).
 - Không thu thập: tên, email, số điện thoại, danh bạ, ảnh, tệp, lịch sử duyệt web, định danh thiết bị, dữ liệu tài chính, sức khỏe.
+- Tên gọi, tâm trạng, nhật ký (đã mã hóa) chỉ lưu và xử lý trên máy người dùng, không gửi đi đâu, nên không tính là thu thập. Form hỗ trợ chỉ mở ứng dụng email của người dùng; họ tự bấm gửi.
 - **Dữ liệu có được mã hóa khi truyền không?** Có (HTTPS).
 - **Người dùng có thể yêu cầu xóa dữ liệu không?** Có. Dữ liệu chỉ nằm trên máy: nút “Xóa dữ liệu” trong app, nút “Tắt thời tiết” hoặc gỡ app.
 - Lưu ý: nhà cung cấp máy chủ (Vercel, Hostinger) ghi nhật ký kỹ thuật có địa chỉ IP. Điều này đã nêu trong chính sách quyền riêng tư; không có mục riêng trong Data safety.
 
 ## Phân loại nội dung (Content rating)
 - Loại ứng dụng: Tất cả các loại ứng dụng khác (All Other App Types).
-- Bạo lực, nội dung tình dục, ngôn ngữ thô tục, chất kích thích, cờ bạc: **Không** (đã rà 199 quẻ và 58 món: không có rượu bia, thuốc lá, cá cược).
+- Bạo lực, nội dung tình dục, ngôn ngữ thô tục, chất kích thích, cờ bạc: **Không** (đã rà 299 quẻ, 80 món và 12 thử thách 7 ngày: không có rượu bia, thuốc lá, cá cược, đua xe; bước build tự dừng nếu nội dung có các từ này hoặc lời lẽ về tự tử, tự làm hại bản thân).
 - Người dùng trò chuyện hoặc trao đổi nội dung với nhau trong app: **Không** (chỉ chia sẻ ra ngoài qua ứng dụng khác).
 - Chia sẻ vị trí với người dùng khác: **Không**.
 - Mua hàng trong app: **Không**.

@@ -196,6 +196,17 @@ b,strong{font-weight:600}
 .daily-act{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-top:14px}
 .daily-act .note{font-size:.85rem;color:var(--muted)}
 
+/* thử thách 7 ngày */
+.wk-list{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px}
+@media (min-width:480px) and (max-width:959px){.wk-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.wk-pick{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:transparent;cursor:pointer;font-weight:600;font-size:.92rem;line-height:1.35}
+.wk-pick:hover{border-color:var(--do-line)}
+.wk-ok{flex:none;font-size:.75rem;font-weight:600;color:var(--tre)}
+.wk-dots{display:flex;gap:6px;margin-top:12px}
+.wk-dot{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1.5px dashed var(--line);font-size:.78rem;font-weight:600;color:var(--muted)}
+.wk-dot.on{border:0;background:var(--gold);color:#241826}
+#weekCard .daily-act{margin-top:12px}
+
 /* sắp tới */
 .soon-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .soon-item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:12px 14px;border-radius:8px;border:1px solid var(--line);background:transparent;cursor:pointer}

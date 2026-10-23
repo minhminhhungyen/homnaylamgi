@@ -20,13 +20,35 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 /* ---------- 1. nguồn ---------- */
 const css0 = read('style.css'), body0 = read('body.html'), data0 = read('data.js'), app0 = read('app.js');
-const [ACT, FOODS] = new Function(`${data0}\nreturn [ACTIVITIES, FOODS];`)();
+const [ACT, FOODS, CHALLENGES] = new Function(`${data0}\nreturn [ACTIVITIES, FOODS, CHALLENGES];`)();
 const COUNT = ACT.length;
+
+/* ---------- 1b. chốt chặn nội dung: tuyệt đối không xúi giục tự tử, tự làm hại bản thân,
+   không chất kích thích, cờ bạc, hành vi mạo hiểm. Có từ nào dưới đây là build dừng lại. ---------- */
+const BANNED = [
+  /tự\s*tử/iu, /tự\s*sát/iu, /tự\s*(làm\s*)?hại/iu, /tự\s*hủy/iu, /quyên\s*sinh/iu, /kết\s*liễu/iu, /muốn\s*chết/iu,
+  /(rạch|cắt|cứa)\s*(tay|cổ\s*tay|da)/iu, /nhảy\s*(cầu|lầu|sông|xuống)/iu, /treo\s*cổ/iu, /thuốc\s*(ngủ|chuột|độc|trừ\s*sâu)/iu,
+  /quá\s*liều/iu, /nhịn\s*(ăn|đói|uống)/iu, /thức\s*trắng/iu, /(nín|nhịn)\s*thở\s*(lâu|tối\s*đa|đến)/iu, /(tắm|ngâm)\s*(nước\s*)?đá/iu,
+  /chỗ\s*cao\s*nhất/iu, /mép\s*(vực|tầng|mái|cầu)/iu, /(?<!\p{L})(bia|rượu)(?!\p{L})/iu, /thuốc\s*lá|thuốc\s*lào|vape|shisha|bóng\s*cười/iu,
+  /cá\s*cược|cờ\s*bạc|lô\s*đề|cá\s*độ/iu, /đua\s*xe|bốc\s*đầu|lạng\s*lách|vượt\s*đèn\s*đỏ/iu
+];
+const scan = (list, fields, label) => list.flatMap(it => fields.flatMap(f => BANNED.filter(re => it[f] && re.test(it[f])).map(re => `${label} ${it.id || it.k} (${f}): “${it[f].match(re)[0]}”`)));
+const BAD = [...scan(ACT, ['t', 'n', 's'], 'Quẻ'), ...scan(FOODS, ['t', 'n'], 'Món'), ...scan(CHALLENGES, ['t', 's'], 'Thử thách')];
+if (BAD.length) throw new Error('Nội dung bị chặn vì an toàn người dùng:\n' + BAD.join('\n'));
+/* quy tắc theo nhãn: việc cho người đang buồn, cô đơn phải nhẹ (độ khó ≤ 6); việc lúc khuya (22–5h) không bắt ra ngoài */
+const RULE = [
+  ...ACT.filter(a => /[bl]/.test(a.m) && a.d > 6).map(a => `Quẻ ${a.id}: gắn tâm trạng buồn/cô đơn nhưng độ khó ${a.d} > 6`),
+  ...ACT.filter(a => a.g.includes('k') && a.o === 'o').map(a => `Quẻ ${a.id}: gợi ý ra ngoài lúc khuya`)
+];
+if (RULE.length) throw new Error('Nội dung bị chặn vì an toàn người dùng:\n' + RULE.join('\n'));
+const dup = (list, key) => list.map(x => x[key]).filter((v, i, a) => a.indexOf(v) !== i);
+if (dup(ACT, 'id').length || dup(FOODS, 'id').length || dup(CHALLENGES, 'k').length) throw new Error('Trùng số quẻ, số món hoặc mã thử thách');
+if (dup(ACT.map(a => ({ t: a.t.toLowerCase() })), 't').length) throw new Error('Trùng tên quẻ: ' + dup(ACT.map(a => ({ t: a.t.toLowerCase() })), 't').join(', '));
 if (!app0.includes('const DEPLOY = false;')) throw new Error('Không thấy cờ DEPLOY trong app.js');
 
 /* ---------- 2. quẻ mẫu dựng sẵn vào HTML (hiện khi tắt JavaScript; JS thay ngay khi chạy) ---------- */
 const SEAL = { vd: ['VẬN', 'ĐỘNG', 'Vận động'], kp: ['KHÁM', 'PHÁ', 'Khám phá'], st: ['SÁNG', 'TẠO', 'Sáng tạo'], hh: ['HỌC', 'HỎI', 'Học hỏi'], kn: ['KẾT', 'NỐI', 'Kết nối'], cm: ['CHĂM', 'MÌNH', 'Chăm mình'], au: ['ĂN', 'UỐNG', 'Ăn uống'], sn: ['SỰ', 'NGHIỆP', 'Sự nghiệp'], tt: ['TỬ', 'TẾ', 'Tử tế'], gt: ['GIẢI', 'TRÍ', 'Giải trí'] };
-const LVL = d => (d <= 3 ? 'Nhẹ nhàng' : d <= 6 ? 'Vừa sức' : d <= 8 ? 'Thử thách' : 'Liều mới ăn nhiều');
+const LVL = d => (d <= 3 ? 'Nhẹ nhàng' : d <= 6 ? 'Vừa sức' : d <= 8 ? 'Thử thách' : 'Thử thách lớn');
 const WHO = { a: 'một mình', b: 'bạn bè', y: 'người yêu', g: 'gia đình' };
 const fmtWho = s => { if (s.length >= 4) return 'Ai cũng được'; const t = s.split('').map(c => WHO[c]).join(', '); return t[0].toUpperCase() + t.slice(1); };
 const fmtTime = p => (p < 60 ? `${p} phút` : p % 60 === 0 ? `${p / 60} tiếng` : p % 60 === 30 ? `${(p - 30) / 60} tiếng rưỡi` : `${Math.floor(p / 60)} tiếng ${p % 60} phút`);

@@ -123,7 +123,7 @@ const CATS = {
 const LEVELS = [[0, 'Chiến binh nằm dài'], [10, 'Người bắt đầu'], [30, 'Kẻ tò mò'], [60, 'Người chủ động'], [100, 'Tay chơi có kế hoạch'], [160, 'Nhà thám hiểm'], [240, 'Người truyền cảm hứng'], [350, 'Huyền thoại sống'], [500, 'Bậc thầy Hôm nay']];
 const xs = a => (a.x ? a.x.split(' ') : []);
 const band = d => (d <= 3 ? 1 : d <= 6 ? 2 : 3);
-const LVL = d => (d <= 3 ? 'Nhẹ nhàng' : d <= 6 ? 'Vừa sức' : d <= 8 ? 'Thử thách' : 'Liều mới ăn nhiều');
+const LVL = d => (d <= 3 ? 'Nhẹ nhàng' : d <= 6 ? 'Vừa sức' : d <= 8 ? 'Thử thách' : 'Thử thách lớn');
 const COST = ['0 đồng', 'Dưới 100k', '100k–300k', 'Trên 300k'];
 const WHERE = { i: 'Trong nhà', o: 'Ra ngoài', b: 'Đâu cũng được' };
 const WHO = { a: 'một mình', b: 'bạn bè', y: 'người yêu', g: 'gia đình' };
@@ -136,7 +136,7 @@ const fmtTime = a => {
 };
 
 /* ---------- trạng thái (lưu trên máy người dùng) ---------- */
-const DEF = () => ({ v: 1, stars: 0, best: 0, done: [], saved: [], recent: [], got: [], cur: 0, curDay: '', acc: 0, accAt: 0, mood: 'all', moodDay: '', chAccDay: '', mode: 'lam', food: 0, foodDay: '', frecent: [], meal: '', mealDay: '', ftype: '', fmt: 'story', name: '', pref: {}, prefDay: '', wxOn: false, wxLoc: null, wx: null, aq: null, f: { who: '', budget: '', dur: '', place: '', level: '', when: 'now' } });
+const DEF = () => ({ v: 1, stars: 0, best: 0, done: [], saved: [], recent: [], got: [], cur: 0, curDay: '', acc: 0, accAt: 0, mood: 'all', moodDay: '', chAccDay: '', mode: 'lam', food: 0, foodDay: '', frecent: [], meal: '', mealDay: '', ftype: '', fmt: 'story', name: '', wk: null, wkDone: [], pref: {}, prefDay: '', wxOn: false, wxLoc: null, wx: null, aq: null, f: { who: '', budget: '', dur: '', place: '', level: '', when: 'now' } });
 let S = (() => {
   try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw), d = DEF(); return Object.assign(d, s, { f: Object.assign(d.f, s.f || {}) }); } } catch (e) { /* bỏ qua */ }
   return DEF();
@@ -171,7 +171,9 @@ const BADGES = [
   { k: 'dau', g: '1', name: 'Quẻ đầu tiên', hint: 'Làm xong quẻ đầu tiên', ok: s => s.done.length >= 1 },
   { k: 'lua3', g: '3', name: 'Lửa 3 ngày', hint: 'Giữ chuỗi 3 ngày', ok: s => s.best >= 3 },
   { k: 'lua7', g: '7', name: 'Lửa 7 ngày', hint: 'Giữ chuỗi 7 ngày', ok: s => s.best >= 7 },
-  { k: 'lieu', g: '8+', name: 'Liều ăn nhiều', hint: 'Xong quẻ độ khó từ 8', ok: s => s.done.some(r => r.d >= 8) },
+  { k: 'lieu', g: '8+', name: 'Vượt thử thách lớn', hint: 'Xong quẻ độ khó từ 8', ok: s => s.done.some(r => r.d >= 8) },
+  { k: 'tuan', g: '7N', name: 'Bền bỉ 7 ngày', hint: 'Xong một thử thách 7 ngày', ok: s => (s.wkDone || []).length >= 1 },
+  { k: 'tuan3', g: '3×7', name: 'Kiên trì', hint: 'Xong 3 thử thách 7 ngày', ok: s => (s.wkDone || []).length >= 3 },
   { k: 'chung', g: '5', name: 'Đồng hành', hint: 'Xong 5 thử thách chung', ok: s => s.done.filter(r => r.ch).length >= 5 },
   { k: 'som', g: '6h', name: 'Chim sớm', hint: 'Xong một quẻ trước 7 giờ sáng', ok: s => s.done.some(r => { const h = new Date(r.ts).getHours(); return h >= 4 && h < 7; }) }
 ].concat(Object.keys(CATS).map(c => ({ k: 'c_' + c, g: CATS[c].ab, name: CATS[c].badge, hint: `Xong 3 quẻ ${CATS[c].name}`, ok: s => s.done.filter(r => (byId.get(r.id) || {}).c === c).length >= 3 })));
@@ -191,6 +193,7 @@ const MOOD_NOTE = {
   l: 'Cô đơn thì ưu tiên việc kết nối với một người.',
   h: 'Đang hứng thì thử việc khó hơn một chút xem sao.'
 };
+const NIGHT_OUT = 'Khuya rồi, việc ra ngoài này để trời sáng hãy làm nhé.';
 const RELAX = ['place', 'level', 'dur', 'budget', 'who', 'when'];
 const RELAX_NAME = { place: 'nơi chốn', level: 'mức thử thách', dur: 'thời gian', budget: 'ngân sách', who: 'đi cùng ai', when: 'khung giờ' };
 const isSet = k => (k === 'when' ? S.f.when === 'now' : !!S.f[k]);
@@ -247,6 +250,10 @@ function choose(exclude) {
   let P = pool.filter(a => a.id !== exclude);
   if (!P.length) P = pool;
   if (S.mood !== 'all') { const mm = P.filter(a => a.m.includes(S.mood)); if (mm.length >= 3) P = mm; }
+  /* đang buồn hoặc cô đơn: chỉ gợi ý việc nhẹ nhàng (độ khó ≤ 6), khuya thì không gợi ý ra ngoài */
+  if (S.mood === 'b' || S.mood === 'l') { const soft = P.filter(a => a.d <= 6 && !(SLOT === 'k' && a.o === 'o')); if (soft.length >= 3) P = soft; }
+  /* khuya (22–5h), ai cũng vậy: chỉ gợi ý việc nhẹ nhàng (độ khó ≤ 3), không phải ra ngoài */
+  if (SLOT === 'k' && S.f.when === 'now') { const calm = P.filter(a => a.d <= 3 && a.o !== 'o'); if (calm.length >= 3) P = calm; }
   /* mưa, dông, không khí xấu: chỉ gợi ý việc trong nhà (trừ khi người dùng tự chọn “Ra ngoài” ở Tinh chỉnh) */
   if (WX && S.f.when === 'now' && !S.f.place && (WX.cls === 'rain' || WX.cls === 'storm' || WX.cls === 'air')) { const dry = P.filter(a => a.o !== 'o'); if (dry.length >= 3) P = dry; }
   return { a: pickWeighted(P), relaxed };
@@ -309,9 +316,11 @@ function renderSlip() {
   $('span', sb).textContent = saved ? 'Đã để dành' : 'Để dành';
   $('#feel').hidden = !rec;
   if (rec) $$('#feel [data-feel]').forEach(b => b.setAttribute('aria-pressed', String(rec.f === b.dataset.feel)));
-  const rn = $('#relaxNote');
-  rn.hidden = !lastRelax.length;
-  if (lastRelax.length) rn.textContent = `Không có quẻ nào khớp hết lựa chọn của bạn lúc này, nên mình nới bớt phần ${lastRelax.map(k => RELAX_NAME[k]).join(', ')}.`;
+  const rn = $('#relaxNote'), notes = [];
+  if (lastRelax.length) notes.push(`Không có quẻ nào khớp hết lựa chọn của bạn lúc này, nên mình nới bớt phần ${lastRelax.map(k => RELAX_NAME[k]).join(', ')}.`);
+  if (SLOT === 'k' && a.o === 'o' && !rec) notes.push(NIGHT_OUT);
+  rn.hidden = !notes.length;
+  rn.textContent = notes.join(' ');
   $('#careNote').hidden = !(S.mood === 'b' || S.mood === 'l');
   renderInstall();
   const inv = $('#invite');
@@ -329,6 +338,7 @@ function renderMood() {
 /* ---------- ống quẻ "Hôm nay ăn gì?" ---------- */
 const curMeal = () => ((S.mealDay === TODAY && S.meal) ? S.meal : MEAL_OF_SLOT[SLOT]);
 function foodStep(f) {
+  if (curMeal() === 'k') return f.o === 'h' ? 'Ăn khuya thì làm nhanh với đồ có sẵn trong tủ lạnh, ăn nhẹ thôi cho dễ ngủ.' : f.o === 'n' ? 'Ăn khuya thì gọi giao tận nhà hoặc rủ người nhà đi cùng, ăn nhẹ thôi cho dễ ngủ.' : 'Ăn khuya thì gọi giao tận nhà hoặc tự làm nhanh trong bếp, ăn nhẹ thôi cho dễ ngủ.';
   if (f.o === 'n') return `Mở bản đồ tìm “${f.t}” quanh chỗ bạn, chọn quán đông khách và nhiều đánh giá tốt.`;
   if (f.o === 'h') return 'Xem nhanh một video hướng dẫn, kiểm tra tủ lạnh rồi đi chợ mua phần còn thiếu.';
   return `Lười thì tìm quán “${f.t}” gần nhất. Rảnh thì tự nấu, xem video hướng dẫn rồi đi chợ.`;
@@ -420,11 +430,52 @@ function renderDaily() {
   $('#dTitle').textContent = CH.t;
   $('#dWhy').textContent = CH.n;
   $('#dStep').textContent = CH.s;
+  $('#dNight').hidden = !(SLOT === 'k' && CH.o === 'o' && !doneToday(CH.id));
   const b = $('#dBtn');
   if (doneToday(CH.id)) { b.disabled = true; b.className = 'btn btn-main is-go btn-sm'; b.innerHTML = `${icon('check')}<span>Đã hoàn thành</span>`; }
   else if (S.chAccDay === TODAY) { b.disabled = false; b.className = 'btn btn-main is-go btn-sm'; b.innerHTML = `${icon('check')}<span>Mình làm xong rồi</span>`; }
   else { b.disabled = false; b.className = 'btn btn-main btn-sm'; b.innerHTML = '<span>Nhận thử thách</span>'; }
 }
+
+/* ---------- thử thách 7 ngày: mỗi ngày bấm “Hôm nay xong” một lần, đủ 7 lần trong 14 ngày ---------- */
+const WK_BY = new Map(CHALLENGES.map(c => [c.k, c]));
+const dayDiff = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5);
+function renderWeek() {
+  const box = $('#weekCard'), w = S.wk, c = w && WK_BY.get(w.k);
+  const doneList = (S.wkDone || []).map(k => WK_BY.get(k)).filter(Boolean);
+  const doneHtml = doneList.length ? `<p class="note">Đã hoàn thành: ${doneList.map(x => esc(x.t)).join(' · ')}</p>` : '';
+  if (c) {
+    const n = w.days.length, used = dayDiff(w.start, TODAY), expired = used >= 14 && n < 7, today = w.days.includes(TODAY);
+    const dots = Array.from({ length: 7 }, (_, i) => `<span class="wk-dot${i < n ? ' on' : ''}" aria-hidden="true">${i + 1}</span>`).join('');
+    box.innerHTML = expired
+      ? `<h3>${esc(c.t)}</h3><p class="why">Thử thách đã quá 14 ngày, bạn làm được ${n}/7 ngày. Không sao cả, mình bắt đầu lại nhé!</p><div class="daily-act"><button class="btn btn-main btn-sm" type="button" data-wk-start="${c.k}">Làm lại từ đầu</button><button class="link muted" type="button" data-wk-quit>Chọn thử thách khác</button></div>${doneHtml}`
+      : `<h3>${esc(c.t)}</h3><p class="why">${esc(c.s)}</p><div class="wk-dots" role="img" aria-label="Đã xong ${n} trên 7 ngày">${dots}</div><p class="note">Ngày ${Math.min(used + 1, 14)} trên tối đa 14 ngày · mỗi ngày xong được 1 sao, đủ 7 ngày thêm 10 sao.</p><div class="daily-act"><button class="btn btn-main btn-sm${today ? ' is-go' : ''}" type="button" data-wk-check ${today ? 'disabled' : ''}>${icon('check')}<span>${today ? 'Hôm nay đã xong' : 'Hôm nay xong'}</span></button><button class="link muted" type="button" data-wk-quit>Bỏ thử thách</button></div>${doneHtml}`;
+    return;
+  }
+  const order = CHALLENGES.slice().sort((a, b) => (S.wkDone.includes(a.k) ? 1 : 0) - (S.wkDone.includes(b.k) ? 1 : 0));
+  box.innerHTML = `<p class="why">Chọn một việc nhỏ, làm đủ 7 ngày để nhận thêm 10 sao và huy hiệu “Bền bỉ 7 ngày”.</p><ul class="wk-list">${order.map(x => `<li><button class="wk-pick" type="button" data-wk-start="${x.k}"><span>${esc(x.t)}</span>${S.wkDone.includes(x.k) ? '<span class="wk-ok">Đã xong</span>' : ''}</button></li>`).join('')}</ul>${doneHtml}`;
+}
+let wkQuitAt = 0;
+$('#weekCard').addEventListener('click', e => {
+  const st = e.target.closest('[data-wk-start]'), ck = e.target.closest('[data-wk-check]'), qt = e.target.closest('[data-wk-quit]');
+  if (st) {
+    const c = WK_BY.get(st.dataset.wkStart); if (!c) return;
+    S.wk = { k: c.k, start: TODAY, days: [] }; save(); renderWeek();
+    toast(`Bắt đầu “${c.t}”. Hôm nay làm xong thì bấm “Hôm nay xong” nhé!`);
+  } else if (ck) {
+    const w = S.wk; if (!w || w.days.includes(TODAY)) return;
+    w.days.push(TODAY); S.stars += 1;
+    if (w.days.length >= 7) {
+      const c = WK_BY.get(w.k); S.stars += 10; S.wkDone = (S.wkDone || []).filter(k => k !== w.k).concat(w.k); S.wk = null;
+      const fresh = BADGES.filter(b => !S.got.includes(b.k) && b.ok(S)); fresh.forEach(b => S.got.push(b.k)); NEW_BADGES = fresh.map(b => b.k);
+      save(); renderWeek(); renderJourney(); confetti();
+      toast(`Hoàn thành “${c ? c.t : 'thử thách'}”! +11 sao${fresh.length ? `, mở khóa huy hiệu “${fresh[0].name}”` : ''}.`);
+    } else { save(); renderWeek(); renderJourney(); toast(`+1 sao. Đã xong ${w.days.length}/7 ngày.`); }
+  } else if (qt) {
+    if (S.wk && dayDiff(S.wk.start, TODAY) < 14 && Date.now() - wkQuitAt > 5000) { wkQuitAt = Date.now(); qt.textContent = 'Bấm lần nữa để bỏ'; return; }
+    wkQuitAt = 0; S.wk = null; save(); renderWeek();
+  }
+});
 
 function whenText(e) {
   if (e.diff === 0) return 'Hôm nay';
@@ -478,7 +529,7 @@ function renderJourney() {
   $('#saved').innerHTML = sv.length ? `<ul class="rows">${sv.map(a => `<li><div class="row-main"><p class="row-t">${esc(a.t)}</p><p class="row-m">Độ khó ${a.d}/10 · ${CATS[a.c].name}</p></div><div class="row-act"><button class="link" type="button" data-open="${a.id}">Rút quẻ này</button><button class="link muted" type="button" data-rm="${a.id}" aria-label="Bỏ khỏi danh sách để dành">Bỏ</button></div></li>`).join('')}</ul>` : '<p class="empty">Gặp quẻ hay mà chưa làm được ngay? Bấm “Để dành” để lưu lại đây.</p>';
 }
 
-function renderAll() { renderHeader(); renderSlip(); renderMood(); renderTune(); renderDaily(); renderJourney(); }
+function renderAll() { renderHeader(); renderSlip(); renderMood(); renderTune(); renderDaily(); renderWeek(); renderJourney(); }
 
 /* ---------- hành động ---------- */
 function setCur(id) {
@@ -694,6 +745,8 @@ const WX_SYM = [
 ];
 const WX_TIP = { storm: 'ưu tiên việc trong nhà', rain: 'ưu tiên việc trong nhà', air: 'nên ở trong nhà', hot: 'tránh nắng, ưu tiên chỗ mát', cold: 'trời lạnh, nhớ mặc ấm', fog: 'ra đường đi chậm thôi', nice: 'hợp ra ngoài đấy' };
 const WX_TIP_FOOD = { storm: 'ưu tiên món nóng', rain: 'ưu tiên món nóng', cold: 'ưu tiên món nóng', hot: 'ưu tiên món mát' };
+const WX_TIP_NIGHT = { nice: 'khuya rồi, mai hãy ra ngoài', hot: 'nhớ uống đủ nước' };
+const WX_TOAST_NIGHT = { nice: 'Trời đẹp, nhưng khuya rồi. Nghỉ ngơi thôi, mai ra ngoài nhé!', hot: 'Trời nóng, nhớ uống đủ nước và ngủ chỗ thoáng nhé.' };
 const WX_TOAST = { air: 'Không khí đang xấu, mình ưu tiên việc trong nhà nhé.', storm: 'Trời đang có dông, mình đổi sang việc trong nhà nhé.', rain: 'Trời đang mưa, mình ưu tiên việc trong nhà nhé.', hot: 'Trời nắng nóng, mình ưu tiên việc trong nhà hoặc chỗ mát.', cold: 'Trời lạnh, nhớ mặc ấm nhé.', nice: 'Trời đẹp, hợp ra ngoài đấy!' };
 let WX = null, wxLoading = false, wxFail = '';
 /* nơi gần nhất trong danh sách (tính trên máy, không gửi tọa độ đi đâu thêm) */
@@ -785,7 +838,7 @@ function renderWx() {
     return;
   }
   ask.hidden = true; now.hidden = false;
-  let tip = S.mode === 'an' ? (WX_TIP_FOOD[WX.cls] || '') : (S.f.when === 'now' ? (WX_TIP[WX.cls] || '') : '');
+  let tip = S.mode === 'an' ? (WX_TIP_FOOD[WX.cls] || '') : (S.f.when === 'now' ? ((SLOT === 'k' && WX_TIP_NIGHT[WX.cls]) || WX_TIP[WX.cls] || '') : '');
   if (S.mode !== 'an' && S.f.when === 'now' && !tip) tip = WX.airSens ? 'hạn chế vận động mạnh ngoài trời' : WX.uvHigh ? 'UV cao, nhớ che nắng' : '';
   const L = S.wxLoc, place = L ? (L.name || nearCity(L.lat, L.lon)) : '';
   const where = place ? ` ${L.name ? 'ở' : 'gần'} ${place}` : '';
@@ -826,7 +879,8 @@ function afterWx(userAction) {
   closeWxBox();
   if (S.mode === 'an') drawFood();
   else if (!busy() && !doneToday(S.cur) && S.f.when === 'now') { lastRelax = []; draw(); }
-  if (WX_TOAST[WX.cls]) toast(WX_TOAST[WX.cls]);
+  const tm = (SLOT === 'k' && WX_TOAST_NIGHT[WX.cls]) || WX_TOAST[WX.cls];
+  if (tm) toast(tm);
 }
 function locate() {
   if (!navigator.geolocation) { openWxBox('Máy này không lấy được vị trí. Bạn chọn nơi gần nhất nhé.'); return; }

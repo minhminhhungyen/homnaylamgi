@@ -12,12 +12,12 @@ Không biết làm gì? Rút một quẻ: việc nhỏ, món ngon, hợp tâm tr
 Không biết hôm nay làm gì, ăn gì? Mở “Hôm nay làm gì?” là có ngay một quẻ: một việc nhỏ vừa sức, hợp giờ, hợp tâm trạng, hợp thời tiết và túi tiền của bạn.
 
 ★ RÚT MỘT QUẺ, LÀM MỘT VIỆC NHỎ
-• 199 quẻ việc trong 10 nhóm: vận động, khám phá, sáng tạo, học hỏi, kết nối, chăm mình, ăn uống, sự nghiệp, sống tử tế, giải trí.
+• 299 quẻ việc trong 10 nhóm: vận động, khám phá, sáng tạo, học hỏi, kết nối, chăm mình, ăn uống, sự nghiệp, sống tử tế, giải trí.
 • Mỗi quẻ có lời nhắn, bước bắt đầu ngay, thời gian, chi phí ước tính và đi cùng ai.
 • Độ khó từ 1 đến 10: làm xong nhận đúng số sao đó.
 
 ★ HÔM NAY ĂN GÌ?
-• 58 món cho bữa sáng, trưa, tối, khuya và ăn vặt; chọn ăn ngoài hoặc tự nấu.
+• 80 món cho bữa sáng, trưa, tối, khuya và ăn vặt; chọn ăn ngoài hoặc tự nấu.
 • Một chạm để tìm quán gần bạn hoặc xem cách nấu.
 
 ★ HỢP TÂM TRẠNG VÀ THỜI TIẾT
@@ -31,13 +31,15 @@ Không biết hôm nay làm gì, ăn gì? Mở “Hôm nay làm gì?” là có 
 • Mỗi quẻ có link riêng, bạn bè bấm vào là thấy đúng quẻ đó.
 
 ★ GOM SAO, MỞ HUY HIỆU
-• 9 danh hiệu, 16 huy hiệu, chuỗi ngày liên tiếp.
+• 9 danh hiệu, 18 huy hiệu, chuỗi ngày liên tiếp.
 • Thử thách chung: mỗi ngày mọi người cùng nhận một quẻ.
+• 12 thử thách 7 ngày: đi bộ, mang bình nước, ngủ trước 23 giờ, đọc sách, học tiếng Anh, tự nấu ăn, để dành tiền, tắt mạng xã hội trước khi ngủ… Mỗi ngày làm được thêm 1 sao, đủ 7 ngày thêm 10 sao.
 • Có âm lịch và các dịp lễ Việt Nam như Rằm, Trung thu, Tết, 20/10, 20/11, mỗi dịp có quẻ riêng.
 
 ★ RIÊNG TƯ
 • Không cần đăng ký tài khoản.
 • Sao, huy hiệu, lịch sử chỉ lưu trên điện thoại của bạn.
+• Nhật ký riêng tư khóa bằng mật khẩu của bạn, mã hóa ngay trên máy, không gửi đi đâu.
 • Không quảng cáo, không theo dõi.
 
 Ứng dụng do Công ty TNHH Minh Minh Hưng Yên phát triển. Hỗ trợ, góp ý: hotro@homnaylamgi.com

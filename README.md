@@ -6,7 +6,7 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 
 | Đường dẫn | Nội dung |
 |---|---|
-| `src/data.js` | Thư viện quẻ. Sửa hoặc thêm quẻ ở đây. |
+| `src/data.js` | Thư viện: 299 quẻ (`ACTIVITIES`), 80 món (`FOODS`), 12 thử thách 7 ngày (`CHALLENGES`). Sửa hoặc thêm ở đây. |
 | `src/app.js` | Logic trang: rút quẻ, lọc, sao, huy hiệu, âm lịch, thời tiết, chia sẻ. |
 | `src/style.css`, `src/body.html` | Giao diện. |
 | `src/sw.js` | Service worker để trang mở được khi mất mạng. |
@@ -44,6 +44,19 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 | `ev` | Chỉ hiện quanh một dịp: `halloween`, `2011`, `noel`, `tet`, `trungthu`, `phunu`, `valentine`, `giadinh`, `thieunhi`, `giaothua`, `ram`, `cathangtu`, `doan`, `nghile` |
 
 Món ăn (`FOODS`) có thêm khóa `w`: `n` món nóng, ấm bụng (ưu tiên khi mưa, lạnh), `m` món mát (ưu tiên khi nóng).
+
+Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên, `s` lời nhắn. Mỗi ngày bấm “Hôm nay xong” được 1 sao; đủ 7 ngày trong 14 ngày được thêm 10 sao, mở huy hiệu “Bền bỉ 7 ngày” (xong 3 thử thách: “Kiên trì”).
+
+## Chốt chặn nội dung an toàn
+
+- `tools/build.mjs` rà mọi quẻ, món, thử thách trước khi build. Gặp lời lẽ về tự tử, tự làm hại bản thân, nhịn ăn, nhịn ngủ, chỗ cao nguy hiểm, rượu bia, thuốc lá, vape, bóng cười, cờ bạc, cá độ, đua xe, vượt đèn đỏ thì build dừng và in ra quẻ vi phạm. Trùng số quẻ, trùng tiêu đề cũng dừng.
+- Build cũng dừng nếu quẻ gắn tâm trạng Buồn/Cô đơn (`m` có `b` hoặc `l`) mà độ khó trên 6, hoặc quẻ lúc khuya (`g` có `k`) mà phải ra ngoài (`o:'o'`).
+- Muốn thêm từ cấm: sửa mảng `BANNED` trong `tools/build.mjs`. Không gỡ chốt chặn để build cho qua; sửa lời quẻ.
+- Người chọn tâm trạng Buồn hoặc Cô đơn chỉ được gợi ý việc nhẹ (độ khó tối đa 6).
+- Khuya (22–5h), ai cũng chỉ được gợi ý việc nhẹ nhàng (độ khó tối đa 3), không phải ra ngoài. Mở link rủ hoặc thử thách chung có việc ra ngoài lúc khuya thì hiện lời nhắc để trời sáng hãy làm. Trời đẹp lúc khuya không khuyên ra ngoài. Ăn khuya thì gợi ý gọi giao tận nhà hoặc tự làm nhanh.
+- Lời quẻ cũng in lên ảnh story nên mỗi câu `n` phải đọc riêng vẫn an toàn. Nhãn `ai` (đi cùng ai) chỉ lọc khi người dùng tự chọn, nên việc cần có người đi cùng phải ghi rõ trong lời `s`.
+- Ngày 23/10/2026 đã rà độc lập toàn bộ 299 quẻ, 80 món, 12 thử thách: sửa 43 quẻ (bỏ hình ảnh chỗ cao, nước, đêm khuya một mình, thư từ biệt, cho đi đồ quý; thêm lưu ý an toàn khi gặp người lạ, đi xa, chạy bộ, tuổi lái xe, tuổi hiến máu).
+- Chọn Buồn hoặc Cô đơn thì hiện lời nhắn: kể với người bạn tin tưởng, người nhà, thầy cô hoặc gặp bác sĩ; thấy không an toàn thì gọi cấp cứu 115. Trang nhật ký và chân trang có lời nhắn tương tự. Số Admin ghi rõ là để báo lỗi trang. Trang không tư vấn tâm lý.
 
 ## Chia sẻ và link rủ
 

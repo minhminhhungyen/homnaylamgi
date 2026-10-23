@@ -56,7 +56,7 @@
       </button>
     </div>
     <p class="lede">Khỏi nghĩ nữa. Rút một quẻ, làm một việc nhỏ, để hôm nay khác hôm qua một chút.</p>
-    <p class="night" id="nightHint" hidden>Khuya rồi nên mình chỉ rút những việc nhẹ nhàng. Muốn lên kế hoạch cho cả ngày mai, mở phần Tinh chỉnh và chọn “Cả ngày”.</p>
+    <p class="night" id="nightHint" hidden>Khuya rồi nên mình chỉ rút những việc nhẹ nhàng, không cần ra ngoài. Muốn lên kế hoạch cho cả ngày mai, mở phần Tinh chỉnh và chọn “Cả ngày”.</p>
 
     <div class="wx needs-js" id="wx">
       <button class="wx-ask" id="wxAsk" type="button"><svg class="ico"><use href="#i-cloud"/></svg><span>Gợi ý theo thời tiết chỗ bạn</span></button>
@@ -166,7 +166,7 @@
         </div>
       </div>
       <p class="relax" id="relaxNote" hidden></p>
-      <p class="care" id="careNote" hidden>Nếu nỗi buồn kéo dài nhiều ngày, bạn không phải chịu một mình: hãy kể với người bạn tin tưởng hoặc gặp bác sĩ. Khi thấy mình không an toàn, gọi ngay cấp cứu <b>115</b>.</p>
+      <p class="care" id="careNote" hidden>Nếu nỗi buồn kéo dài nhiều ngày, bạn không phải chịu một mình: hãy kể với người bạn tin tưởng, người nhà, thầy cô hoặc gặp bác sĩ. Khi thấy mình không an toàn, gọi ngay cấp cứu <b>115</b>.</p>
       <p class="sr" id="live" aria-live="polite"></p>
     </div>
   </section>
@@ -209,11 +209,17 @@
         <h3 id="dTitle"></h3>
         <p class="why" id="dWhy"></p>
         <details><summary>Cách bắt đầu</summary><p id="dStep"></p></details>
+        <p class="night" id="dNight" hidden>Khuya rồi, việc ra ngoài này để trời sáng hãy làm nhé.</p>
         <div class="daily-act">
           <button class="btn btn-main btn-sm" id="dBtn" type="button">Nhận thử thách</button>
           <span class="note">Ai vào trang hôm nay cũng nhận cùng thử thách này.</span>
         </div>
       </div>
+    </section>
+
+    <section id="weekSec" aria-labelledby="wLabel">
+      <h2 id="wLabel">Thử thách 7 ngày</h2>
+      <div class="daily-card" id="weekCard"></div>
     </section>
 
     <section id="soonSec" aria-labelledby="sLabel">
@@ -292,7 +298,7 @@
           <label class="lbl" for="helpMail">Email của bạn (nếu muốn được trả lời)</label>
           <input id="helpMail" type="email" maxlength="120" autocomplete="email">
           <button class="btn btn-main btn-sm" type="submit">Gửi tới hotro@homnaylamgi.com</button>
-          <p class="note">Nút này mở ứng dụng email trên máy bạn với lời nhắn soạn sẵn. Cần gấp thì gọi Admin: <a href="tel:0919391060">0919 391 060</a>.</p>
+          <p class="note">Nút này mở ứng dụng email trên máy bạn với lời nhắn soạn sẵn. Trang bị lỗi cần xử lý gấp thì gọi Admin: <a href="tel:0919391060">0919 391 060</a>.</p>
         </form>
       </div>
       <div class="card">
@@ -307,6 +313,7 @@
     <a class="back" href="#toi">← Trang của bạn</a>
     <h2 id="diTitle" tabindex="-1">Nhật ký riêng tư</h2>
     <p class="sub">Viết gì cũng được: cảm nhận sau một quẻ, điều làm bạn vui, điều đang lo. Nhật ký được mã hóa ngay trên máy bằng mật khẩu của bạn. Không ai khác đọc được, kể cả người làm ra trang này.</p>
+    <p class="care">Nếu thấy nặng lòng quá, đừng giữ một mình: hãy kể với một người bạn hoặc người nhà tin tưởng. Khi thấy mình không an toàn, gọi ngay cấp cứu <a href="tel:115">115</a>.</p>
     <p class="note" id="diNoCrypto" hidden>Trình duyệt này không hỗ trợ mã hóa nên chưa dùng được nhật ký. Bạn mở bằng Chrome, Safari hoặc Edge bản mới nhé.</p>
     <form class="card stack" id="diSetup" hidden novalidate>
       <h3>Đặt mật khẩu cho nhật ký</h3>
@@ -357,7 +364,7 @@
 <footer class="foot">
   <div class="wrap foot-in">
     <p class="about"><b>Hôm nay làm gì?</b> gợi ý mỗi ngày một việc nhỏ cho người trẻ 16–40 tuổi: vận động, khám phá, kết nối, học hỏi, chăm sóc bản thân, và cả hôm nay ăn gì. Có {{count}} quẻ việc và {{foods}} món ăn, lọc theo tâm trạng, thời gian và túi tiền, không cần đăng ký.</p>
-    <p class="help">Có những ngày nặng lòng hơn bình thường. Hãy kể với một người bạn tin tưởng, đừng giữ một mình. Nếu bạn thấy mình không an toàn, gọi ngay cấp cứu <a href="tel:115">115</a>.</p>
+    <p class="help">Có những ngày nặng lòng hơn bình thường. Hãy kể với một người bạn hoặc người nhà tin tưởng, đừng giữ một mình. Nếu bạn thấy mình không an toàn, gọi ngay cấp cứu <a href="tel:115">115</a>.</p>
     <p class="contact">Cần hỗ trợ hoặc góp ý? Gửi email tới <a href="mailto:hotro@homnaylamgi.com">hotro@homnaylamgi.com</a> hoặc gọi Admin: <a href="tel:0919391060">0919 391 060</a>.</p>
     <p class="tiny">Thời gian, chi phí và túi tiền trên mỗi quẻ là ước tính. Ngày âm lịch tính theo giờ Việt Nam. Thời tiết: <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a>. Chất lượng không khí, UV: <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">Copernicus Atmosphere Monitoring Service</a> qua <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0).</p>
     <p class="tiny">© 2026 homnaylamgi.com · <a href="/rieng-tu">Chính sách quyền riêng tư</a></p>

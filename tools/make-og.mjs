@@ -18,7 +18,7 @@ const FONTS = [font('Be Vietnam Pro', 400, 'normal', 'be-vietnam-pro-400.woff2')
   font('Bricolage Grotesque', 800, 'normal', 'bricolage-grotesque-800.woff2'), font('Fraunces', 400, 'italic', 'fraunces-400-italic.woff2')].join('');
 const SEAL = { vd: 'VẬN ĐỘNG', kp: 'KHÁM PHÁ', st: 'SÁNG TẠO', hh: 'HỌC HỎI', kn: 'KẾT NỐI', cm: 'CHĂM MÌNH', au: 'ĂN UỐNG', sn: 'SỰ NGHIỆP', tt: 'TỬ TẾ', gt: 'GIẢI TRÍ' };
 const FSEAL = { n: 'ĂN NGOÀI', h: 'TỰ NẤU', nh: 'MÓN NGON' };
-const LVL = d => (d <= 3 ? 'Nhẹ nhàng' : d <= 6 ? 'Vừa sức' : d <= 8 ? 'Thử thách' : 'Liều mới ăn nhiều');
+const LVL = d => (d <= 3 ? 'Nhẹ nhàng' : d <= 6 ? 'Vừa sức' : d <= 8 ? 'Thử thách' : 'Thử thách lớn');
 const KIND = { n: 'Ăn ngoài', h: 'Tự nấu', nh: 'Ăn ngoài hoặc tự nấu' };
 const REGION = { '': 'Cả nước', B: 'Miền Bắc', T: 'Miền Trung', N: 'Miền Nam', TN: 'Miền Trung, miền Nam' };
 const PURSE = ['', 'Bình dân', 'Vừa phải', 'Hơi sang'];
