@@ -2,6 +2,13 @@
 
 Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay, hợp giờ, tâm trạng, thời gian và túi tiền. Dành cho người trẻ 16–40 tuổi.
 
+## Định hướng sản phẩm (đã chốt)
+
+- Web cho vui. Sao, huy hiệu, danh hiệu chỉ lưu trên máy người dùng, chỉ họ thấy.
+- Không gây áp lực: không đếm chuỗi ngày liên tiếp (chỉ đếm số ngày đã làm), không nhắc "làm kẻo mất".
+- Không phục vụ khoe mẽ: không bảng xếp hạng, không thi đua có quà, không bắt chụp ảnh làm bằng chứng.
+- Tính năng mới phải qua được ba điều trên.
+
 ## Cấu trúc
 
 | Đường dẫn | Nội dung |

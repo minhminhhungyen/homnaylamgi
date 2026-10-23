@@ -173,17 +173,12 @@ const FEEL_PT = { vui: 1, thuong: 0, nho: 1.5 };
 const doneToday = id => S.done.some(r => r.id === id && r.day === TODAY);
 const recToday = id => S.done.find(r => r.id === id && r.day === TODAY);
 const doneWithin = (id, days) => { const lim = Date.now() - days * 864e5; return S.done.some(r => r.id === id && r.ts >= lim); };
-function streak() {
-  const days = new Set(S.done.map(r => r.day));
-  let d = new Date(NOW), n = 0;
-  if (!days.has(ymd(d))) d = addDays(d, -1);
-  while (days.has(ymd(d))) { n++; d = addDays(d, -1); }
-  return n;
-}
+/* số ngày có làm quẻ, KHÔNG cần liên tiếp: bỏ một hôm cũng không mất gì (web cho vui, không tạo áp lực giữ chuỗi) */
+function streak() { return new Set(S.done.map(r => r.day)).size; }
 const BADGES = [
   { k: 'dau', g: '1', name: 'Quẻ đầu tiên', hint: 'Làm xong quẻ đầu tiên', ok: s => s.done.length >= 1 },
-  { k: 'lua3', g: '3', name: 'Lửa 3 ngày', hint: 'Giữ chuỗi 3 ngày', ok: s => s.best >= 3 },
-  { k: 'lua7', g: '7', name: 'Lửa 7 ngày', hint: 'Giữ chuỗi 7 ngày', ok: s => s.best >= 7 },
+  { k: 'lua3', g: '3', name: 'Lửa 3 ngày', hint: 'Có 3 ngày làm quẻ, ngày nào cũng được', ok: s => s.best >= 3 },
+  { k: 'lua7', g: '7', name: 'Lửa 7 ngày', hint: 'Có 7 ngày làm quẻ, ngày nào cũng được', ok: s => s.best >= 7 },
   { k: 'lieu', g: '8+', name: 'Vượt thử thách lớn', hint: 'Xong quẻ độ khó từ 8', ok: s => s.done.some(r => r.d >= 8) },
   { k: 'tuan', g: '7N', name: 'Bền bỉ 7 ngày', hint: 'Xong một thử thách 7 ngày', ok: s => (s.wkDone || []).length >= 1 },
   { k: 'tuan3', g: '3×7', name: 'Kiên trì', hint: 'Xong 3 thử thách 7 ngày', ok: s => (s.wkDone || []).length >= 3 },
@@ -525,7 +520,7 @@ function renderJourney() {
   $('#jDone').textContent = S.done.length;
   const st = streak();
   $('#jStreak').textContent = st;
-  $('#jStreakLab').textContent = S.done.some(r => r.day === TODAY) ? 'ngày liên tiếp · hôm nay đã giữ lửa' : st ? 'ngày liên tiếp · làm một quẻ để giữ lửa' : 'ngày liên tiếp';
+  $('#jStreakLab').textContent = 'ngày đã làm quẻ';
   const [cur, next] = levelOf(S.stars);
   $('#jLevel').textContent = cur[1];
   const pct = next ? Math.round((S.stars - cur[0]) / (next[0] - cur[0]) * 100) : 100;
@@ -939,7 +934,7 @@ let shareKind = 'item', SH = { title: '', msg: '', url: SHARE_SITE + '/' };
 function shareInfo() {
   if (shareKind === 'site') return {
     title: 'Hôm nay làm gì?', url: SHARE_SITE + '/',
-    msg: S.stars > 0 ? `Mình gom được ${S.stars} sao ở “Hôm nay làm gì?” rồi đó ⭐ Bạn vào rút một quẻ xem, mỗi ngày một việc nhỏ thôi:` : 'Không biết hôm nay làm gì, ăn gì? Vào đây rút một quẻ, có cả sao với huy hiệu, vui phết 😆'
+    msg: 'Không biết hôm nay làm gì, ăn gì? Vào đây rút một quẻ, mỗi ngày một việc nhỏ cho vui thôi 😆'
   };
   if (S.mode === 'an') {
     const f = foodById.get(S.food);
@@ -1316,7 +1311,7 @@ function renderMe() {
   if ($('#viewMe').hidden) return;
   if (document.activeElement !== $('#nameInput')) $('#nameInput').value = S.name || '';
   const lv = LEVELS.filter(l => S.stars >= l[0]).pop();
-  $('#meStats').innerHTML = [['Sao đã gom', S.stars], ['Chuỗi ngày', streak()], ['Quẻ đã làm', S.done.length], ['Danh hiệu', lv ? lv[1] : '']]
+  $('#meStats').innerHTML = [['Sao đã gom', S.stars], ['Ngày đã làm', streak()], ['Quẻ đã làm', S.done.length], ['Danh hiệu', lv ? lv[1] : '']]
     .map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
   const d = HAS_CRYPTO ? dLoad() : null;
   $('#meDiary').textContent = !HAS_CRYPTO ? 'Trình duyệt này chưa hỗ trợ nhật ký mã hóa.' : d ? `${d.entries.length} trang, đã khóa bằng mật khẩu của bạn.` : 'Chưa có nhật ký. Đặt một mật khẩu là viết được ngay.';
