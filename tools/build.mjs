@@ -62,7 +62,7 @@ const fill = {
   qTitle: esc(Q.t), qPoem: esc(Q.n), qStep: esc(Q.s),
   qStars: Array.from({ length: 10 }, (_, i) => `<svg class="star${i < Q.d ? ' on' : ''}" viewBox="0 0 24 24"><use href="#i-star"/></svg>`).join(''),
   qStarsTxt: `Độ khó ${Q.d}/10 · nhận ${Q.d} sao`, qTime: fmtTime(Q.p), qCost: ['0 đồng', 'Dưới 100k', '100k–300k', 'Trên 300k'][Q.k],
-  qWhere: { i: 'Trong nhà', o: 'Ra ngoài', b: 'Đâu cũng được' }[Q.o], qWho: fmtWho(Q.ai), count: String(COUNT), foods: String(FOODS.length)
+  qWhere: { i: 'Trong nhà', o: 'Ra ngoài', b: 'Đâu cũng được' }[Q.o], qWho: fmtWho(Q.ai), count: COUNT.toLocaleString('vi-VN'), foods: String(FOODS.length)
 };
 const body = body0.replace(/\{\{(\w+)\}\}/g, (m, k) => { if (!(k in fill)) throw new Error('Thiếu giá trị cho ' + m); return fill[k]; });
 

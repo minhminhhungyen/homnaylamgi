@@ -258,6 +258,7 @@ b,strong{font-weight:600}
 /* chân trang */
 .foot{border-top:1px solid var(--line)}
 .foot-in{padding-block:26px 34px;display:flex;flex-direction:column;gap:12px;font-size:.88rem;color:var(--muted)}
+.foot-brand{font:800 1.15rem/1.2 var(--f-display);color:var(--ink)}.foot-slogan{font-style:italic;color:var(--ink)}
 .help{max-width:72ch}
 .help b,.help a{color:var(--ink)}
 .help a{font-weight:600;white-space:nowrap}
