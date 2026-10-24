@@ -12,12 +12,12 @@ Không biết làm gì? Rút một quẻ: việc nhỏ, món ngon, hợp tâm tr
 Không biết hôm nay làm gì, ăn gì? Mở “Hôm nay làm gì?” là có ngay một quẻ: một việc nhỏ vừa sức, hợp giờ, hợp tâm trạng, hợp thời tiết và túi tiền của bạn.
 
 ★ RÚT MỘT QUẺ, LÀM MỘT VIỆC NHỎ
-• 1.000 quẻ việc trong 10 nhóm: vận động, khám phá, sáng tạo, học hỏi, kết nối, chăm mình, ăn uống, sự nghiệp, sống tử tế, giải trí.
+• 2.000 quẻ việc trong 10 nhóm: vận động, khám phá, sáng tạo, học hỏi, kết nối, chăm mình, ăn uống, sự nghiệp, sống tử tế, giải trí.
 • Mỗi quẻ có lời nhắn, bước bắt đầu ngay, thời gian, chi phí ước tính và đi cùng ai.
 • Độ khó từ 1 đến 10: làm xong nhận đúng số sao đó.
 
 ★ HÔM NAY ĂN GÌ?
-• 80 món cho bữa sáng, trưa, tối, khuya và ăn vặt; chọn ăn ngoài hoặc tự nấu.
+• 1.000 món ba miền và món nước ngoài cho bữa sáng, trưa, tối, khuya và ăn vặt; chọn ăn ngoài hoặc tự nấu.
 • Một chạm để tìm quán gần bạn hoặc xem cách nấu.
 
 ★ HỢP TÂM TRẠNG VÀ THỜI TIẾT

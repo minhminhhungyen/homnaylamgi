@@ -13,7 +13,7 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 
 | Đường dẫn | Nội dung |
 |---|---|
-| `src/data.js` | Thư viện: 1000 quẻ (`ACTIVITIES`, mỗi nhóm 100), 80 món (`FOODS`), 12 thử thách 7 ngày (`CHALLENGES`). Sửa hoặc thêm ở đây. |
+| `src/data.js` | Thư viện: 2000 quẻ (`ACTIVITIES`, mỗi nhóm 200), 1000 món (`FOODS`), 12 thử thách 7 ngày (`CHALLENGES`). Sửa hoặc thêm ở đây. |
 | `src/app.js` | Logic trang: rút quẻ, lọc, sao, huy hiệu, âm lịch, thời tiết, chia sẻ. |
 | `src/style.css`, `src/body.html` | Giao diện. |
 | `src/sw.js` | Service worker để trang mở được khi mất mạng. |
@@ -66,6 +66,7 @@ Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên,
 - Người chọn tâm trạng Buồn hoặc Cô đơn chỉ được gợi ý việc nhẹ (độ khó tối đa 6).
 - Khuya (22–5h), ai cũng chỉ được gợi ý việc nhẹ nhàng (độ khó tối đa 3), không phải ra ngoài. Mở link rủ hoặc thử thách chung lúc khuya mà việc đó phải ra ngoài, khó hoặc không hợp giờ khuya thì hiện lời nhắc để trời sáng, để mai hãy làm. Trời đẹp lúc khuya không khuyên ra ngoài. Ăn khuya thì gợi ý gọi giao tận nhà hoặc tự làm nhanh.
 - Lời quẻ cũng in lên ảnh story nên mỗi câu `n` phải đọc riêng vẫn an toàn. Nhãn `ai` (đi cùng ai) chỉ lọc khi người dùng tự chọn, nên việc cần có người đi cùng phải ghi rõ trong lời `s`.
+- Ngày 24/10/2026 thêm 1000 quẻ (id 1001–2000) và 920 món (id 81–1000): qua trình kiểm tự động và 7 lượt rà độc lập (an toàn, sự thật, trùng ý), sửa hoặc thay khoảng 80 mục.
 - Ngày 23/10/2026 đã rà độc lập toàn bộ 299 quẻ, 80 món, 12 thử thách: sửa 43 quẻ (bỏ hình ảnh chỗ cao, nước, đêm khuya một mình, thư từ biệt, cho đi đồ quý; thêm lưu ý an toàn khi gặp người lạ, đi xa, chạy bộ, tuổi lái xe, tuổi hiến máu).
 - Cùng ngày, rà độc lập 101 quẻ mới (300–400): sửa 29 quẻ (cảnh báo app VssID giả, dây điện đứt gọi điện lực, an toàn khi thắng đường, đi xa dưới 18 tuổi, dán đầu pin cũ, bỏ quẻ trùng ý). Số khẩn cấp 113, 114, 115 (quẻ 327) cần kiểm lại khi gộp đầu số (dự kiến 2027).
 - Cùng ngày, thêm 600 quẻ (401–1000, mỗi nhóm lên 100; thử thách chung 176 quẻ). Ba lượt rà độc lập toàn bộ 600 quẻ: không có nội dung về tự tử, tự làm hại; sửa 23 quẻ (khuya không gây ồn, thêm đường gọi 115 cho quẻ người buồn, bỏ kiểu “trả nợ, thu xếp”, độ tuổi xem kịch, phí SMS ngân hàng, quẻ cần người đi cùng). Tăng trọng số gợi ý hoàng hôn (×25), món nóng khi mưa (×3), nhóm việc giúp vui lên khi buồn (×1,8) để giữ tỉ lệ khi thư viện lớn hơn.

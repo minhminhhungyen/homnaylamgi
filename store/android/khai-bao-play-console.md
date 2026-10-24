@@ -28,7 +28,7 @@
 
 ## Phân loại nội dung (Content rating)
 - Loại ứng dụng: Tất cả các loại ứng dụng khác (All Other App Types).
-- Bạo lực, nội dung tình dục, ngôn ngữ thô tục, chất kích thích, cờ bạc: **Không** (đã rà 1000 quẻ, 80 món và 12 thử thách 7 ngày: không có rượu bia, thuốc lá, cá cược, đua xe; bước build tự dừng nếu nội dung có các từ này hoặc lời lẽ về tự tử, tự làm hại bản thân).
+- Bạo lực, nội dung tình dục, ngôn ngữ thô tục, chất kích thích, cờ bạc: **Không** (đã rà 2.000 quẻ, 1.000 món và 12 thử thách 7 ngày: không có rượu bia, thuốc lá, cá cược, đua xe; bước build tự dừng nếu nội dung có các từ này hoặc lời lẽ về tự tử, tự làm hại bản thân).
 - Người dùng trò chuyện hoặc trao đổi nội dung với nhau trong app: **Không** (chỉ chia sẻ ra ngoài qua ứng dụng khác).
 - Chia sẻ vị trí với người dùng khác: **Không**.
 - Mua hàng trong app: **Không**.
