@@ -98,6 +98,13 @@
         <button class="chip" type="button" data-ft="h" aria-pressed="false">Tự nấu</button>
       </div>
     </div>
+    <div class="chips fregs" id="fregs" role="group" aria-label="Bạn ở miền nào?" hidden>
+      <span class="fregs-lbl">Bạn ở</span>
+      <button class="chip" type="button" data-reg="B" aria-pressed="false">Miền Bắc</button>
+      <button class="chip" type="button" data-reg="T" aria-pressed="false">Miền Trung</button>
+      <button class="chip" type="button" data-reg="N" aria-pressed="false">Miền Nam</button>
+      <span class="fregs-note" id="fregNote"></span>
+    </div>
     <p class="mood-note" id="moodNote" hidden></p>
 
     <div class="draw">
@@ -136,6 +143,10 @@
       <div class="actions needs-js" id="actions">
         <button class="btn btn-main" id="btnMain" type="button">Nhận quẻ này</button>
         <button class="btn btn-line" id="btnDraw" type="button"><svg class="ico"><use href="#i-shuffle"/></svg><span>Rút quẻ khác</span></button>
+      </div>
+      <div class="loc-ask needs-js" id="locAsk" hidden role="region" aria-labelledby="locAskT">
+        <p><b id="locAskT">Gợi ý hợp nơi bạn ở?</b> Cho xem vị trí để gợi ý theo thời tiết và vùng miền. Vị trí làm tròn khoảng 1 km, chỉ lưu trên máy bạn, không gửi về máy chủ của chúng tôi.</p>
+        <div class="loc-acts"><button class="btn btn-main btn-sm" type="button" id="locYes">Cho phép</button><button class="chip" type="button" data-locreg="B" aria-label="Chọn miền Bắc">Bắc</button><button class="chip" type="button" data-locreg="T" aria-label="Chọn miền Trung">Trung</button><button class="chip" type="button" data-locreg="N" aria-label="Chọn miền Nam">Nam</button><button class="link muted" type="button" id="locLater">Để sau</button></div>
       </div>
       <div class="actions2 needs-js" id="actions2">
         <button class="btn btn-soft btn-sm" id="btnShare" type="button"><svg class="ico"><use href="#i-users"/></svg><span>Rủ bạn</span></button>

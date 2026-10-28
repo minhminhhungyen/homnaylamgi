@@ -149,7 +149,7 @@ const fmtTime = a => {
 };
 
 /* ---------- trạng thái (lưu trên máy người dùng) ---------- */
-const DEF = () => ({ v: 1, stars: 0, best: 0, done: [], saved: [], recent: [], got: [], cur: 0, curDay: '', acc: 0, accAt: 0, mood: 'all', moodDay: '', chAccDay: '', mode: 'lam', food: 0, foodDay: '', frecent: [], meal: '', mealDay: '', ftype: '', fmt: 'story', name: '', wk: null, wkDone: [], pref: {}, prefDay: '', wxOn: false, wxLoc: null, wx: null, aq: null, f: { who: '', budget: '', dur: '', place: '', level: '', when: 'now' } });
+const DEF = () => ({ v: 1, stars: 0, best: 0, done: [], saved: [], recent: [], got: [], cur: 0, curDay: '', acc: 0, accAt: 0, mood: 'all', moodDay: '', chAccDay: '', mode: 'lam', food: 0, foodDay: '', frecent: [], meal: '', mealDay: '', ftype: '', freg: '', fmt: 'story', name: '', wk: null, wkDone: [], pref: {}, prefDay: '', wxOn: false, wxLoc: null, wx: null, aq: null, f: { who: '', budget: '', dur: '', place: '', level: '', when: 'now' } });
 let S = (() => {
   try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw), d = DEF(); return Object.assign(d, s, { f: Object.assign(d.f, s.f || {}) }); } } catch (e) { /* bỏ qua */ }
   return DEF();
@@ -397,14 +397,33 @@ function renderMeals() {
   const meal = curMeal();
   $$('#meals [data-meal]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.meal === meal)));
   $$('#meals [data-ft]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.ft === S.ftype)));
+  const reg = foodRegion();
+  $$('#fregs [data-reg]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.reg === reg)));
+  $('#fregNote').textContent = reg ? (S.freg ? '' : '(tự nhận theo nơi bạn chọn ở thời tiết)') : 'Chưa chọn miền: đang gợi ý món cả nước.';
+}
+/* miền để gợi ý món: người dùng tự chọn, hoặc tự nhận theo nơi đã bật thời tiết; '' = cả nước */
+function foodRegion() {
+  if (S.freg === 'B' || S.freg === 'T' || S.freg === 'N') return S.freg;
+  if (S.freg === 'all' || !S.wxLoc) return '';
+  const L = S.wxLoc, named = L.name && CITIES.find(c => c[0] === L.name);
+  if (named) return named[3];
+  let best = null, bd = 1e9;
+  for (const c of CITIES) { const dx = (c[2] - L.lon) * Math.cos(L.lat * Math.PI / 180), dy = c[1] - L.lat, d = dx * dx + dy * dy; if (d < bd) { bd = d; best = c; } }
+  return best ? best[3] : '';
+}
+/* món hợp miền: món của miền mình và món phổ biến cả nước; đặc sản miền khác chỉ khi tự nấu được, và ít khi ra */
+function regionWeight(f, reg) {
+  if (!reg || !f.r || f.r.includes(reg)) return f.r && reg && f.r.includes(reg) ? 1.5 : 1;
+  return f.o.includes('h') ? 0.15 : 0;
 }
 function chooseFood(exclude) {
-  const meal = curMeal(), ft = S.ftype;
-  let P = F.filter(f => f.b.includes(meal) && (!ft || f.o.includes(ft)));
+  const meal = curMeal(), ft = S.ftype, reg = foodRegion();
+  let P = F.filter(f => f.b.includes(meal) && (!ft || f.o.includes(ft)) && regionWeight(f, reg) > 0);
+  if (P.length < 3) P = F.filter(f => f.b.includes(meal) && (!ft || f.o.includes(ft)));
   if (P.length < 3) P = F.filter(f => f.b.includes(meal));
   if (P.length < 3) P = F;
   const list = P.filter(f => f.id !== exclude).length ? P.filter(f => f.id !== exclude) : P;
-  const ws = list.map(f => { const ri = S.frecent.indexOf(f.id); return (ri >= 0 ? Math.min(1, 0.05 + ri * 0.08) : 1) * wxFood(f); });
+  const ws = list.map(f => { const ri = S.frecent.indexOf(f.id); return (ri >= 0 ? Math.min(1, 0.05 + ri * 0.08) : 1) * wxFood(f) * (regionWeight(f, reg) || 0.05); });
   let r = Math.random() * ws.reduce((x, y) => x + y, 0);
   for (let i = 0; i < list.length; i++) { r -= ws[i]; if (r <= 0) return list[i]; }
   return list[list.length - 1];
@@ -423,6 +442,7 @@ function setMode(m) {
   $('#tabAn').setAttribute('aria-selected', String(an));
   $('#moods').hidden = an;
   $('#meals').hidden = !an;
+  $('#fregs').hidden = !an;
   $('#tuneSec').hidden = an;
   renderMood(); renderWx();
   $('#tube').setAttribute('aria-label', an ? 'Lắc ống quẻ để rút món khác' : 'Lắc ống quẻ để rút quẻ khác');
@@ -629,6 +649,10 @@ $('#tube').addEventListener('click', () => { if (S.mode !== 'an' && busy()) { to
 $$('#pickrow [role="tab"]').forEach(b => b.addEventListener('click', () => { if (S.mode !== b.dataset.mode) setMode(b.dataset.mode); }));
 $$('#meals [data-meal]').forEach(b => b.addEventListener('click', () => { S.meal = b.dataset.meal; S.mealDay = TODAY; save(); renderMeals(); drawFood(); }));
 $$('#meals [data-ft]').forEach(b => b.addEventListener('click', () => { S.ftype = S.ftype === b.dataset.ft ? '' : b.dataset.ft; save(); renderMeals(); drawFood(); }));
+$$('#fregs [data-reg]').forEach(b => b.addEventListener('click', () => {
+  const r = b.dataset.reg; S.freg = foodRegion() === r ? 'all' : r; save(); renderMeals(); drawFood();
+  toast(S.freg === 'all' ? 'Đã bỏ chọn miền: gợi ý món cả nước.' : `Gợi ý món hợp ${REGION[r].toLowerCase()}.`);
+}));
 
 /* ---------- thêm vào lịch ---------- */
 const utc = d => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
@@ -749,15 +773,16 @@ $('#btnReset').addEventListener('click', () => {
    Thời tiết: MET Norway (miễn phí, cho dùng thương mại, CC BY 4.0).
    Không khí + UV: Open-Meteo Air Quality, mô hình CAMS (miễn phí cho web phi thương mại, CC BY 4.0).
    Gọi thẳng từ trình duyệt, không khóa API; tọa độ làm tròn 2 chữ số (~1 km). */
+/* tên, vĩ độ, kinh độ, miền (B Bắc, T Trung và Tây Nguyên, N Nam) — miền dùng để gợi ý món ăn hợp nơi bạn ở */
 const CITIES = [
-  ['Hà Nội', 21.03, 105.85], ['TP. Hồ Chí Minh', 10.78, 106.7], ['Hải Phòng', 20.84, 106.69], ['Đà Nẵng', 16.05, 108.2],
-  ['Cần Thơ', 10.05, 105.75], ['Huế', 16.46, 107.59], ['Hưng Yên', 20.65, 106.05], ['Bắc Ninh', 21.19, 106.08],
-  ['Hải Dương', 20.94, 106.33], ['Hạ Long', 20.95, 107.08], ['Thái Nguyên', 21.59, 105.85], ['Nam Định', 20.42, 106.17],
-  ['Ninh Bình', 20.25, 105.97], ['Thanh Hóa', 19.81, 105.78], ['Vinh', 18.68, 105.68], ['Quy Nhơn', 13.78, 109.22],
-  ['Nha Trang', 12.24, 109.2], ['Đà Lạt', 11.94, 108.46], ['Buôn Ma Thuột', 12.67, 108.04], ['Pleiku', 13.98, 108],
-  ['Biên Hòa', 10.96, 106.84], ['Thủ Dầu Một', 10.98, 106.65], ['Vũng Tàu', 10.35, 107.08], ['Phan Thiết', 10.93, 108.1],
-  ['Mỹ Tho', 10.36, 106.36], ['Long Xuyên', 10.39, 105.44], ['Rạch Giá', 10.01, 105.08], ['Cà Mau', 9.18, 105.15],
-  ['Phú Quốc', 10.22, 103.96], ['Sa Pa', 22.34, 103.84]
+  ['Hà Nội', 21.03, 105.85, 'B'], ['TP. Hồ Chí Minh', 10.78, 106.7, 'N'], ['Hải Phòng', 20.84, 106.69, 'B'], ['Đà Nẵng', 16.05, 108.2, 'T'],
+  ['Cần Thơ', 10.05, 105.75, 'N'], ['Huế', 16.46, 107.59, 'T'], ['Hưng Yên', 20.65, 106.05, 'B'], ['Bắc Ninh', 21.19, 106.08, 'B'],
+  ['Hải Dương', 20.94, 106.33, 'B'], ['Hạ Long', 20.95, 107.08, 'B'], ['Thái Nguyên', 21.59, 105.85, 'B'], ['Nam Định', 20.42, 106.17, 'B'],
+  ['Ninh Bình', 20.25, 105.97, 'B'], ['Thanh Hóa', 19.81, 105.78, 'T'], ['Vinh', 18.68, 105.68, 'T'], ['Quy Nhơn', 13.78, 109.22, 'T'],
+  ['Nha Trang', 12.24, 109.2, 'T'], ['Đà Lạt', 11.94, 108.46, 'T'], ['Buôn Ma Thuột', 12.67, 108.04, 'T'], ['Pleiku', 13.98, 108, 'T'],
+  ['Biên Hòa', 10.96, 106.84, 'N'], ['Thủ Dầu Một', 10.98, 106.65, 'N'], ['Vũng Tàu', 10.35, 107.08, 'N'], ['Phan Thiết', 10.93, 108.1, 'T'],
+  ['Mỹ Tho', 10.36, 106.36, 'N'], ['Long Xuyên', 10.39, 105.44, 'N'], ['Rạch Giá', 10.01, 105.08, 'N'], ['Cà Mau', 9.18, 105.15, 'N'],
+  ['Phú Quốc', 10.22, 103.96, 'N'], ['Sa Pa', 22.34, 103.84, 'B']
 ];
 const WX_SYM = [
   [/thunder/, 'có dông', '⛈️'], [/heavyrain/, 'mưa to', '🌧️'], [/lightrain/, 'mưa nhỏ', '🌦️'], [/rainshowers/, 'mưa rào', '🌦️'],
@@ -909,7 +934,7 @@ function locate() {
   navigator.geolocation.getCurrentPosition(p => {
     S.wxOn = true;
     S.wxLoc = { lat: Math.round(p.coords.latitude * 100) / 100, lon: Math.round(p.coords.longitude * 100) / 100, name: '' };
-    save(); getWx(true);
+    save(); renderMeals(); getWx(true);
   }, err => {
     wxLoading = false; renderWx();
     openWxBox(err && err.code === 1 ? 'Bạn chưa cho xem vị trí, không sao. Chọn nơi gần bạn để xem thời tiết nhé.' : 'Chưa lấy được vị trí. Chọn nơi gần bạn nhé.');
@@ -922,8 +947,24 @@ $('#wxEdit').addEventListener('click', () => { if ($('#wxBox').hidden) openWxBox
 $('#wxLoc').addEventListener('click', locate);
 $('#wxCity').addEventListener('change', e => {
   const c = CITIES[+e.target.value]; if (!c || e.target.value === '') return;
-  S.wxOn = true; S.wxLoc = { lat: c[1], lon: c[2], name: c[0] }; save(); getWx(true);
+  S.wxOn = true; S.wxLoc = { lat: c[1], lon: c[2], name: c[0] }; save(); renderMeals(); getWx(true);
 });
+/* lời mời cho xem vị trí: chỉ hiện thông báo của trang; hộp xin quyền của trình duyệt chỉ bật khi người dùng bấm “Cho phép” */
+const LOCK = 'hnlg.locAsk';
+function locAskHide() { $('#locAsk').hidden = true; try { localStorage.setItem(LOCK, String(Date.now())); } catch (e) { /* bỏ qua */ } }
+async function locAskShow() {
+  if (!DEPLOY || !navigator.geolocation || S.wxOn || S.freg) return;
+  let at = 0; try { at = +(localStorage.getItem(LOCK) || 0); } catch (e) { at = 0; }
+  if (Date.now() - at < 30 * 864e5) return;
+  try { if (navigator.permissions) { const st = await navigator.permissions.query({ name: 'geolocation' }); if (st.state === 'denied') return; } } catch (e) { /* trình duyệt không hỗ trợ hỏi trạng thái quyền */ }
+  $('#locAsk').hidden = false;
+}
+$('#locYes').addEventListener('click', () => { locAskHide(); locate(); });
+$('#locLater').addEventListener('click', locAskHide);
+$$('#locAsk [data-locreg]').forEach(b => b.addEventListener('click', () => {
+  locAskHide(); S.freg = b.dataset.locreg; save(); renderMeals(); if (S.mode === 'an') drawFood();
+  toast(`Đã chọn ${REGION[S.freg].toLowerCase()}. Món ăn sẽ gợi ý hợp nơi bạn ở.`);
+}));
 $('#wxOff').addEventListener('click', () => {
   S.wxOn = false; S.wxLoc = null; S.wx = null; S.aq = null; wxFail = ''; save(); closeWxBox(); renderWx(); toast('Đã tắt gợi ý theo thời tiết.');
 });
@@ -1695,6 +1736,7 @@ if (S.mealDay !== TODAY) { S.meal = ''; S.mealDay = ''; }
 if (window.matchMedia && matchMedia('(min-width: 960px)').matches) $('#tune').open = true;
 renderAll(); renderSoon(); setMode(S.mode); save(); renderMe();
 SY_ON = true;
+locAskShow();
 boot();
 if (SERVER && SY.uid) accLoad();
 if (location.hash === '#toi' || location.hash === '#nhat-ky') route();

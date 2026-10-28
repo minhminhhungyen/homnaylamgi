@@ -163,6 +163,8 @@ b,strong{font-weight:600}
 
 /* chip */
 .chips{display:flex;flex-wrap:wrap;gap:8px}
+.loc-ask{margin:14px 0 0;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:.85rem;line-height:1.45}.loc-ask p{margin:0 0 8px}.loc-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.loc-acts .chip{min-height:34px;padding:4px 12px;font-size:.88rem}.loc-acts .btn{min-height:34px}
+.fregs{margin-top:10px;align-items:center;gap:6px}.fregs .chip{min-height:34px;padding:4px 12px;font-size:.88rem}.fregs-lbl{font-size:.88rem;color:var(--muted);flex:none}.fregs-note{font-size:.8rem;color:var(--muted);flex:none}
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-size:.94rem;font-weight:400;cursor:pointer;transition:background-color .15s ease,border-color .15s ease}
 .chip:hover{border-color:var(--muted)}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}

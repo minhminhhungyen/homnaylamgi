@@ -233,7 +233,7 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <li>Dùng được ngay không cần tài khoản. Tài khoản là tùy chọn: nếu đăng ký, công ty lưu tên gọi, email và mật khẩu đã băm một chiều.</li>
 <li>Sao, huy hiệu, lịch sử và lựa chọn của bạn lưu trên thiết bị của bạn. Nếu bạn đăng nhập, sao, huy hiệu, lịch sử và nhật ký đã mã hóa được đồng bộ vào tài khoản để dùng trên nhiều máy.</li>
 <li>Nhật ký riêng tư được mã hóa trên thiết bị bằng mật khẩu của bạn; không ai khác đọc được, kể cả công ty, kể cả khi nhật ký được đồng bộ vào tài khoản.</li>
-<li>Vị trí chỉ dùng khi bạn tự bật gợi ý theo thời tiết, và được làm tròn khoảng 1 km.</li>
+<li>Vị trí chỉ dùng khi bạn bấm cho phép, để gợi ý theo thời tiết và vùng miền; được làm tròn khoảng 1 km, chỉ lưu trên máy bạn, không gửi về máy chủ của công ty.</li>
 <li>Không quảng cáo, không công cụ theo dõi, không bán dữ liệu.</li>
 </ul></div>
 <h2>1. Dữ liệu lưu trên thiết bị của bạn</h2>
@@ -244,7 +244,7 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <p>Nếu bạn đăng nhập, nhật ký ở dạng đã mã hóa được đồng bộ vào tài khoản. Máy chủ chỉ giữ dữ liệu đã mã hóa và không có mật khẩu để mở.</p>
 <p>Khi bạn tải bản sao lưu, file sao lưu chứa nhật ký ở dạng đã mã hóa cùng sao, huy hiệu và lịch sử. File nằm trên thiết bị của bạn; hãy cất ở nơi an toàn.</p>
 <h2>3. Vị trí và thời tiết (tùy chọn)</h2>
-<p>Dịch vụ chỉ hỏi quyền vị trí khi bạn bấm “Gợi ý theo thời tiết chỗ bạn”. Tọa độ được làm tròn đến 2 chữ số thập phân (khoảng 1 km), rồi gửi thẳng từ thiết bị của bạn tới:</p>
+<p>Khi bạn mở trang, một thông báo hỏi bạn có muốn cho xem vị trí không. Trình duyệt chỉ hỏi quyền vị trí khi bạn bấm “Cho phép” hoặc “Gợi ý theo thời tiết chỗ bạn”. Vị trí dùng để gợi ý việc và món ăn hợp thời tiết, hợp vùng miền nơi bạn ở. Bạn có thể không cho phép mà tự chọn miền Bắc, Trung hoặc Nam; lựa chọn này chỉ lưu trên máy bạn. Tọa độ được làm tròn đến 2 chữ số thập phân (khoảng 1 km), rồi gửi thẳng từ thiết bị của bạn tới:</p>
 <ul><li><a href="https://www.met.no/en" rel="noopener">MET Norway</a> (Viện Khí tượng Na Uy, api.met.no) để lấy dự báo thời tiết;</li>
 <li><a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a> (air-quality-api.open-meteo.com) để lấy chất lượng không khí và chỉ số UV.</li></ul>
 <p>Như mọi dịch vụ trên mạng, các nhà cung cấp này cũng nhận địa chỉ IP của bạn khi trả dữ liệu và xử lý theo chính sách của họ. Bạn có thể không cho phép vị trí mà chọn tỉnh, thành thay thế, hoặc bấm “Tắt thời tiết” để xóa vị trí đã lưu.</p>
