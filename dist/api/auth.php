@@ -24,7 +24,7 @@ switch ($act) {
 
   case 'register':
     need_post(); check_csrf();
-    limit('reg:' . client_ip(), 5, 3600);
+    limit('reg:' . ip_bucket(), 5, 3600);
     $email = mb_strtolower(str_in('email', 190)); $name = clean_name(str_in('name', 120)); $pass = (string) (input()['password'] ?? '');
     if (!valid_email($email)) fail('Email chưa đúng.');
     if (!$name) fail('Bạn điền tên gọi nhé.');
@@ -73,7 +73,7 @@ switch ($act) {
     need_post(); check_csrf();
     $gid = (string) cfg('google_client_id', '');
     if (!$gid) fail('Đăng nhập Google chưa được bật.', 503);
-    limit('google:' . client_ip(), 20, 900);
+    limit('google:' . ip_bucket(), 20, 900);
     $cred = str_in('credential', 4000);
     if (!preg_match('/^[\w-]+\.[\w-]+\.[\w-]+$/', $cred)) fail('Thông tin đăng nhập Google không hợp lệ.');
     $ch = curl_init('https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode($cred));

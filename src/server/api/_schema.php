@@ -82,14 +82,20 @@ const SCHEMA = [
     state MEDIUMTEXT NOT NULL,
     diary MEDIUMTEXT NULL,
     rev INT UNSIGNED NOT NULL DEFAULT 0,
+    drev INT UNSIGNED NOT NULL DEFAULT 0,
     updated_at DATETIME NOT NULL,
     CONSTRAINT fk_user_data_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 ];
-const SCHEMA_VERSION = 3;
+/* số phiên bản cấu trúc nằm ở SCHEMA_V trong _lib.php (tên file cờ hnlg-schema-vN) */
 /* nâng cấp cơ sở dữ liệu đã cài từ bản cũ: thêm cột nếu chưa có (chạy được trên cả MySQL và MariaDB) */
 function migrate(PDO $pdo): void {
   foreach (SCHEMA as $sql) $pdo->exec($sql);
   $has = fn(string $t, string $c) => (bool) $pdo->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '$t' AND COLUMN_NAME = '$c'")->fetchColumn();
   if (!$has('users', 'totp_secret')) $pdo->exec('ALTER TABLE users ADD COLUMN totp_secret VARCHAR(255) NULL, ADD COLUMN totp_last BIGINT NULL');
+  if (!$has('user_data', 'drev')) { try { $pdo->exec('ALTER TABLE user_data ADD COLUMN drev INT UNSIGNED NOT NULL DEFAULT 0 AFTER rev'); } catch (PDOException $e) { if ((int) ($e->errorInfo[1] ?? 0) !== 1060) throw $e; } } // 1060: yêu cầu khác vừa thêm cột
+  /* v5 (phòng hờ): dữ liệu đồng bộ của tài khoản chưa xác nhận do bản đầu ghi thì bỏ; mốc thời gian vượt quá hiện tại thì kéo về hiện tại */
+  $pdo->exec('DELETE d FROM user_data d JOIN users u ON u.id = d.user_id WHERE u.email_verified = 0 AND u.google_sub IS NULL');
+  $now = (int) floor(microtime(true) * 1000); $max = $now + 86400000;
+  foreach (['$.epoch', '$.mtf.saved', '$.mtf.wk', '$.mtf.name'] as $path) $pdo->exec("UPDATE user_data SET state = JSON_SET(state, '$path', $now) WHERE JSON_VALID(state) AND JSON_EXTRACT(state, '$path') IS NOT NULL AND CAST(JSON_EXTRACT(state, '$path') AS DECIMAL(20,0)) > $max");
 }

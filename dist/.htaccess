@@ -52,7 +52,7 @@ ErrorDocument 404 /404.html
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(self), payment=(), usb=()"
   Header always set Strict-Transport-Security "max-age=15552000"
   <FilesMatch "\.(html|webmanifest|xml|txt)$">
-    Header set Cache-Control "no-cache"
+    Header set Cache-Control "no-cache, private"
   </FilesMatch>
   <FilesMatch "^sw\.js$">
     Header set Cache-Control "no-cache"

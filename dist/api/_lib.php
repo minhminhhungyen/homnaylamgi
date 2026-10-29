@@ -28,6 +28,7 @@ function cfg(?string $k = null, $def = null) {
   if ($c === null) { $p = cfg_path(); $c = is_file($p) ? (require $p) : []; if (!is_array($c)) $c = []; }
   return $k === null ? $c : ($c[$k] ?? $def);
 }
+const SCHEMA_V = 5; // tăng khi đổi cấu trúc CSDL: lần gọi db() đầu tiên sau đó sẽ tự chạy migrate()
 function upload_dir(): string { return dirname(cfg_path()) . '/hnlg-uploads'; }
 function installed(): bool { return (bool) cfg('db_name'); }
 
@@ -39,7 +40,7 @@ function db(): PDO {
   try {
     $pdo = new PDO($dsn, cfg('db_user'), cfg('db_pass'), [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, PDO::ATTR_EMULATE_PREPARES => false]);
     $pdo->exec("SET time_zone = '+07:00'");
-    $flag = dirname(cfg_path()) . '/hnlg-schema-v3';
+    $flag = dirname(cfg_path()) . '/hnlg-schema-v' . SCHEMA_V;
     if (!is_file($flag)) { require_once __DIR__ . '/_schema.php'; migrate($pdo); @file_put_contents($flag, now()); }
   } catch (Throwable $e) { error_log('hnlg db: ' . $e->getMessage()); fail('Không kết nối được cơ sở dữ liệu.', 503); }
   return $pdo;
@@ -128,6 +129,13 @@ function audit(int $uid, string $action, string $detail = ''): void {
   try { q('INSERT INTO audit (user_id, action, detail, at, ip) VALUES (?, ?, ?, ?, ?)', [$uid, $action, mb_substr($detail, 0, 300), now(), client_ip()]); } catch (Throwable $e) { error_log('hnlg audit: ' . $e->getMessage()); }
 }
 function client_ip(): string { return substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45); }
+/* nhóm địa chỉ để giới hạn số lần: IPv4 giữ nguyên, IPv6 lấy khối /64 (một nhà mạng cấp cả khối cho một thuê bao) */
+function ip_bucket(): string {
+  $ip = client_ip(); $b = @inet_pton($ip);
+  if ($b === false || strlen($b) !== 16) return $ip;
+  if (substr($b, 0, 12) === str_repeat("\0", 10) . "\xff\xff") return inet_ntop(substr($b, 12)); // ::ffff:1.2.3.4 là địa chỉ IPv4
+  return bin2hex(substr($b, 0, 8)) . '::/64';
+}
 
 /* ---------- chống dò mật khẩu, spam ---------- */
 function limit_key(string $key): string { return substr(hash('sha256', $key), 0, 40); }

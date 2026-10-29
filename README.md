@@ -96,10 +96,13 @@ Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên,
 ## Tài khoản, quản trị, bài viết (PHP + MySQL, chỉ chạy trên Hostinger)
 
 - Mã nằm trong `src/server/` (build chép sang `dist/`): `api/` (auth, admin, public, setup, sync…), `bai-viet/`, `quan-tri/`.
-- Đồng bộ theo tài khoản (`api/sync.php`, bảng `user_data`): sao, lịch sử, huy hiệu, thử thách, tên gọi và nhật ký đã mã hóa trên máy. Không đồng bộ vị trí, thời tiết, bộ lọc.
-  - Gộp: lịch sử hợp theo (quẻ, ngày); sao lấy bên cao hơn cộng quẻ chỉ có ở bên kia; huy hiệu hợp lại; bấm "Xóa dữ liệu" hoặc khôi phục sao lưu tạo `epoch` mới, bản đó thắng.
-  - Nhật ký: cả khối mã hóa, cùng mật khẩu gốc thì bản sửa sau thắng; khác mật khẩu thì không ghi đè, hiện nút cho người dùng chọn.
-  - Ghi theo `rev`: bản cũ nhận 409 và tự gộp lại. Người khác đăng nhập trên cùng máy thì không mang dữ liệu người trước sang.
+- Đồng bộ theo tài khoản (`api/sync.php`, bảng `user_data`), chỉ cho tài khoản đã xác nhận email hoặc đăng nhập Google: sao, lịch sử, huy hiệu, thử thách, để dành, tên gọi và nhật ký đã mã hóa. Không đồng bộ vị trí, thời tiết, bộ lọc, mức ưa thích nhóm việc.
+  - Gộp: lịch sử hợp theo (quẻ, ngày); sao lấy bên cao hơn cộng quẻ chỉ có ở bên kia (trừ quẻ bị cắt ở mốc 600); tên, để dành, thử thách theo giờ sửa riêng từng trường (`mtf`); huy hiệu hợp lại, sắp thứ tự cố định.
+  - "Xóa dữ liệu" hoặc khôi phục sao lưu tạo `epoch` mới: bản đó thắng, nhưng quẻ bên kia làm sau mốc ấy vẫn giữ. Máy lần đầu gắn với tài khoản luôn được cộng dữ liệu của mình.
+  - Nhật ký: gộp theo từng trang (mỗi trang có giờ sửa `u`, trang xóa để lại dấu `del` 180 ngày, khóa kèm mã trang làm AAD); khác mật khẩu thì theo lần đổi mật khẩu (`pa`), bên thua còn trang chưa lên tài khoản thì hỏi người dùng. Xóa nhật ký ghi mã cuốn đã xóa (`dcl`), không đụng cuốn khác.
+  - Ghi theo `rev`/`drev`: bản cũ nhận 409 và tự gộp lại; `get?since=&dsince=` không đổi thì không gửi lại dữ liệu. Máy chủ lọc từng trường, chặn mốc thời gian vượt giờ máy chủ + 1 ngày.
+  - Đăng xuất (tài khoản đã đồng bộ): máy trở về trống; phần chưa gửi được cất trong `hnlg.prev[uid]`, chỉ hiện lại cho đúng người đó. Người khác đăng nhập trên máy đang giữ dữ liệu của người trước thì dữ liệu đó được cất cho chủ cũ.
+  - Kiểm thử đầu cuối: 59 mục (đồng bộ nhiều máy, nhiều tab, xung đột nhật ký, đổi tài khoản, dữ liệu sai, gửi cùng lúc); đã qua 3 lượt rà độc lập.
 - File cấu hình `hnlg-config.php`, thư mục phiên `hnlg-sessions/` và ảnh tải lên `hnlg-uploads/` nằm NGOÀI public_html (thư mục cha). Không đưa lên Git, đưa bản web mới lên không mất ảnh.
 - Cài lần đầu:
   1. Tạo CSDL MySQL trong hPanel.

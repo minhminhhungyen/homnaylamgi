@@ -257,7 +257,7 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <li>Nếu đăng nhập bằng Google: mã định danh tài khoản Google, tên và email mà Google cung cấp sau khi bạn đồng ý. Công ty không nhận mật khẩu Google của bạn.</li>
 <li>Thời điểm tạo tài khoản, lần đăng nhập gần nhất, xác nhận bạn từ đủ 16 tuổi; địa chỉ IP được dùng tạm thời để chống dò mật khẩu và ghi nhật ký thao tác quản trị.</li>
 <li>Một cookie đăng nhập (hnlg_s), chỉ dùng để giữ phiên đăng nhập, không dùng để theo dõi hay quảng cáo.</li>
-<li>Dữ liệu đồng bộ: số sao, danh hiệu, huy hiệu, lịch sử quẻ đã làm và cảm nhận, danh sách để dành, thử thách 7 ngày, tên gọi, mức ưa thích các nhóm việc, và nhật ký ở dạng đã mã hóa. Vị trí, thời tiết và các lựa chọn lọc không được đồng bộ.</li></ul>
+<li>Dữ liệu đồng bộ (chỉ bật khi email đã xác nhận hoặc đăng nhập bằng Google): số sao, danh hiệu, huy hiệu, lịch sử quẻ đã làm và cảm nhận, danh sách để dành, thử thách 7 ngày, tên gọi, và nhật ký ở dạng đã mã hóa. Vị trí, thời tiết, các lựa chọn lọc và thói quen chọn nhóm việc không được đồng bộ. Khi bạn đăng xuất, dữ liệu này được xóa khỏi máy đang dùng (vẫn còn trong tài khoản); phần chưa kịp gửi lên được cất riêng trên máy và chỉ hiện lại khi chính bạn đăng nhập.</li></ul>
 <p>Dữ liệu tài khoản lưu trên máy chủ của Hostinger mà công ty thuê, không bán, không chia sẻ cho bên thứ ba để quảng cáo. Máy chủ có thể đặt ngoài Việt Nam tùy trung tâm dữ liệu của Hostinger; khi tạo tài khoản, bạn đồng ý cho dữ liệu nêu trên được lưu ở đó. Bạn xóa tài khoản bất cứ lúc nào trong Trang của bạn; dữ liệu tài khoản và dữ liệu đồng bộ bị xóa khỏi cơ sở dữ liệu ngay khi bạn bấm. Nút “Xóa toàn bộ dữ liệu” khi đang đăng nhập cũng xóa bản đồng bộ trong tài khoản.</p>
 <h2>5. Máy chủ lưu trữ</h2>
 <p>Website được phục vụ qua Hostinger và Vercel. Như mọi trang web, các nhà cung cấp này có thể ghi nhật ký kỹ thuật (địa chỉ IP, thời gian truy cập, loại trình duyệt) để vận hành và chống tấn công. Công ty không dùng nhật ký này để nhận diện cá nhân.</p>
@@ -377,7 +377,7 @@ ErrorDocument 404 /404.html
 ${SECURITY.map(([k, v]) => `  Header always set ${k} "${v}"`).join('\n')}
   Header always set Strict-Transport-Security "max-age=15552000"
   <FilesMatch "\\.(html|webmanifest|xml|txt)$">
-    Header set Cache-Control "no-cache"
+    Header set Cache-Control "no-cache, private"
   </FilesMatch>
   <FilesMatch "^sw\\.js$">
     Header set Cache-Control "no-cache"
