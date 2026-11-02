@@ -91,7 +91,7 @@ const jsArt = await minJs(data0 + '\n' + app0);
 const htmlOpts = { collapseWhitespace: true, conservativeCollapse: true, removeComments: true, minifyCSS: false, minifyJS: false, keepClosingSlash: true, decodeEntities: false };
 
 /* ---------- 5. dist/index.html ---------- */
-const DESC = `Không biết hôm nay làm gì, ăn gì? Rút một quẻ để nhận ngay một việc hợp tâm trạng, thời gian và túi tiền. ${COUNT} quẻ việc và ${FOODS.length} món ăn cho người trẻ 16–40 tuổi, có sao, huy hiệu và thử thách chung mỗi ngày.`;
+const DESC = `Không biết hôm nay làm gì, ăn gì? Rút một quẻ là có ngay việc hợp tâm trạng, thời gian, túi tiền và thời tiết. ${COUNT.toLocaleString('vi-VN')} việc và ${FOODS.length.toLocaleString('vi-VN')} món ăn.`;
 const ldjson = JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'Hôm nay làm gì?', url: SITE + '/', inLanguage: 'vi', description: DESC });
 const page = `<!doctype html>
 <html lang="vi" class="no-js">
@@ -231,18 +231,18 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <p>“Hôm nay làm gì?” gồm website homnaylamgi.com và ứng dụng cùng tên trên điện thoại, máy tính. Dịch vụ do ${COMPANY.name} vận hành. Trang này nói rõ dịch vụ xử lý dữ liệu nào và vì sao.</p>
 <div class="sum"><ul>
 <li>Dùng được ngay không cần tài khoản. Tài khoản là tùy chọn: nếu đăng ký, công ty lưu tên gọi, email và mật khẩu đã băm một chiều.</li>
-<li>Sao, huy hiệu, lịch sử và lựa chọn của bạn lưu trên thiết bị của bạn. Nếu bạn đăng nhập, sao, huy hiệu, lịch sử và nhật ký đã mã hóa được đồng bộ vào tài khoản để dùng trên nhiều máy.</li>
+<li>Sao, lịch sử và lựa chọn của bạn lưu trên thiết bị của bạn. Nếu bạn đăng nhập, sao, lịch sử và nhật ký đã mã hóa được đồng bộ vào tài khoản để dùng trên nhiều máy.</li>
 <li>Nhật ký riêng tư được mã hóa trên thiết bị bằng mật khẩu của bạn; không ai khác đọc được, kể cả công ty, kể cả khi nhật ký được đồng bộ vào tài khoản.</li>
 <li>Vị trí chỉ dùng khi bạn bấm cho phép, để gợi ý theo thời tiết và vùng miền; được làm tròn khoảng 1 km, chỉ lưu trên máy bạn, không gửi về máy chủ của công ty.</li>
 <li>Không quảng cáo, không công cụ theo dõi, không bán dữ liệu.</li>
 </ul></div>
 <h2>1. Dữ liệu lưu trên thiết bị của bạn</h2>
-<p>Các thông tin sau được lưu trong bộ nhớ trình duyệt trên thiết bị của bạn (localStorage): quẻ đang làm, số sao, huy hiệu, lịch sử quẻ đã làm và cảm nhận, danh sách để dành, tâm trạng, bữa ăn, các lựa chọn ở phần Tinh chỉnh. Nếu bạn bật thời tiết, có thêm vị trí đã làm tròn hoặc tỉnh, thành bạn chọn và bản dự báo gần nhất.</p>
+<p>Các thông tin sau được lưu trong bộ nhớ trình duyệt trên thiết bị của bạn (localStorage): quẻ đang làm, số sao, lịch sử quẻ đã làm và cảm nhận, số thứ tự các quẻ và món đã hiện gần đây (để lần sau không lặp lại), danh sách để dành, tâm trạng, bữa ăn, các lựa chọn ở phần Tinh chỉnh. Nếu bạn bật thời tiết, có thêm vị trí đã làm tròn hoặc tỉnh, thành bạn chọn và bản dự báo gần nhất.</p>
 <p>Nếu bạn không đăng nhập, các dữ liệu này không được gửi về máy chủ của công ty. Nếu bạn đăng nhập, xem mục 4b về đồng bộ. Bạn xóa được bất cứ lúc nào bằng nút “Xóa dữ liệu” ở phần Hành trình, bằng cách xóa dữ liệu trang web trong trình duyệt, hoặc gỡ ứng dụng.</p>
 <h2>2. Nhật ký riêng tư</h2>
 <p>Nhật ký được mã hóa ngay trên thiết bị của bạn (AES-GCM 256 bit, khóa sinh từ mật khẩu bằng PBKDF2-SHA256 với 600.000 vòng lặp) trước khi lưu vào bộ nhớ trình duyệt. Mật khẩu nhật ký không được lưu và không được gửi đi đâu. Vì vậy công ty và bất kỳ ai không có mật khẩu đều không đọc được nhật ký của bạn. Điều này cũng có nghĩa là nếu quên mật khẩu, không ai khôi phục được nội dung nhật ký.</p>
 <p>Nếu bạn đăng nhập, nhật ký ở dạng đã mã hóa được đồng bộ vào tài khoản. Máy chủ chỉ giữ dữ liệu đã mã hóa và không có mật khẩu để mở.</p>
-<p>Khi bạn tải bản sao lưu, file sao lưu chứa nhật ký ở dạng đã mã hóa cùng sao, huy hiệu và lịch sử. File nằm trên thiết bị của bạn; hãy cất ở nơi an toàn.</p>
+<p>Khi bạn tải bản sao lưu, file sao lưu chứa nhật ký ở dạng đã mã hóa cùng sao và lịch sử. File nằm trên thiết bị của bạn; hãy cất ở nơi an toàn.</p>
 <h2>3. Vị trí và thời tiết (tùy chọn)</h2>
 <p>Khi bạn mở trang, một thông báo hỏi bạn có muốn cho xem vị trí không. Trình duyệt chỉ hỏi quyền vị trí khi bạn bấm “Cho phép” hoặc “Gợi ý theo thời tiết chỗ bạn”. Vị trí dùng để gợi ý việc và món ăn hợp thời tiết, hợp vùng miền nơi bạn ở. Bạn có thể không cho phép mà tự chọn miền Bắc, Trung hoặc Nam; lựa chọn này chỉ lưu trên máy bạn. Tọa độ được làm tròn đến 2 chữ số thập phân (khoảng 1 km), rồi gửi thẳng từ thiết bị của bạn tới:</p>
 <ul><li><a href="https://www.met.no/en" rel="noopener">MET Norway</a> (Viện Khí tượng Na Uy, api.met.no) để lấy dự báo thời tiết;</li>
@@ -257,7 +257,7 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <li>Nếu đăng nhập bằng Google: mã định danh tài khoản Google, tên và email mà Google cung cấp sau khi bạn đồng ý. Công ty không nhận mật khẩu Google của bạn.</li>
 <li>Thời điểm tạo tài khoản, lần đăng nhập gần nhất, xác nhận bạn từ đủ 16 tuổi; địa chỉ IP được dùng tạm thời để chống dò mật khẩu và ghi nhật ký thao tác quản trị.</li>
 <li>Một cookie đăng nhập (hnlg_s), chỉ dùng để giữ phiên đăng nhập, không dùng để theo dõi hay quảng cáo.</li>
-<li>Dữ liệu đồng bộ (chỉ bật khi email đã xác nhận hoặc đăng nhập bằng Google): số sao, danh hiệu, huy hiệu, lịch sử quẻ đã làm và cảm nhận, danh sách để dành, thử thách 7 ngày, tên gọi, và nhật ký ở dạng đã mã hóa. Vị trí, thời tiết, các lựa chọn lọc và thói quen chọn nhóm việc không được đồng bộ. Khi bạn đăng xuất, dữ liệu này được xóa khỏi máy đang dùng (vẫn còn trong tài khoản); phần chưa kịp gửi lên được cất riêng trên máy và chỉ hiện lại khi chính bạn đăng nhập.</li></ul>
+<li>Dữ liệu đồng bộ (chỉ bật khi email đã xác nhận hoặc đăng nhập bằng Google): số sao, danh hiệu, lịch sử quẻ đã làm và cảm nhận, danh sách để dành, thử thách 7 ngày, tên gọi, và nhật ký ở dạng đã mã hóa. Vị trí, thời tiết, các lựa chọn lọc và thói quen chọn nhóm việc không được đồng bộ. Khi bạn đăng xuất, dữ liệu này được xóa khỏi máy đang dùng (vẫn còn trong tài khoản); phần chưa kịp gửi lên được cất riêng trên máy và chỉ hiện lại khi chính bạn đăng nhập.</li></ul>
 <p>Dữ liệu tài khoản lưu trên máy chủ của Hostinger mà công ty thuê, không bán, không chia sẻ cho bên thứ ba để quảng cáo. Máy chủ có thể đặt ngoài Việt Nam tùy trung tâm dữ liệu của Hostinger; khi tạo tài khoản, bạn đồng ý cho dữ liệu nêu trên được lưu ở đó. Bạn xóa tài khoản bất cứ lúc nào trong Trang của bạn; dữ liệu tài khoản và dữ liệu đồng bộ bị xóa khỏi cơ sở dữ liệu ngay khi bạn bấm. Nút “Xóa toàn bộ dữ liệu” khi đang đăng nhập cũng xóa bản đồng bộ trong tài khoản.</p>
 <h2>5. Máy chủ lưu trữ</h2>
 <p>Website được phục vụ qua Hostinger và Vercel. Như mọi trang web, các nhà cung cấp này có thể ghi nhật ký kỹ thuật (địa chỉ IP, thời gian truy cập, loại trình duyệt) để vận hành và chống tấn công. Công ty không dùng nhật ký này để nhận diện cá nhân.</p>
@@ -288,7 +288,7 @@ for (const [f, html] of LANDS) out(f, html);
 let ogCount = 0;
 try { mkdirSync(path.join(DIST, 'og'), { recursive: true }); for (const f of readdirSync(OG_DIR)) if (f.endsWith('.png')) { copyFileSync(path.join(OG_DIR, f), path.join(DIST, 'og', f)); ogCount++; } } catch (e) { /* chưa có ảnh xem trước riêng */ }
 const SHOTS = (() => { try { return readdirSync(path.join(SRC, 'static', 'screenshots')).filter(f => f.endsWith('.png')).sort(); } catch (e) { return []; } })();
-const SHOT_LABEL = { 'narrow-1': 'Mở ra là có ngay một quẻ hợp giờ, tâm trạng và thời tiết', 'narrow-2': 'Hôm nay ăn gì? Rút món hợp bữa và hợp trời', 'narrow-3': 'Rủ bạn qua Zalo, Messenger, Facebook, Instagram, Threads', 'narrow-4': 'Gom sao, lên danh hiệu, mở khóa huy hiệu', 'wide-1': 'Hôm nay làm gì? trên máy tính' };
+const SHOT_LABEL = { 'narrow-1': 'Mở ra là có ngay một quẻ hợp giờ, tâm trạng và thời tiết', 'narrow-2': 'Hôm nay ăn gì? Rút món hợp bữa và hợp trời', 'narrow-3': 'Rủ bạn qua Zalo, Messenger, Facebook, Instagram, Threads', 'narrow-4': 'Gom sao, lên danh hiệu', 'wide-1': 'Hôm nay làm gì? trên máy tính' };
 out('site.webmanifest', JSON.stringify({
   id: '/', name: 'Hôm nay làm gì?', short_name: 'Hôm nay làm gì', description: 'Rút một quẻ, làm một việc nhỏ, để hôm nay khác hôm qua một chút.',
   lang: 'vi', dir: 'ltr', start_url: '/', scope: '/', display: 'standalone', background_color: '#F5F2F6', theme_color: '#D02842',

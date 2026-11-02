@@ -242,7 +242,7 @@
 
   <section class="journey needs-js" aria-labelledby="jTitle">
     <h2 id="jTitle">Hành trình của bạn</h2>
-    <p class="sub">Làm xong mỗi quẻ, bạn nhận số sao bằng độ khó của quẻ. Sao và huy hiệu chỉ để vui, chỉ mình bạn thấy. Bận thì nghỉ, không mất gì cả.</p>
+    <p class="sub">Làm xong mỗi quẻ, bạn nhận số sao bằng độ khó của quẻ. Sao chỉ để vui, chỉ mình bạn thấy. Bận thì nghỉ, không mất gì cả.</p>
     <div class="stats">
       <div class="stat"><p class="big" id="jStars">0</p><p class="lab">sao đã gom</p></div>
       <div class="stat"><p class="big" id="jStreak">0</p><p class="lab" id="jStreakLab">ngày đã làm quẻ</p></div>
@@ -262,15 +262,11 @@
       <p>Cài lên màn hình chính: mỗi sáng mở một chạm là có quẻ, không cần gõ địa chỉ.</p>
       <button class="btn btn-soft btn-sm" data-install type="button"><svg class="ico"><use href="#i-download"/></svg><span>Cài ứng dụng</span></button>
     </div>
-    <div class="badges-wrap">
-      <h3>Huy hiệu</h3>
-      <ul class="badges" id="badges"></ul>
-    </div>
     <div class="lists">
       <div><h3>Đã làm gần đây</h3><div id="hist"></div></div>
       <div><h3>Để dành</h3><div id="saved"></div></div>
     </div>
-    <p class="local">Sao, huy hiệu và lịch sử được lưu ngay trên trình duyệt của bạn, không cần đăng nhập. Nếu đăng nhập ở trang Tôi, bản sao được giữ trong tài khoản để dùng trên máy khác. <button class="link muted" id="btnReset" type="button">Xóa dữ liệu</button></p>
+    <p class="local">Sao và lịch sử được lưu ngay trên trình duyệt của bạn, không cần đăng nhập. Nếu đăng nhập ở trang Tôi, bản sao được giữ trong tài khoản để dùng trên máy khác. <button class="link muted" id="btnReset" type="button">Xóa dữ liệu</button></p>
   </section>
 
   <section class="view needs-js" id="viewMe" hidden aria-labelledby="meTitle">
@@ -298,7 +294,7 @@
       </div>
       <div class="card">
         <h3>Sao lưu, chuyển sang máy khác</h3>
-        <p class="note">File sao lưu gồm sao, huy hiệu, lịch sử và nhật ký. Nhật ký trong file vẫn được mã hóa bằng mật khẩu của bạn.</p>
+        <p class="note">File sao lưu gồm sao, lịch sử và nhật ký. Nhật ký trong file vẫn được mã hóa bằng mật khẩu của bạn.</p>
         <div class="acts">
           <button class="btn btn-soft btn-sm" id="btnBackup" type="button"><svg class="ico"><use href="#i-download"/></svg><span>Tải bản sao lưu</span></button>
           <label class="btn btn-soft btn-sm file-btn"><svg class="ico"><use href="#i-upload"/></svg><span>Khôi phục từ file</span><input type="file" id="restoreFile" accept="application/json,.json"></label>
@@ -319,7 +315,7 @@
       </div>
       <div class="card">
         <h3>Dữ liệu trên máy này</h3>
-        <p class="note">Xóa sạch sao, huy hiệu, lịch sử, nhật ký và các lựa chọn, cả bản trong tài khoản nếu đang đăng nhập. Không lấy lại được, trừ khi bạn có file sao lưu.</p>
+        <p class="note">Xóa sạch sao, lịch sử, nhật ký và các lựa chọn, cả bản trong tài khoản nếu đang đăng nhập. Không lấy lại được, trừ khi bạn có file sao lưu.</p>
         <div class="acts"><button class="btn btn-soft btn-sm" id="btnWipe" type="button">Xóa toàn bộ dữ liệu</button><a class="link" href="/rieng-tu">Chính sách quyền riêng tư</a></div>
       </div>
     </div>

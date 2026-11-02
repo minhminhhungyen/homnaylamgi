@@ -1,6 +1,6 @@
 <?php
 /* Đồng bộ dữ liệu cá nhân giữa các máy của cùng một tài khoản.
-   - state: sao, lịch sử quẻ, huy hiệu, thử thách 7 ngày, danh sách để dành, tên gọi (KHÔNG có vị trí, thời tiết).
+   - state: sao, lịch sử quẻ, thử thách 7 ngày (trường got là huy hiệu cũ, đã bỏ, giữ để tương thích), danh sách để dành, tên gọi (KHÔNG có vị trí, thời tiết).
      Máy chủ lọc từng trường, bỏ phần tử sai kiểu, chặn mốc thời gian vượt quá giờ máy chủ.
    - diary: nhật ký ĐÃ MÃ HÓA trên máy người dùng (AES-GCM, khóa sinh từ mật khẩu riêng). Máy chủ chỉ cất, không giải mã được. Tối đa 1 MB.
    - Chỉ tài khoản đã xác nhận email (hoặc đăng nhập Google) mới đồng bộ: người tạo tài khoản bằng email của người khác không ghi được gì.

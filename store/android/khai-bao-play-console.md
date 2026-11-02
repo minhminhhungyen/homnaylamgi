@@ -17,7 +17,7 @@
     - Người dùng xóa được tài khoản ngay trong app (Trang của bạn → Xóa tài khoản).
   - **Mã định danh khác (User IDs):** mã tài khoản Google khi đăng nhập bằng Google. Mục đích: Quản lý tài khoản.
   - **Hoạt động trong ứng dụng → Lịch sử tương tác trong ứng dụng (App interactions) và Nội dung khác do người dùng tạo (Other user-generated content):**
-    - Thu thập: Có, chỉ khi người dùng đăng nhập (đồng bộ sao, lịch sử quẻ, huy hiệu, nhật ký ĐÃ MÃ HÓA trên máy). Chia sẻ: Không.
+    - Thu thập: Có, chỉ khi người dùng đăng nhập (đồng bộ sao, lịch sử quẻ, nhật ký ĐÃ MÃ HÓA trên máy). Chia sẻ: Không.
     - Bắt buộc hay tùy chọn: Tùy chọn. Mục đích: Chức năng ứng dụng (App functionality).
     - Nhật ký được mã hóa đầu cuối bằng mật khẩu riêng; máy chủ không đọc được.
 - Không thu thập: số điện thoại, danh bạ, ảnh, tệp, lịch sử duyệt web, định danh thiết bị, dữ liệu tài chính, sức khỏe.

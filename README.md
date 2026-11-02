@@ -4,7 +4,8 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 
 ## Định hướng sản phẩm (đã chốt)
 
-- Web cho vui. Sao, huy hiệu, danh hiệu chỉ lưu trên máy người dùng, chỉ họ thấy.
+- Web cho vui, hướng tư vấn đơn giản. Sao, danh hiệu chỉ lưu trên máy người dùng, chỉ họ thấy. Đã bỏ huy hiệu (02/11/2026) cho gọn.
+- Gieo không lặp lại: máy nhớ 400 quẻ và 400 món đã hiện gần nhất (`recent`, `frecent`, chỉ lưu trên máy, không đồng bộ). Mỗi lần rút chỉ lấy mục chưa gặp; gặp hết thì lấy nửa đã gặp lâu nhất. Mỗi lần vào trang là một lần gieo mới, trừ khi đang làm dở quẻ đã bấm Nhận hoặc mở từ link rủ.
 - Không gây áp lực: không đếm chuỗi ngày liên tiếp (chỉ đếm số ngày đã làm), không nhắc "làm kẻo mất".
 - Không phục vụ khoe mẽ: không bảng xếp hạng, không thi đua có quà, không bắt chụp ảnh làm bằng chứng.
 - Tính năng mới phải qua được ba điều trên.
@@ -14,7 +15,7 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 | Đường dẫn | Nội dung |
 |---|---|
 | `src/data.js` | Thư viện: 2000 quẻ (`ACTIVITIES`, mỗi nhóm 200), 1000 món (`FOODS`), 12 thử thách 7 ngày (`CHALLENGES`). Sửa hoặc thêm ở đây. |
-| `src/app.js` | Logic trang: rút quẻ, lọc, sao, huy hiệu, âm lịch, thời tiết, chia sẻ. |
+| `src/app.js` | Logic trang: rút quẻ, lọc, sao, âm lịch, thời tiết, chia sẻ. |
 | `src/style.css`, `src/body.html` | Giao diện. |
 | `src/sw.js` | Service worker để trang mở được khi mất mạng. |
 | `src/static/` | Ảnh chia sẻ chung (og-image), favicon, biểu tượng ứng dụng. |
@@ -52,7 +53,7 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 
 Món ăn (`FOODS`) có thêm khóa `w`: `n` món nóng, ấm bụng (ưu tiên khi mưa, lạnh), `m` món mát (ưu tiên khi nóng).
 
-Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên, `s` lời nhắn. Mỗi ngày bấm “Hôm nay xong” được 1 sao; đủ 7 ngày trong 14 ngày được thêm 10 sao, mở huy hiệu “Bền bỉ 7 ngày” (xong 3 thử thách: “Kiên trì”).
+Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên, `s` lời nhắn. Mỗi ngày bấm “Hôm nay xong” được 1 sao; đủ 7 ngày trong 14 ngày được thêm 10 sao.
 
 ## Chốt chặn nội dung an toàn
 
@@ -96,8 +97,8 @@ Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên,
 ## Tài khoản, quản trị, bài viết (PHP + MySQL, chỉ chạy trên Hostinger)
 
 - Mã nằm trong `src/server/` (build chép sang `dist/`): `api/` (auth, admin, public, setup, sync…), `bai-viet/`, `quan-tri/`.
-- Đồng bộ theo tài khoản (`api/sync.php`, bảng `user_data`), chỉ cho tài khoản đã xác nhận email hoặc đăng nhập Google: sao, lịch sử, huy hiệu, thử thách, để dành, tên gọi và nhật ký đã mã hóa. Không đồng bộ vị trí, thời tiết, bộ lọc, mức ưa thích nhóm việc.
-  - Gộp: lịch sử hợp theo (quẻ, ngày); sao lấy bên cao hơn cộng quẻ chỉ có ở bên kia (trừ quẻ bị cắt ở mốc 600); tên, để dành, thử thách theo giờ sửa riêng từng trường (`mtf`); huy hiệu hợp lại, sắp thứ tự cố định.
+- Đồng bộ theo tài khoản (`api/sync.php`, bảng `user_data`), chỉ cho tài khoản đã xác nhận email hoặc đăng nhập Google: sao, lịch sử, thử thách, để dành, tên gọi và nhật ký đã mã hóa. Không đồng bộ vị trí, thời tiết, bộ lọc, mức ưa thích nhóm việc.
+  - Gộp: lịch sử hợp theo (quẻ, ngày); sao lấy bên cao hơn cộng quẻ chỉ có ở bên kia (trừ quẻ bị cắt ở mốc 600); tên, để dành, thử thách theo giờ sửa riêng từng trường (`mtf`); trường `got` (huy hiệu cũ, đã bỏ) vẫn hợp lại để máy chưa cập nhật không lỗi.
   - "Xóa dữ liệu" hoặc khôi phục sao lưu tạo `epoch` mới: bản đó thắng, nhưng quẻ bên kia làm sau mốc ấy vẫn giữ. Máy lần đầu gắn với tài khoản luôn được cộng dữ liệu của mình.
   - Nhật ký: gộp theo từng trang (mỗi trang có giờ sửa `u`, trang xóa để lại dấu `del` 180 ngày, khóa kèm mã trang làm AAD); khác mật khẩu thì theo lần đổi mật khẩu (`pa`), bên thua còn trang chưa lên tài khoản thì hỏi người dùng. Xóa nhật ký ghi mã cuốn đã xóa (`dcl`), không đụng cuốn khác.
   - Ghi theo `rev`/`drev`: bản cũ nhận 409 và tự gộp lại; `get?since=&dsince=` không đổi thì không gửi lại dữ liệu. Máy chủ lọc từng trường, chặn mốc thời gian vượt giờ máy chủ + 1 ngày.
@@ -127,7 +128,7 @@ Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên,
 
 ## Ghi chú kỹ thuật
 
-- Một trang duy nhất, không cần máy chủ. Sao, huy hiệu, lịch sử lưu trong `localStorage` của từng người (khóa `hnlg.v1`).
+- Một trang duy nhất, không cần máy chủ. Sao, lịch sử lưu trong `localStorage` của từng người (khóa `hnlg.v1`).
 - Font tự host (Be Vietnam Pro, Bricolage Grotesque, Fraunces; giấy phép SIL OFL), chỉ tải bộ ký tự Latin và tiếng Việt cần dùng.
 - Chính sách bảo mật nội dung (CSP) nằm trong thẻ meta của `index.html`, mã băm do build tự tính. Trang chỉ được gọi ra ngoài tới `api.met.no` và `air-quality-api.open-meteo.com`. Sửa tay `dist/index.html` sẽ làm trang hỏng; luôn sửa `src/` rồi build lại.
 - Âm lịch dùng thuật toán Hồ Ngọc Đức, múi giờ GMT+7.

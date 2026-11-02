@@ -31,14 +31,14 @@ Không biết hôm nay làm gì, ăn gì? Mở “Hôm nay làm gì?” là có 
 • Mỗi quẻ có link riêng, bạn bè bấm vào là thấy đúng quẻ đó.
 
 ★ GOM SAO, MỞ HUY HIỆU
-• 9 danh hiệu, 18 huy hiệu cho vui, không bắt làm mỗi ngày, không bảng xếp hạng.
+• 9 danh hiệu cho vui, không bắt làm mỗi ngày, không bảng xếp hạng.
 • Thử thách chung: mỗi ngày mọi người cùng nhận một quẻ.
 • 12 thử thách 7 ngày: đi bộ, mang bình nước, ngủ trước 23 giờ, đọc sách, học tiếng Anh, tự nấu ăn, để dành tiền, tắt mạng xã hội trước khi ngủ… Mỗi ngày làm được thêm 1 sao, đủ 7 ngày thêm 10 sao.
 • Có âm lịch và các dịp lễ Việt Nam như Rằm, Trung thu, Tết, 20/10, 20/11, mỗi dịp có quẻ riêng.
 
 ★ RIÊNG TƯ
 • Dùng ngay không cần tài khoản; tài khoản là tùy chọn để nhận tin, bài viết mới.
-• Sao, huy hiệu, lịch sử chỉ lưu trên điện thoại của bạn.
+• Sao, lịch sử chỉ lưu trên điện thoại của bạn.
 • Nhật ký riêng tư khóa bằng mật khẩu của bạn, mã hóa ngay trên máy, không gửi đi đâu.
 • Không quảng cáo, không theo dõi.
 

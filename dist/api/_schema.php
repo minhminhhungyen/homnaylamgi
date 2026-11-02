@@ -76,7 +76,7 @@ const SCHEMA = [
     at DATETIME NOT NULL,
     INDEX (at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
-  /* dữ liệu đồng bộ của người dùng: sao, lịch sử, huy hiệu (JSON) và nhật ký ĐÃ MÃ HÓA trên máy người dùng (máy chủ không đọc được) */
+  /* dữ liệu đồng bộ của người dùng: sao, lịch sử (JSON) và nhật ký ĐÃ MÃ HÓA trên máy người dùng (máy chủ không đọc được) */
   "CREATE TABLE IF NOT EXISTS user_data (
     user_id INT UNSIGNED NOT NULL PRIMARY KEY,
     state MEDIUMTEXT NOT NULL,
