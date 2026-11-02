@@ -14,11 +14,15 @@ Không biết hôm nay làm gì, ăn gì? Mở “Hôm nay làm gì?” là có 
 ★ RÚT MỘT QUẺ, LÀM MỘT VIỆC NHỎ
 • 2.000 quẻ việc trong 10 nhóm: vận động, khám phá, sáng tạo, học hỏi, kết nối, chăm mình, ăn uống, sự nghiệp, sống tử tế, giải trí.
 • Mỗi quẻ có lời nhắn, bước bắt đầu ngay, thời gian, chi phí ước tính và đi cùng ai.
-• Độ khó từ 1 đến 10: làm xong nhận đúng số sao đó.
+• Mỗi quẻ ghi rõ mức độ: nhẹ nhàng, vừa sức hay thử thách.
+• Lần rút sau không lặp lại quẻ đã gặp.
 
 ★ HÔM NAY ĂN GÌ?
 • 1.000 món ba miền và món nước ngoài cho bữa sáng, trưa, tối, khuya và ăn vặt; chọn ăn ngoài hoặc tự nấu.
 • Một chạm để tìm quán gần bạn hoặc xem cách nấu.
+• Lọc món chay; ngày rằm, mùng một nhắc khéo món chay.
+• Bấm “Không ăn món này” để món đó không hiện lại.
+• “Chọn cho cả nhóm”: rút 3 món, cả nhóm chốt một.
 
 ★ HỢP TÂM TRẠNG VÀ THỜI TIẾT
 • Chọn Chán, Buồn, Mệt, Căng thẳng, Cô đơn hay Hứng khởi, quẻ đổi theo tâm trạng của bạn.
@@ -27,18 +31,17 @@ Không biết hôm nay làm gì, ăn gì? Mở “Hôm nay làm gì?” là có 
 
 ★ RỦ BẠN BÈ
 • Gửi lời rủ qua Zalo, Messenger, Facebook, Threads, Telegram, X.
-• Tạo ảnh story để đăng Instagram, TikTok.
+• Lưu ảnh quẻ để gửi bạn bè hoặc đăng story.
 • Mỗi quẻ có link riêng, bạn bè bấm vào là thấy đúng quẻ đó.
 
-★ GOM SAO, MỞ HUY HIỆU
-• 9 danh hiệu cho vui, không bắt làm mỗi ngày, không bảng xếp hạng.
+★ ĐƠN GIẢN, KHÔNG ÁP LỰC
+• Không điểm thưởng, không chuỗi ngày, không bảng xếp hạng. Bận thì nghỉ, không mất gì cả.
 • Thử thách chung: mỗi ngày mọi người cùng nhận một quẻ.
-• 12 thử thách 7 ngày: đi bộ, mang bình nước, ngủ trước 23 giờ, đọc sách, học tiếng Anh, tự nấu ăn, để dành tiền, tắt mạng xã hội trước khi ngủ… Mỗi ngày làm được thêm 1 sao, đủ 7 ngày thêm 10 sao.
 • Có âm lịch và các dịp lễ Việt Nam như Rằm, Trung thu, Tết, 20/10, 20/11, mỗi dịp có quẻ riêng.
 
 ★ RIÊNG TƯ
 • Dùng ngay không cần tài khoản; tài khoản là tùy chọn để nhận tin, bài viết mới.
-• Sao, lịch sử chỉ lưu trên điện thoại của bạn.
+• Lịch sử, danh sách để dành chỉ lưu trên điện thoại của bạn.
 • Nhật ký riêng tư khóa bằng mật khẩu của bạn, mã hóa ngay trên máy, không gửi đi đâu.
 • Không quảng cáo, không theo dõi.
 

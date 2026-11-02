@@ -133,7 +133,6 @@ const CATS = {
   tt: { name: 'Tử tế', seal: ['TỬ', 'TẾ'] },
   gt: { name: 'Giải trí', seal: ['GIẢI', 'TRÍ'] }
 };
-const LEVELS = [[0, 'Chiến binh nằm dài'], [10, 'Người bắt đầu'], [30, 'Kẻ tò mò'], [60, 'Người chủ động'], [100, 'Tay chơi có kế hoạch'], [160, 'Nhà thám hiểm'], [240, 'Người truyền cảm hứng'], [350, 'Huyền thoại sống'], [500, 'Bậc thầy Hôm nay']];
 const xs = a => (a.x ? a.x.split(' ') : []);
 const band = d => (d <= 3 ? 1 : d <= 6 ? 2 : 3);
 const LVL = d => (d <= 3 ? 'Nhẹ nhàng' : d <= 6 ? 'Vừa sức' : d <= 8 ? 'Thử thách' : 'Thử thách lớn');
@@ -150,7 +149,7 @@ const fmtTime = a => {
 
 /* ---------- trạng thái (lưu trên máy người dùng) ---------- */
 /* got: danh sách huy hiệu cũ. Đã bỏ huy hiệu (02/11/2026) nhưng giữ trường này để đồng bộ với máy chưa cập nhật không lỗi. */
-const DEF = () => ({ v: 1, stars: 0, best: 0, done: [], saved: [], recent: [], got: [], cur: 0, curDay: '', acc: 0, accAt: 0, mood: 'all', moodDay: '', chAccDay: '', mode: 'lam', food: 0, foodDay: '', frecent: [], meal: '', mealDay: '', ftype: '', freg: '', fmt: 'story', name: '', wk: null, wkDone: [], pref: {}, prefDay: '', epoch: 0, dcl: [], mtf: { saved: 0, wk: 0, name: 0 }, wxOn: false, wxLoc: null, wx: null, aq: null, f: { who: '', budget: '', dur: '', place: '', level: '', when: 'now' } });
+const DEF = () => ({ v: 1, stars: 0, best: 0, done: [], saved: [], recent: [], got: [], cur: 0, curDay: '', acc: 0, accAt: 0, mood: 'all', moodDay: '', chAccDay: '', mode: 'lam', food: 0, foodDay: '', frecent: [], meal: '', mealDay: '', ftype: '', fveg: false, fban: [], freg: '', fmt: 'story', name: '', wk: null, wkDone: [], pref: {}, prefDay: '', epoch: 0, dcl: [], mtf: { saved: 0, wk: 0, name: 0 }, wxOn: false, wxLoc: null, wx: null, aq: null, f: { who: '', budget: '', dur: '', place: '', level: '', when: 'now' } });
 let S = (() => {
   try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw), d = DEF(); return Object.assign(d, s, { f: Object.assign(d.f, s.f || {}) }); } } catch (e) { /* bỏ qua */ }
   return DEF();
@@ -309,6 +308,7 @@ function renderSlip() {
   $('#qNoLbl').textContent = 'Quẻ số';
   $('#qStepLbl').textContent = 'Bắt đầu ngay';
   $('#qLinks').hidden = true;
+  $('#foodMore').hidden = true;
   [['#qM1', 'Thời gian'], ['#qM2', 'Chi phí'], ['#qM3', 'Ở đâu'], ['#qM4', 'Đi cùng']].forEach(([s, t]) => { $(s).textContent = t; });
   $('#actions2').hidden = false;
   $('#qNo').textContent = String(a.id).padStart(3, '0');
@@ -320,14 +320,14 @@ function renderSlip() {
   $('#qPoem').textContent = a.n;
   $('#qStep').textContent = a.s;
   $('#qStars').innerHTML = stars10(a.d);
-  $('#qStarsTxt').textContent = `Độ khó ${a.d}/10 · nhận ${a.d} sao`;
+  $('#qStarsTxt').textContent = `Độ khó ${a.d}/10`;
   $('#qTime').textContent = fmtTime(a);
   $('#qCost').textContent = COST[a.k];
   $('#qWhere').textContent = WHERE[a.o];
   $('#qWho').textContent = fmtWho(a.ai);
   const rec = recToday(a.id), slip = $('#slip'), st = $('#qStatus');
   slip.classList.toggle('is-done', !!rec);
-  if (rec) { st.hidden = false; st.textContent = `Đã làm lúc ${hm(rec.ts)} · +${rec.d} sao`; }
+  if (rec) { st.hidden = false; st.textContent = `Đã làm lúc ${hm(rec.ts)}`; }
   else if (S.acc && S.curDay === TODAY) { st.hidden = false; st.textContent = `Đang làm · nhận lúc ${hm(S.accAt)}`; }
   else st.hidden = true;
 
@@ -387,6 +387,7 @@ function renderFood() {
   map.hidden = !f.o.includes('n'); map.href = mapsUrl(f.t);
   cook.hidden = !f.o.includes('h'); cook.href = cookUrl(f.t);
   $('#qLinks').hidden = false;
+  $('#foodMore').hidden = false;
   [['#qM1', 'Bữa'], ['#qM2', 'Kiểu'], ['#qM3', 'Vùng'], ['#qM4', 'Túi tiền']].forEach(([s, t]) => { $(s).textContent = t; });
   $('#qTime').textContent = cap(f.b.split('').map(c => MEAL_WORD[c]).join(', '));
   $('#qCost').textContent = FOOD_KIND[f.o];
@@ -408,6 +409,11 @@ function renderMeals() {
   const reg = foodRegion();
   $$('#fregs [data-reg]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.reg === reg)));
   $('#fregNote').textContent = reg ? (S.freg ? '' : '(tự nhận theo nơi bạn chọn ở thời tiết)') : 'Chưa chọn miền: đang gợi ý món cả nước.';
+  $('#vegChip').setAttribute('aria-pressed', String(!!S.fveg));
+  const vn = $('#vegNote');
+  vn.textContent = S.fveg ? 'Chỉ gợi ý món chay: không thịt, cá, trứng. Ai ăn chay kỹ (kiêng hành tỏi, nước mắm) thì hỏi lại quán nhé.'
+    : VEG_DAY ? `Hôm nay ${LUNAR_NOW.d === 15 ? 'rằm' : 'mùng một'} tháng ${LM[LUNAR_NOW.m - 1]}, nhiều nhà ăn chay. Bấm “Món chay” nếu bạn cũng ăn chay.` : '';
+  vn.hidden = S.mode !== 'an' || !vn.textContent;
 }
 /* miền để gợi ý món: người dùng tự chọn, hoặc tự nhận theo nơi đã bật thời tiết; '' = cả nước */
 function foodRegion() {
@@ -424,14 +430,20 @@ function regionWeight(f, reg) {
   if (!reg || !f.r || f.r.includes(reg)) return f.r && reg && f.r.includes(reg) ? 1.5 : 1;
   return f.o.includes('h') ? 0.15 : 0;
 }
+/* ngày rằm, mùng một âm lịch: nhiều nhà ăn chay, món chay được ưu tiên hơn một chút */
+const LUNAR_NOW = lunarOf(NOW), VEG_DAY = !LUNAR_NOW.leap && (LUNAR_NOW.d === 1 || LUNAR_NOW.d === 15);
+/* exclude: một số món hoặc một Set; món đã ẩn (“Không ăn món này”) không bao giờ ra, bật “Món chay” thì chỉ ra món chay */
 function chooseFood(exclude) {
-  const meal = curMeal(), ft = S.ftype, reg = foodRegion();
-  let P = F.filter(f => f.b.includes(meal) && (!ft || f.o.includes(ft)) && regionWeight(f, reg) > 0);
-  if (P.length < 3) P = F.filter(f => f.b.includes(meal) && (!ft || f.o.includes(ft)));
-  if (P.length < 3) P = F.filter(f => f.b.includes(meal));
-  if (P.length < 3) P = F;
-  const list = notSeen(P.filter(f => f.id !== exclude).length ? P.filter(f => f.id !== exclude) : P, S.frecent);
-  const ws = list.map(f => { const ri = S.frecent.indexOf(f.id); return (ri >= 0 ? Math.min(1, 0.05 + ri * 0.08) : 1) * wxFood(f) * (regionWeight(f, reg) || 0.05); });
+  const meal = curMeal(), ft = S.ftype, reg = foodRegion(), ex = exclude instanceof Set ? exclude : new Set([exclude]);
+  const ban = new Set(S.fban || []);
+  let base = F.filter(f => !ban.has(f.id) && (!S.fveg || f.v));
+  if (base.length < 3) base = S.fveg ? F.filter(f => f.v) : F;
+  let P = base.filter(f => f.b.includes(meal) && (!ft || f.o.includes(ft)) && regionWeight(f, reg) > 0);
+  if (P.length < 3) P = base.filter(f => f.b.includes(meal) && (!ft || f.o.includes(ft)));
+  if (P.length < 3) P = base.filter(f => f.b.includes(meal));
+  if (P.length < 3) P = base;
+  const list = notSeen(P.filter(f => !ex.has(f.id)).length ? P.filter(f => !ex.has(f.id)) : P, S.frecent);
+  const ws = list.map(f => { const ri = S.frecent.indexOf(f.id); return (ri >= 0 ? Math.min(1, 0.05 + ri * 0.08) : 1) * wxFood(f) * (regionWeight(f, reg) || 0.05) * (VEG_DAY && !S.fveg && f.v ? 2 : 1); });
   let r = Math.random() * ws.reduce((x, y) => x + y, 0);
   for (let i = 0; i < list.length; i++) { r -= ws[i]; if (r <= 0) return list[i]; }
   return list[list.length - 1];
@@ -451,6 +463,7 @@ function setMode(m) {
   $('#moods').hidden = an;
   $('#meals').hidden = !an;
   $('#fregs').hidden = !an;
+  if (!an) $('#vegNote').hidden = true;
   $('#tuneSec').hidden = an;
   renderMood(); renderWx();
   $('#tube').setAttribute('aria-label', an ? 'Lắc ống quẻ để rút món khác' : 'Lắc ống quẻ để rút quẻ khác');
@@ -473,7 +486,7 @@ function renderTune() {
 
 function renderDaily() {
   $('#dDate').textContent = `Ngày ${dm(NOW)}`;
-  $('#dStars').textContent = `+${CH.d} sao`;
+  $('#dStars').textContent = `Độ khó ${CH.d}/10`;
   $('#dTitle').textContent = CH.t;
   $('#dWhy').textContent = CH.n;
   $('#dStep').textContent = CH.s;
@@ -486,44 +499,7 @@ function renderDaily() {
   else { b.disabled = false; b.className = 'btn btn-main btn-sm'; b.innerHTML = '<span>Nhận thử thách</span>'; }
 }
 
-/* ---------- thử thách 7 ngày: mỗi ngày bấm “Hôm nay xong” một lần, đủ 7 lần trong 14 ngày ---------- */
-const WK_BY = new Map(CHALLENGES.map(c => [c.k, c]));
-const dayDiff = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5);
-function renderWeek() {
-  const box = $('#weekCard'), w = S.wk, c = w && WK_BY.get(w.k);
-  const doneList = (S.wkDone || []).map(k => WK_BY.get(k)).filter(Boolean);
-  const doneHtml = doneList.length ? `<p class="note">Đã hoàn thành: ${doneList.map(x => esc(x.t)).join(' · ')}</p>` : '';
-  if (c) {
-    const n = w.days.length, used = dayDiff(w.start, TODAY), expired = used >= 14 && n < 7, today = w.days.includes(TODAY);
-    const dots = Array.from({ length: 7 }, (_, i) => `<span class="wk-dot${i < n ? ' on' : ''}" aria-hidden="true">${i + 1}</span>`).join('');
-    box.innerHTML = expired
-      ? `<h3>${esc(c.t)}</h3><p class="why">Thử thách đã quá 14 ngày, bạn làm được ${n}/7 ngày. Không sao cả, mình bắt đầu lại nhé!</p><div class="daily-act"><button class="btn btn-main btn-sm" type="button" data-wk-start="${c.k}">Làm lại từ đầu</button><button class="link muted" type="button" data-wk-quit>Chọn thử thách khác</button></div>${doneHtml}`
-      : `<h3>${esc(c.t)}</h3><p class="why">${esc(c.s)}</p><div class="wk-dots" role="img" aria-label="Đã xong ${n} trên 7 ngày">${dots}</div><p class="note">Ngày ${Math.min(used + 1, 14)} trên tối đa 14 ngày · mỗi ngày xong được 1 sao, đủ 7 ngày thêm 10 sao.</p><div class="daily-act"><button class="btn btn-main btn-sm${today ? ' is-go' : ''}" type="button" data-wk-check ${today ? 'disabled' : ''}>${icon('check')}<span>${today ? 'Hôm nay đã xong' : 'Hôm nay xong'}</span></button><button class="link muted" type="button" data-wk-quit>Bỏ thử thách</button></div>${doneHtml}`;
-    return;
-  }
-  const order = CHALLENGES.slice().sort((a, b) => (S.wkDone.includes(a.k) ? 1 : 0) - (S.wkDone.includes(b.k) ? 1 : 0));
-  box.innerHTML = `<p class="why">Chọn một việc nhỏ, làm đủ 7 ngày để nhận thêm 10 sao.</p><ul class="wk-list">${order.map(x => `<li><button class="wk-pick" type="button" data-wk-start="${x.k}"><span>${esc(x.t)}</span>${S.wkDone.includes(x.k) ? '<span class="wk-ok">Đã xong</span>' : ''}</button></li>`).join('')}</ul>${doneHtml}`;
-}
-let wkQuitAt = 0;
-$('#weekCard').addEventListener('click', e => {
-  const st = e.target.closest('[data-wk-start]'), ck = e.target.closest('[data-wk-check]'), qt = e.target.closest('[data-wk-quit]');
-  if (st) {
-    const c = WK_BY.get(st.dataset.wkStart); if (!c) return;
-    S.wk = { k: c.k, start: TODAY, days: [] }; save(); renderWeek();
-    toast(`Bắt đầu “${c.t}”. Hôm nay làm xong thì bấm “Hôm nay xong” nhé!`);
-  } else if (ck) {
-    const w = S.wk; if (!w || w.days.includes(TODAY)) return;
-    w.days.push(TODAY); S.stars += 1;
-    if (w.days.length >= 7) {
-      const c = WK_BY.get(w.k); S.stars += 10; S.wkDone = (S.wkDone || []).filter(k => k !== w.k).concat(w.k); S.wk = null;
-      save(); renderWeek(); renderJourney(); confetti();
-      toast(`Hoàn thành “${c ? c.t : 'thử thách'}”! +11 sao.`);
-    } else { save(); renderWeek(); renderJourney(); toast(`+1 sao. Đã xong ${w.days.length}/7 ngày.`); }
-  } else if (qt) {
-    if (S.wk && dayDiff(S.wk.start, TODAY) < 14 && Date.now() - wkQuitAt > 5000) { wkQuitAt = Date.now(); qt.textContent = 'Bấm lần nữa để bỏ'; return; }
-    wkQuitAt = 0; S.wk = null; save(); renderWeek();
-  }
-});
+/* thử thách 7 ngày đã bỏ (02/11/2026, web tư vấn cho gọn). Trường wk, wkDone vẫn giữ để đồng bộ với máy chưa cập nhật không lỗi. */
 
 function whenText(e) {
   if (e.diff === 0) return 'Hôm nay';
@@ -545,33 +521,18 @@ function renderSoon() {
   }).join('');
 }
 
-function levelOf(n) {
-  let i = 0; while (i + 1 < LEVELS.length && n >= LEVELS[i + 1][0]) i++;
-  return [LEVELS[i], LEVELS[i + 1] || null];
-}
 function renderJourney() {
-  $('#jStars').textContent = S.stars;
-  $('#jDone').textContent = S.done.length;
-  const st = streak();
-  $('#jStreak').textContent = st;
-  $('#jStreakLab').textContent = 'ngày đã làm quẻ';
-  const [cur, next] = levelOf(S.stars);
-  $('#jLevel').textContent = cur[1];
-  const pct = next ? Math.round((S.stars - cur[0]) / (next[0] - cur[0]) * 100) : 100;
-  $('#jBar').style.width = pct + '%';
-  $('#jBarWrap').setAttribute('aria-valuenow', String(pct));
-  $('#jNext').textContent = next ? `Còn ${next[0] - S.stars} sao nữa để thành “${next[1]}”.` : 'Bạn đã lên danh hiệu cao nhất.';
   const hist = S.done.slice(0, 8);
   $('#hist').innerHTML = hist.length ? `<ul class="rows">${hist.map(r => {
     const a = byId.get(r.id); if (!a) return '';
     const d = new Date(r.ts);
-    return `<li><div class="row-main"><p class="row-t">${esc(a.t)}</p><p class="row-m">+${r.d | 0} sao · ${dm(d)}${r.ch ? ' · thử thách chung' : ''}${r.f ? ' · ' + FEEL[r.f] : ''}</p></div></li>`;
-  }).join('')}</ul>` : '<p class="empty">Chưa có quẻ nào. Làm xong quẻ đầu tiên để nhận sao.</p>';
+    return `<li><div class="row-main"><p class="row-t">${esc(a.t)}</p><p class="row-m">${dm(d)}${r.ch ? ' · thử thách chung' : ''}${r.f ? ' · ' + FEEL[r.f] : ''}</p></div></li>`;
+  }).join('')}</ul>` : '<p class="empty">Chưa có việc nào. Làm xong một quẻ, nó sẽ hiện ở đây.</p>';
   const sv = S.saved.map(id => byId.get(id)).filter(Boolean);
   $('#saved').innerHTML = sv.length ? `<ul class="rows">${sv.map(a => `<li><div class="row-main"><p class="row-t">${esc(a.t)}</p><p class="row-m">Độ khó ${a.d}/10 · ${CATS[a.c].name}</p></div><div class="row-act"><button class="link" type="button" data-open="${a.id}">Rút quẻ này</button><button class="link muted" type="button" data-rm="${a.id}" aria-label="Bỏ khỏi danh sách để dành">Bỏ</button></div></li>`).join('')}</ul>` : '<p class="empty">Gặp quẻ hay mà chưa làm được ngay? Bấm “Để dành” để lưu lại đây.</p>';
 }
 
-function renderAll() { renderHeader(); renderSlip(); renderMood(); renderTune(); renderDaily(); renderWeek(); renderJourney(); }
+function renderAll() { renderHeader(); renderSlip(); renderMood(); renderTune(); renderDaily(); renderJourney(); }
 
 /* ---------- hành động ---------- */
 function setCur(id) {
@@ -632,7 +593,7 @@ function complete(id) {
   if (S.cur === id) S.acc = 0;
   if (id === CH.id) S.chAccDay = '';
   save(); renderAll(); confetti();
-  toast(`+${a.d} sao. Giỏi lắm!`);
+  toast('Xong rồi, giỏi lắm!');
 }
 
 $('#btnMain').addEventListener('click', () => {
@@ -647,6 +608,34 @@ $('#tube').addEventListener('click', () => { if (S.mode !== 'an' && busy()) { to
 $$('#pickrow [role="tab"]').forEach(b => b.addEventListener('click', () => { if (S.mode !== b.dataset.mode) setMode(b.dataset.mode); }));
 $$('#meals [data-meal]').forEach(b => b.addEventListener('click', () => { S.meal = b.dataset.meal; S.mealDay = TODAY; save(); renderMeals(); drawFood(); }));
 $$('#meals [data-ft]').forEach(b => b.addEventListener('click', () => { S.ftype = S.ftype === b.dataset.ft ? '' : b.dataset.ft; save(); renderMeals(); drawFood(); }));
+$('#vegChip').addEventListener('click', () => {
+  S.fveg = !S.fveg; save(); renderMeals(); drawFood();
+  toast(S.fveg ? 'Chỉ gợi ý món chay.' : 'Gợi ý tất cả các món.');
+});
+/* không ăn món này: ẩn hẳn trên máy này, xem và hiện lại ở trang Tôi */
+$('#btnBan').addEventListener('click', () => {
+  const f = foodById.get(S.food); if (!f) return;
+  S.fban = [f.id].concat((S.fban || []).filter(x => x !== f.id)).slice(0, 300);
+  save(); drawFood(); renderMe();
+  toast(`Đã ẩn “${f.t}”. Hiện lại được ở trang Tôi.`);
+});
+/* chọn cho cả nhóm: rút 3 món khác nhau, cả nhóm chốt một */
+let GRP = [];
+function groupDraw() {
+  const ex = new Set([S.food]); GRP = [];
+  for (let i = 0; i < 3; i++) { const f = chooseFood(ex); if (!f || ex.has(f.id)) break; ex.add(f.id); GRP.push(f); }
+  S.frecent = GRP.map(f => f.id).concat(S.frecent.filter(x => !GRP.some(f => f.id === x))).slice(0, SEEN_MAX); save();
+  $('#grpList').innerHTML = GRP.map(f => `<li class="grp-item"><div class="row-main"><p class="row-t">${esc(f.t)}</p><p class="row-m">${esc(f.n)}</p><p class="row-m">${esc(FOOD_KIND[f.o])} · ${esc(REGION[f.r] || 'Cả nước')} · ${esc(PURSE[f.k])}${f.v ? ' · Món chay' : ''}</p></div><button class="btn btn-main btn-sm" type="button" data-pick="${f.id}">Chốt món này</button></li>`).join('');
+}
+$('#btnGroup').addEventListener('click', () => { groupDraw(); openModal($('#groupModal')); });
+$('#grpAgain').addEventListener('click', groupDraw);
+$('#grpList').addEventListener('click', e => {
+  const b = e.target.closest('[data-pick]'); if (!b) return;
+  const f = foodById.get(+b.dataset.pick); if (!f) return;
+  closeModal($('#groupModal'));
+  animateSwap(() => { setFood(f.id); renderSlip(); announce(); });
+  toast(`Chốt món: ${f.t}. Ăn ngon nhé!`);
+});
 $$('#fregs [data-reg]').forEach(b => b.addEventListener('click', () => {
   const r = b.dataset.reg; S.freg = foodRegion() === r ? 'all' : r; save(); renderMeals(); drawFood();
   toast(S.freg === 'all' ? 'Đã bỏ chọn miền: gợi ý món cả nước.' : `Gợi ý món hợp ${REGION[r].toLowerCase()}.`);
@@ -762,7 +751,7 @@ $('#btnReset').addEventListener('click', () => {
     setCur(choose(0).a.id); renderAll(); setMode('lam');
     b.textContent = 'Xóa dữ liệu'; toast('Đã xóa sạch. Bắt đầu lại từ một quẻ mới.');
   } else {
-    resetAt = Date.now(); b.textContent = 'Bấm lần nữa để xóa hết sao và lịch sử';
+    resetAt = Date.now(); b.textContent = 'Bấm lần nữa để xóa hết lịch sử và lựa chọn';
     setTimeout(() => { if (resetAt && Date.now() - resetAt >= 5000) { resetAt = 0; b.textContent = 'Xóa dữ liệu'; } }, 5100);
   }
 });
@@ -990,7 +979,7 @@ function shareInfo() {
   const a = byId.get(S.cur);
   return {
     title: `Hôm nay làm gì? ${a.t}`, url: `${SHARE_SITE}/q/${a.id}`,
-    msg: doneToday(a.id) ? `Hôm nay mình làm xong quẻ “${a.t}”, +${a.d} sao ✨ Còn bạn, hôm nay làm gì?` : `Ê, ${SLOT_WHEN[SLOT]} làm cái này với mình không: “${a.t}” 👀`
+    msg: doneToday(a.id) ? `Hôm nay mình vừa làm “${a.t}”, vui phết ✨ Còn bạn, hôm nay làm gì?` : `Ê, ${SLOT_WHEN[SLOT]} làm cái này với mình không: “${a.t}” 👀`
   };
 }
 const shareMsg = () => $('#shareText').value.trim() || SH.msg;
@@ -1189,7 +1178,7 @@ async function drawCard() {
     x.fillText(`${FOOD_KIND[a.o]} · ${PURSE[a.k]} · ${REGION[a.r] || 'Cả nước'}`, L, y + 10);
   } else {
     for (let i = 0; i < 10; i++) { starPath(x, L + 26 + i * 62, y, 26); x.fillStyle = i < a.d ? GOLD : '#EADBD5'; x.fill(); }
-    y += 74; x.fillStyle = MUTED; x.font = `600 32px ${BODY}`; x.fillText(`Độ khó ${a.d}/10 · ${a.d} sao`, L, y);
+    y += 74; x.fillStyle = MUTED; x.font = `600 32px ${BODY}`; x.fillText(`Độ khó ${a.d}/10`, L, y);
   }
   // dấu "đã làm"
   if (!food && doneToday(a.id)) {
@@ -1369,17 +1358,18 @@ $('#diChange').addEventListener('submit', async e => {
 ['input', 'keydown', 'pointerdown'].forEach(t => $('#viewDiary').addEventListener(t, dTouch, { passive: true }));
 $('#btnJournal').addEventListener('click', () => { dLinkQ = S.mode !== 'an' && recToday(S.cur) ? S.cur : 0; $('#diLink').checked = !!dLinkQ; });
 
-/* ---------- trang của bạn: tên gọi, thành tích, sao lưu, hỗ trợ, xóa dữ liệu ---------- */
+/* ---------- trang của bạn: tên gọi, sao lưu, hỗ trợ, xóa dữ liệu ---------- */
 function renderMe() {
   $('#meName').textContent = S.name || 'Tôi';
   if ($('#viewMe').hidden) return;
   if (document.activeElement !== $('#nameInput')) $('#nameInput').value = S.name || '';
-  const lv = LEVELS.filter(l => S.stars >= l[0]).pop();
-  $('#meStats').innerHTML = [['Sao đã gom', S.stars], ['Ngày đã làm', streak()], ['Quẻ đã làm', S.done.length], ['Danh hiệu', lv ? lv[1] : '']]
-    .map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+  const nb = (S.fban || []).length;
+  $('#banNote').hidden = !nb;
+  if (nb) $('#banTxt').textContent = `Bạn đã ẩn ${nb} món: ${(S.fban || []).slice(0, 5).map(id => (foodById.get(id) || {}).t).filter(Boolean).join(', ')}${nb > 5 ? '…' : ''}.`;
   const d = HAS_CRYPTO ? dLoad() : null;
   $('#meDiary').textContent = !HAS_CRYPTO ? 'Trình duyệt này chưa hỗ trợ nhật ký mã hóa.' : d ? `${d.entries.length} trang, đã khóa bằng mật khẩu của bạn.` : 'Chưa có nhật ký. Đặt một mật khẩu là viết được ngay.';
 }
+$('#btnUnban').addEventListener('click', () => { S.fban = []; save(); renderMe(); toast('Đã hiện lại tất cả các món.'); });
 $('#nameForm').addEventListener('submit', e => {
   e.preventDefault();
   S.name = syName($('#nameInput').value); save();
@@ -1406,7 +1396,7 @@ $('#restoreFile').addEventListener('change', e => {
     const okDiary = !o || !o.diary || (o.diary.v === 1 && o.diary.kdf && Array.isArray(o.diary.entries));
     if (!okState || !okDiary) { msg.textContent = 'File này không phải bản sao lưu của Hôm nay làm gì?.'; e.target.value = ''; return; }
     restoreData = o;
-    msg.textContent = `Bản sao lưu ngày ${new Date(o.at).toLocaleDateString('vi-VN')}: ${o.state.stars || 0} sao, ${o.state.done.length} quẻ đã làm, ${o.diary ? o.diary.entries.length : 0} trang nhật ký. Dữ liệu hiện tại trên máy này sẽ bị thay.`;
+    msg.textContent = `Bản sao lưu ngày ${new Date(o.at).toLocaleDateString('vi-VN')}: ${o.state.done.length} quẻ đã làm, ${o.diary ? o.diary.entries.length : 0} trang nhật ký. Dữ liệu hiện tại trên máy này sẽ bị thay.`;
     $('#btnRestore').hidden = false;
   };
   r.readAsText(f);
@@ -1467,7 +1457,7 @@ async function sx(path, body) {
 }
 /* ---------- đồng bộ theo tài khoản ----------
    Chỉ tài khoản đã xác nhận email (hoặc đăng nhập Google) mới đồng bộ.
-   Đồng bộ: sao, lịch sử quẻ, thử thách 7 ngày, danh sách để dành, tên gọi; nhật ký ở dạng ĐÃ MÃ HÓA.
+   Đồng bộ: lịch sử quẻ, danh sách để dành, tên gọi; nhật ký ở dạng ĐÃ MÃ HÓA. Sao, thử thách 7 ngày, huy hiệu không còn hiện nhưng trường vẫn giữ để máy chưa cập nhật không lỗi.
    Không đồng bộ: vị trí, thời tiết, bộ lọc, mức ưa thích nhóm việc (thói quen riêng của từng máy).
    Gộp: lịch sử hợp theo (quẻ, ngày); tên, để dành, thử thách theo giờ sửa riêng từng trường; nhật ký gộp từng trang,
    trang xóa để lại dấu 180 ngày. epoch (xóa làm lại, khôi phục sao lưu) thắng cả khối nhưng giữ quẻ làm SAU mốc đó;
@@ -1756,14 +1746,14 @@ function renderSync() {
   const u = ACC.user, me = u && u.id;
   const prev = me ? syPrev(me) : null, pv = prev ? syClean(prev.state) : null, pds = prev ? (prev.diaries || []).map(dValid).filter(Boolean) : [], pd = pds.length;
   let h = '';
-  if (u && !syCan()) h = '<p class="note">Xác nhận email (bấm link trong thư chúng tôi gửi) để bật đồng bộ sao, lịch sử và nhật ký giữa các máy. Trong lúc chờ, dữ liệu vẫn nằm an toàn trên máy này.</p>';
+  if (u && !syCan()) h = '<p class="note">Xác nhận email (bấm link trong thư chúng tôi gửi) để bật đồng bộ lịch sử, để dành và nhật ký giữa các máy. Trong lúc chờ, dữ liệu vẫn nằm an toàn trên máy này.</p>';
   else {
     const when = SY.at && SY.uid === me ? `Đã đồng bộ lúc ${hm(SY.at - SY_SKEW)} ${dm(new Date(SY.at - SY_SKEW))}.` : 'Đang đồng bộ…';
     h = `<p class="note">${esc(syErr ? `Chưa đồng bộ được: ${syErr}` : when)} Sao, lịch sử và nhật ký (đã mã hóa) được giữ trong tài khoản.</p>`;
   }
   if (syNote) h += `<p class="err">${esc(syNote)}</p>`;
   if (syConflict) h += '<p class="err">Nhật ký trên máy này dùng mật khẩu khác với nhật ký trong tài khoản, và cả hai đều có trang mới nên chưa gộp được. Chọn một bản để giữ, bản còn lại sẽ bị thay. Nên tải file sao lưu trước.</p><div class="acts"><button class="btn btn-soft btn-sm" type="button" data-sy="remote">Lấy nhật ký từ tài khoản</button><button class="btn btn-soft btn-sm" type="button" data-sy="local">Đưa nhật ký máy này lên</button></div>';
-  if (pv && (pv.done.length || pv.stars || pd)) h += `<div class="acct-prev"><p class="note">Trên máy này còn dữ liệu của bạn được cất riêng: ${pv.stars} sao, ${pv.done.length} quẻ đã làm${pd ? `, ${pd} cuốn nhật ký` : ''}.</p><div class="acts"><button class="btn btn-soft btn-sm" type="button" data-prev="merge">${syCan() ? 'Gộp vào tài khoản' : 'Đưa lại vào máy'}</button><button class="btn btn-soft btn-sm" type="button" data-prev="file">Tải về thành file</button><button class="link muted" type="button" data-prev="drop">Bỏ dữ liệu này</button></div></div>`;
+  if (pv && (pv.done.length || pv.stars || pd)) h += `<div class="acct-prev"><p class="note">Trên máy này còn dữ liệu của bạn được cất riêng: ${pv.done.length} quẻ đã làm${pd ? `, ${pd} cuốn nhật ký` : ''}.</p><div class="acts"><button class="btn btn-soft btn-sm" type="button" data-prev="merge">${syCan() ? 'Gộp vào tài khoản' : 'Đưa lại vào máy'}</button><button class="btn btn-soft btn-sm" type="button" data-prev="file">Tải về thành file</button><button class="link muted" type="button" data-prev="drop">Bỏ dữ liệu này</button></div></div>`;
   el.innerHTML = h;
 }
 function prevFile(prev) {
@@ -1807,7 +1797,7 @@ $('#acctBody').addEventListener('click', e => {
   syPrevDrop(me); left.forEach(d => syStash(me, null, d));
   const leftD = left.length;
   renderAll(); renderMe(); renderDiary(); syKick(); renderSync();
-  toast(leftD ? 'Đã gộp sao và lịch sử. Cuốn nhật ký cũ dùng mật khẩu khác nên được giữ riêng, bạn có thể tải về thành file.' : 'Đã gộp dữ liệu cũ vào tài khoản.');
+  toast(leftD ? 'Đã gộp lịch sử. Cuốn nhật ký cũ dùng mật khẩu khác nên được giữ riêng, bạn có thể tải về thành file.' : 'Đã gộp dữ liệu cũ vào tài khoản.');
 });
 document.addEventListener('visibilitychange', () => {
   if (!syCan()) return;
@@ -1861,7 +1851,7 @@ function renderAcc() {
       <div class="acct-sync" id="accSync"></div>
       <details><summary>Đổi tên hiển thị</summary><form class="row-form" id="accName"><input id="accNameIn" maxlength="60" value="${esc(u.name)}" aria-label="Tên hiển thị"><button class="btn btn-soft btn-sm" type="submit">Lưu</button></form></details>
       <details><summary>${u.hasPass ? 'Đổi mật khẩu' : 'Đặt mật khẩu'}</summary><form class="stack" id="accPw" novalidate>${u.hasPass ? '<label class="lbl" for="accOld">Mật khẩu hiện tại</label><input id="accOld" type="password" autocomplete="current-password">' : ''}<label class="lbl" for="accNew">Mật khẩu mới (ít nhất 8 ký tự, có chữ và số)</label><input id="accNew" type="password" autocomplete="new-password"><button class="btn btn-soft btn-sm" type="submit">Lưu mật khẩu</button></form></details>
-      <details><summary>Xóa tài khoản</summary><form class="stack" id="accDel"><p class="note">Xóa tên, email và bản sao lưu sao, lịch sử, nhật ký trong tài khoản trên máy chủ. Dữ liệu trên máy này vẫn giữ nguyên. Gõ <b>XÓA</b> để xác nhận.</p><input id="accDelIn" autocomplete="off" aria-label="Gõ XÓA để xác nhận"><button class="btn btn-soft btn-sm" type="submit">Xóa tài khoản</button></form></details>`;
+      <details><summary>Xóa tài khoản</summary><form class="stack" id="accDel"><p class="note">Xóa tên, email và bản sao lưu lịch sử, để dành, nhật ký trong tài khoản trên máy chủ. Dữ liệu trên máy này vẫn giữ nguyên. Gõ <b>XÓA</b> để xác nhận.</p><input id="accDelIn" autocomplete="off" aria-label="Gõ XÓA để xác nhận"><button class="btn btn-soft btn-sm" type="submit">Xóa tài khoản</button></form></details>`;
     renderSync();
     return;
   }
@@ -1873,7 +1863,7 @@ function renderAcc() {
     '2fa': `<form class="stack" id="acc2fa" novalidate><p class="note">Tài khoản này bật xác thực 2 bước. Nhập mã 6 số trong ứng dụng xác thực trên điện thoại.</p><label class="lbl" for="accCode">Mã 6 số</label><input id="accCode" inputmode="numeric" autocomplete="one-time-code" maxlength="7"><button class="btn btn-main btn-sm" type="submit">Xác nhận</button></form>`,
     forgot: `<form class="stack" id="accForgot" novalidate><label class="lbl" for="accFe">Email đã đăng ký</label><input id="accFe" type="email" autocomplete="email" maxlength="190"><button class="btn btn-main btn-sm" type="submit">Gửi thư đặt lại mật khẩu</button></form>`
   };
-  box.innerHTML = `<p class="note">Không bắt buộc. Đăng nhập để giữ sao, lịch sử và nhật ký khi đổi máy hoặc dùng nhiều máy. Nhật ký vẫn được khóa bằng mật khẩu riêng của bạn trước khi gửi lên.</p><div class="acct-tabs" role="tablist">${tab('login', 'Đăng nhập')}${tab('reg', 'Đăng ký')}</div>${forms[accTab]}<p id="accMsg" role="status"></p>
+  box.innerHTML = `<p class="note">Không bắt buộc. Đăng nhập để giữ lịch sử, để dành và nhật ký khi đổi máy hoặc dùng nhiều máy. Nhật ký vẫn được khóa bằng mật khẩu riêng của bạn trước khi gửi lên.</p><div class="acct-tabs" role="tablist">${tab('login', 'Đăng nhập')}${tab('reg', 'Đăng ký')}</div>${forms[accTab]}<p id="accMsg" role="status"></p>
     ${ACC.google && (accTab === 'login' || accTab === 'reg') ? `<p class="or">hoặc</p>${accTab === 'login' ? consent.replace('accAge', 'accAgeG') : ''}<div id="gBtn"></div><p class="note">Lần đầu đăng nhập bằng Google cần đánh dấu ô xác nhận độ tuổi.</p>` : ''}`;
   if (ACC.google && (accTab === 'login' || accTab === 'reg')) gis();
 }
@@ -2037,5 +2027,5 @@ window.addEventListener('pageshow', e => { if (e.persisted) refreshClock(); });
 if (DEPLOY && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* không có service worker thì trang vẫn chạy */ }); });
 }
-window.__hnlg = { dLoad, mergeState, syClean, dMerge, diaryResolve, syDcl, syName, syncNow: f => syncNow(f), sy: () => SY, diary: () => ({ open: !!DK, n: DE.length }), canInstall, installGuide, START_MODE, choose, buildPool, eligible, chooseFood, setMode, state: () => S, CH, EVS, SLOT, A, F, sunSet, parseMet, wxNow, nearCity, wx: () => WX, weight, INV };
+window.__hnlg = { dLoad, mergeState, syClean, dMerge, diaryResolve, syDcl, syName, syncNow: f => syncNow(f), sy: () => SY, diary: () => ({ open: !!DK, n: DE.length }), canInstall, installGuide, START_MODE, choose, buildPool, eligible, chooseFood, setMode, state: () => S, CH, EVS, SLOT, A, F, sunSet, parseMet, wxNow, nearCity, wx: () => WX, weight, INV, lunarOf, vegDay: () => VEG_DAY };
 })();

@@ -4,7 +4,8 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 
 ## Định hướng sản phẩm (đã chốt)
 
-- Web cho vui, hướng tư vấn đơn giản. Sao, danh hiệu chỉ lưu trên máy người dùng, chỉ họ thấy. Đã bỏ huy hiệu (02/11/2026) cho gọn.
+- Web tư vấn, đơn giản, không áp lực. Ngày 02/11/2026 bỏ huy hiệu, sao, danh hiệu, thử thách 7 ngày cho gọn. Các trường `stars`, `best`, `got`, `wk`, `wkDone` vẫn giữ trong dữ liệu để đồng bộ với máy chưa cập nhật không lỗi.
+- Mục Ăn gì: lọc món chay (`v:1`, 152 món: không thịt, cá, hải sản, trứng, nước mắm, dầu hào, mỡ); ngày rằm, mùng một món chay được ưu tiên gấp đôi; “Không ăn món này” (`fban`, chỉ trên máy); “Chọn cho cả nhóm” rút 3 món.
 - Gieo không lặp lại: máy nhớ 400 quẻ và 400 món đã hiện gần nhất (`recent`, `frecent`, chỉ lưu trên máy, không đồng bộ). Mỗi lần rút chỉ lấy mục chưa gặp; gặp hết thì lấy nửa đã gặp lâu nhất. Mỗi lần vào trang là một lần gieo mới, trừ khi đang làm dở quẻ đã bấm Nhận hoặc mở từ link rủ.
 - Không gây áp lực: không đếm chuỗi ngày liên tiếp (chỉ đếm số ngày đã làm), không nhắc "làm kẻo mất".
 - Không phục vụ khoe mẽ: không bảng xếp hạng, không thi đua có quà, không bắt chụp ảnh làm bằng chứng.
@@ -14,7 +15,7 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 
 | Đường dẫn | Nội dung |
 |---|---|
-| `src/data.js` | Thư viện: 2000 quẻ (`ACTIVITIES`, mỗi nhóm 200), 1000 món (`FOODS`), 12 thử thách 7 ngày (`CHALLENGES`). Sửa hoặc thêm ở đây. |
+| `src/data.js` | Thư viện: 2000 quẻ (`ACTIVITIES`, mỗi nhóm 200), 1018 món (`FOODS`). `CHALLENGES` (thử thách 7 ngày) đã thôi hiện, giữ trong file để build vẫn rà từ cấm. Sửa hoặc thêm ở đây. |
 | `src/app.js` | Logic trang: rút quẻ, lọc, sao, âm lịch, thời tiết, chia sẻ. |
 | `src/style.css`, `src/body.html` | Giao diện. |
 | `src/sw.js` | Service worker để trang mở được khi mất mạng. |
@@ -46,7 +47,7 @@ Trang web rút quẻ: mở ra là có ngay một việc nhỏ nên làm hôm nay
 | `o` | Nơi: `i` trong nhà, `o` ra ngoài, `b` đâu cũng được |
 | `g` | Khung giờ: `s` sáng 5–11h, `c` chiều 11–17h, `t` tối 17–22h, `k` khuya 22–5h |
 | `m` | Tâm trạng: `c` chán, `b` buồn, `m` mệt, `x` căng thẳng, `l` cô đơn, `h` hứng khởi |
-| `d` | Độ khó 1–10 = số sao nhận được |
+| `d` | Độ khó 1–10 (trên trang ghi Nhẹ nhàng / Vừa sức / Thử thách) |
 | `ch` | `1` = được chọn làm thử thách chung (cần có cả `s` và `t` trong `g`) |
 | `x` | Nhãn phụ: `cuoituan`, `canngay`, mùa (`xuan he thu dong`), dịp (`ram`, `vulan`, `2011`), trời (`hoanghon` cần trời quang lúc mặt trời lặn, `sao` cần trời quang ban đêm) |
 | `ev` | Chỉ hiện quanh một dịp: `halloween`, `2011`, `noel`, `tet`, `trungthu`, `phunu`, `valentine`, `giadinh`, `thieunhi`, `giaothua`, `ram`, `cathangtu`, `doan`, `nghile` |

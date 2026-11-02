@@ -96,6 +96,8 @@
         <span class="chip-sep" aria-hidden="true"></span>
         <button class="chip" type="button" data-ft="n" aria-pressed="false">Ăn ngoài</button>
         <button class="chip" type="button" data-ft="h" aria-pressed="false">Tự nấu</button>
+          <span class="chip-sep" aria-hidden="true"></span>
+          <button class="chip" type="button" id="vegChip" aria-pressed="false">Món chay</button>
       </div>
     </div>
     <div class="chips fregs" id="fregs" role="group" aria-label="Bạn ở miền nào?" hidden>
@@ -105,7 +107,8 @@
       <button class="chip" type="button" data-reg="N" aria-pressed="false">Miền Nam</button>
       <span class="fregs-note" id="fregNote"></span>
     </div>
-    <p class="mood-note" id="moodNote" hidden></p>
+    <p class="mood-note" id="vegNote" hidden></p>
+      <p class="mood-note" id="moodNote" hidden></p>
 
     <div class="draw">
       <p class="invite" id="invite" hidden></p>
@@ -138,12 +141,13 @@
         <p class="status" id="qStatus" hidden></p>
         <div class="stamp" aria-hidden="true">ĐÃ LÀM</div>
       </article>
-      <noscript><p class="nojs-note">Trình duyệt đang tắt JavaScript nên chỉ xem được quẻ mẫu. Bật JavaScript để rút quẻ, lọc theo tâm trạng và nhận sao.</p></noscript>
+      <noscript><p class="nojs-note">Trình duyệt đang tắt JavaScript nên chỉ xem được quẻ mẫu. Bật JavaScript để rút quẻ và lọc theo tâm trạng.</p></noscript>
 
       <div class="actions needs-js" id="actions">
         <button class="btn btn-main" id="btnMain" type="button">Nhận quẻ này</button>
         <button class="btn btn-line" id="btnDraw" type="button"><svg class="ico"><use href="#i-shuffle"/></svg><span>Rút quẻ khác</span></button>
       </div>
+      <p class="food-more needs-js" id="foodMore" hidden><button class="btn btn-soft btn-sm" id="btnGroup" type="button"><svg class="ico"><use href="#i-users"/></svg><span>Chọn cho cả nhóm</span></button><button class="link muted" id="btnBan" type="button">Không ăn món này</button></p>
       <div class="loc-ask needs-js" id="locAsk" hidden role="region" aria-labelledby="locAskT">
         <p><b id="locAskT">Gợi ý hợp nơi bạn ở?</b> Cho xem vị trí để gợi ý theo thời tiết và vùng miền. Vị trí làm tròn khoảng 1 km, chỉ lưu trên máy bạn, không gửi về máy chủ của chúng tôi.</p>
         <div class="loc-acts"><button class="btn btn-main btn-sm" type="button" id="locYes">Cho phép</button><button class="chip" type="button" data-locreg="B" aria-label="Chọn miền Bắc">Bắc</button><button class="chip" type="button" data-locreg="T" aria-label="Chọn miền Trung">Trung</button><button class="chip" type="button" data-locreg="N" aria-label="Chọn miền Nam">Nam</button><button class="link muted" type="button" id="locLater">Để sau</button></div>
@@ -167,7 +171,7 @@
         <button class="chip" type="button" data-feel="vui" aria-pressed="false">Vui</button>
         <button class="chip" type="button" data-feel="thuong" aria-pressed="false">Bình thường</button>
         <button class="chip" type="button" data-feel="nho" aria-pressed="false">Đáng nhớ</button>
-        <button class="btn btn-soft btn-sm" id="btnCard" type="button"><svg class="ico"><use href="#i-image"/></svg><span>Tạo ảnh khoe</span></button>
+        <button class="btn btn-soft btn-sm" id="btnCard" type="button"><svg class="ico"><use href="#i-image"/></svg><span>Lưu ảnh quẻ</span></button>
         <a class="btn btn-soft btn-sm" href="#nhat-ky" id="btnJournal"><svg class="ico"><use href="#i-book"/></svg><span>Ghi nhật ký</span></a>
       </div>
       <div class="nudge" id="installNudge" hidden>
@@ -201,7 +205,7 @@
             <button class="chip" type="button" data-v="">Đâu cũng được</button><button class="chip" type="button" data-v="i">Trong nhà</button><button class="chip" type="button" data-v="o">Ra ngoài</button>
           </div></div>
           <div class="group"><h3>Mức thử thách</h3><div class="chips" data-f="level">
-            <button class="chip" type="button" data-v="">Mức nào cũng được</button><button class="chip" type="button" data-v="1">Nhẹ (1–3 sao)</button><button class="chip" type="button" data-v="2">Vừa (4–6 sao)</button><button class="chip" type="button" data-v="3">Khó (7–10 sao)</button>
+            <button class="chip" type="button" data-v="">Mức nào cũng được</button><button class="chip" type="button" data-v="1">Nhẹ nhàng</button><button class="chip" type="button" data-v="2">Vừa sức</button><button class="chip" type="button" data-v="3">Thử thách</button>
           </div></div>
           <div class="group"><h3>Khi nào</h3><div class="chips" data-f="when">
             <button class="chip" type="button" data-v="now">Ngay bây giờ</button><button class="chip" type="button" data-v="day">Cả ngày</button>
@@ -229,11 +233,6 @@
       </div>
     </section>
 
-    <section id="weekSec" aria-labelledby="wLabel">
-      <h2 id="wLabel">Thử thách 7 ngày</h2>
-      <div class="daily-card" id="weekCard"></div>
-    </section>
-
     <section id="soonSec" aria-labelledby="sLabel">
       <h2 id="sLabel">Sắp tới</h2>
       <ul class="soon-list" id="soonList"></ul>
@@ -241,21 +240,9 @@
   </aside>
 
   <section class="journey needs-js" aria-labelledby="jTitle">
-    <h2 id="jTitle">Hành trình của bạn</h2>
-    <p class="sub">Làm xong mỗi quẻ, bạn nhận số sao bằng độ khó của quẻ. Sao chỉ để vui, chỉ mình bạn thấy. Bận thì nghỉ, không mất gì cả.</p>
-    <div class="stats">
-      <div class="stat"><p class="big" id="jStars">0</p><p class="lab">sao đã gom</p></div>
-      <div class="stat"><p class="big" id="jStreak">0</p><p class="lab" id="jStreakLab">ngày đã làm quẻ</p></div>
-      <div class="stat"><p class="big" id="jDone">0</p><p class="lab">quẻ đã làm</p></div>
-    </div>
-    <div class="level">
-      <p class="eyebrow">Danh hiệu</p>
-      <p class="level-name" id="jLevel"></p>
-      <div class="bar" role="progressbar" aria-label="Tiến tới danh hiệu kế tiếp" aria-valuemin="0" aria-valuemax="100" id="jBarWrap"><span id="jBar"></span></div>
-      <p class="next" id="jNext"></p>
-    </div>
+    <h2 id="jTitle">Của bạn</h2>
     <div class="invite-row">
-      <p>Rủ cả hội cùng rút quẻ mỗi ngày, ai làm xong cũng có sao.</p>
+      <p>Rủ cả hội cùng rút quẻ, cùng làm một việc nhỏ cho vui.</p>
       <button class="btn btn-soft btn-sm" id="btnInvite" type="button"><svg class="ico"><use href="#i-users"/></svg><span>Rủ bạn cùng chơi</span></button>
     </div>
     <div class="invite-row" id="installRow" hidden>
@@ -266,13 +253,13 @@
       <div><h3>Đã làm gần đây</h3><div id="hist"></div></div>
       <div><h3>Để dành</h3><div id="saved"></div></div>
     </div>
-    <p class="local">Sao và lịch sử được lưu ngay trên trình duyệt của bạn, không cần đăng nhập. Nếu đăng nhập ở trang Tôi, bản sao được giữ trong tài khoản để dùng trên máy khác. <button class="link muted" id="btnReset" type="button">Xóa dữ liệu</button></p>
+    <p class="local">Lịch sử và danh sách để dành được lưu ngay trên trình duyệt của bạn, không cần đăng nhập. Nếu đăng nhập ở trang Tôi, bản sao được giữ trong tài khoản để dùng trên máy khác. <button class="link muted" id="btnReset" type="button">Xóa dữ liệu</button></p>
   </section>
 
   <section class="view needs-js" id="viewMe" hidden aria-labelledby="meTitle">
     <a class="back" href="#">← Về quẻ hôm nay</a>
     <h2 id="meTitle" tabindex="-1">Trang của bạn</h2>
-    <p class="sub">Sao, lịch sử và nhật ký chỉ nằm trên máy này. Tài khoản là tùy chọn, dùng để nhận tin và bài viết mới.</p>
+    <p class="sub">Lịch sử, để dành và nhật ký chỉ nằm trên máy này. Tài khoản là tùy chọn, dùng để nhận tin và bài viết mới.</p>
     <div class="cards">
       <div class="card acct" id="acctCard" hidden>
         <h3>Tài khoản</h3>
@@ -284,17 +271,13 @@
         <p class="note">Chỉ dùng để chào bạn trên trang.</p>
       </div>
       <div class="card">
-        <h3>Thành tích</h3>
-        <dl class="me-stats" id="meStats"></dl>
-      </div>
-      <div class="card">
         <h3>Nhật ký riêng tư</h3>
         <p id="meDiary"></p>
         <a class="btn btn-main btn-sm" href="#nhat-ky"><svg class="ico"><use href="#i-book"/></svg><span>Mở nhật ký</span></a>
       </div>
       <div class="card">
         <h3>Sao lưu, chuyển sang máy khác</h3>
-        <p class="note">File sao lưu gồm sao, lịch sử và nhật ký. Nhật ký trong file vẫn được mã hóa bằng mật khẩu của bạn.</p>
+        <p class="note">File sao lưu gồm lịch sử, để dành và nhật ký. Nhật ký trong file vẫn được mã hóa bằng mật khẩu của bạn.</p>
         <div class="acts">
           <button class="btn btn-soft btn-sm" id="btnBackup" type="button"><svg class="ico"><use href="#i-download"/></svg><span>Tải bản sao lưu</span></button>
           <label class="btn btn-soft btn-sm file-btn"><svg class="ico"><use href="#i-upload"/></svg><span>Khôi phục từ file</span><input type="file" id="restoreFile" accept="application/json,.json"></label>
@@ -315,7 +298,8 @@
       </div>
       <div class="card">
         <h3>Dữ liệu trên máy này</h3>
-        <p class="note">Xóa sạch sao, lịch sử, nhật ký và các lựa chọn, cả bản trong tài khoản nếu đang đăng nhập. Không lấy lại được, trừ khi bạn có file sao lưu.</p>
+        <p class="note" id="banNote" hidden><span id="banTxt"></span> <button class="link" id="btnUnban" type="button">Hiện lại tất cả</button></p>
+        <p class="note">Xóa sạch lịch sử, để dành, nhật ký và các lựa chọn, cả bản trong tài khoản nếu đang đăng nhập. Không lấy lại được, trừ khi bạn có file sao lưu.</p>
         <div class="acts"><button class="btn btn-soft btn-sm" id="btnWipe" type="button">Xóa toàn bộ dữ liệu</button><a class="link" href="/rieng-tu">Chính sách quyền riêng tư</a></div>
       </div>
     </div>
@@ -420,6 +404,15 @@
       </div>
       <p>Đăng story xong, thêm nhãn dán Liên kết trỏ về link ở trên để bạn bè bấm vào rút quẻ.</p>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="groupModal" hidden role="dialog" aria-modal="true" aria-labelledby="grTitle">
+  <div class="modal-box">
+    <div class="modal-head"><h2 id="grTitle">Cả nhóm chọn một món</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="ico"><use href="#i-x"/></svg></button></div>
+    <p class="note">Ba món hợp bữa này. Mỗi người nói một câu rồi chốt món nhiều người thích nhất.</p>
+    <ul class="rows grp-list" id="grpList"></ul>
+    <button class="btn btn-line btn-sm" id="grpAgain" type="button"><svg class="ico"><use href="#i-shuffle"/></svg><span>Rút 3 món khác</span></button>
   </div>
 </div>
 

@@ -20,6 +20,7 @@ function clean_item(string $kind, array $d, int $id): array {
     guard_text($t, $n);
     $out = ['id' => $id, 't' => $t, 'n' => $n, 'b' => $b, 'o' => $o, 'r' => $r, 'k' => $k];
     if ($w) $out['w'] = $w;
+    if (!empty($d['v'])) $out['v'] = 1; // món chay
     return $out;
   }
   $c = $s('c', 2); $st = $s('s', 300); $ai = $s('ai', 4); $o = $s('o', 1); $g = $s('g', 4); $m = $s('m', 6); $x = $s('x', 80); $ev = $s('ev', 12);
