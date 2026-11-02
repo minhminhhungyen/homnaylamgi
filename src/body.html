@@ -172,7 +172,6 @@
         <button class="chip" type="button" data-feel="thuong" aria-pressed="false">Bình thường</button>
         <button class="chip" type="button" data-feel="nho" aria-pressed="false">Đáng nhớ</button>
         <button class="btn btn-soft btn-sm" id="btnCard" type="button"><svg class="ico"><use href="#i-image"/></svg><span>Lưu ảnh quẻ</span></button>
-        <a class="btn btn-soft btn-sm" href="#nhat-ky" id="btnJournal"><svg class="ico"><use href="#i-book"/></svg><span>Ghi nhật ký</span></a>
       </div>
       <div class="nudge" id="installNudge" hidden>
         <p>Mai rút quẻ tiếp nhé! Cài app lên màn hình chính để mở một chạm.</p>
@@ -253,13 +252,13 @@
       <div><h3>Đã làm gần đây</h3><div id="hist"></div></div>
       <div><h3>Để dành</h3><div id="saved"></div></div>
     </div>
-    <p class="local">Lịch sử và danh sách để dành được lưu ngay trên trình duyệt của bạn, không cần đăng nhập. Nếu đăng nhập ở trang Tôi, bản sao được giữ trong tài khoản để dùng trên máy khác. <button class="link muted" id="btnReset" type="button">Xóa dữ liệu</button></p>
+    <p class="local">Lịch sử và danh sách để dành được lưu ngay trên trình duyệt của bạn, không cần đăng nhập. <button class="link muted" id="btnReset" type="button">Xóa dữ liệu</button></p>
   </section>
 
   <section class="view needs-js" id="viewMe" hidden aria-labelledby="meTitle">
     <a class="back" href="#">← Về quẻ hôm nay</a>
     <h2 id="meTitle" tabindex="-1">Trang của bạn</h2>
-    <p class="sub">Lịch sử, để dành và nhật ký chỉ nằm trên máy này. Tài khoản là tùy chọn, dùng để nhận tin và bài viết mới.</p>
+    <p class="sub">Lịch sử, để dành và các lựa chọn của bạn chỉ nằm trên máy này, không cần tài khoản.</p>
     <div class="cards">
       <div class="card acct" id="acctCard" hidden>
         <h3>Tài khoản</h3>
@@ -270,14 +269,14 @@
         <form class="row-form" id="nameForm"><label class="sr" for="nameInput">Tên gọi</label><input id="nameInput" maxlength="30" autocomplete="nickname" placeholder="Bạn muốn được gọi là gì?"><button class="btn btn-soft btn-sm" type="submit">Lưu</button></form>
         <p class="note">Chỉ dùng để chào bạn trên trang.</p>
       </div>
-      <div class="card">
-        <h3>Nhật ký riêng tư</h3>
+      <div class="card" id="meDiaryCard" hidden>
+        <h3>Nhật ký cũ</h3>
         <p id="meDiary"></p>
-        <a class="btn btn-main btn-sm" href="#nhat-ky"><svg class="ico"><use href="#i-book"/></svg><span>Mở nhật ký</span></a>
+        <a class="btn btn-main btn-sm" href="#nhat-ky"><svg class="ico"><use href="#i-book"/></svg><span>Mở nhật ký cũ</span></a>
       </div>
       <div class="card">
         <h3>Sao lưu, chuyển sang máy khác</h3>
-        <p class="note">File sao lưu gồm lịch sử, để dành và nhật ký. Nhật ký trong file vẫn được mã hóa bằng mật khẩu của bạn.</p>
+        <p class="note">File sao lưu gồm lịch sử, để dành và các lựa chọn, dùng để chuyển sang máy khác. Nếu máy có nhật ký cũ, nhật ký trong file vẫn được mã hóa bằng mật khẩu của bạn.</p>
         <div class="acts">
           <button class="btn btn-soft btn-sm" id="btnBackup" type="button"><svg class="ico"><use href="#i-download"/></svg><span>Tải bản sao lưu</span></button>
           <label class="btn btn-soft btn-sm file-btn"><svg class="ico"><use href="#i-upload"/></svg><span>Khôi phục từ file</span><input type="file" id="restoreFile" accept="application/json,.json"></label>
@@ -299,7 +298,7 @@
       <div class="card">
         <h3>Dữ liệu trên máy này</h3>
         <p class="note" id="banNote" hidden><span id="banTxt"></span> <button class="link" id="btnUnban" type="button">Hiện lại tất cả</button></p>
-        <p class="note">Xóa sạch lịch sử, để dành, nhật ký và các lựa chọn, cả bản trong tài khoản nếu đang đăng nhập. Không lấy lại được, trừ khi bạn có file sao lưu.</p>
+        <p class="note">Xóa sạch lịch sử, để dành, nhật ký cũ và các lựa chọn trên máy này. Không lấy lại được, trừ khi bạn có file sao lưu.</p>
         <div class="acts"><button class="btn btn-soft btn-sm" id="btnWipe" type="button">Xóa toàn bộ dữ liệu</button><a class="link" href="/rieng-tu">Chính sách quyền riêng tư</a></div>
       </div>
     </div>
@@ -307,8 +306,9 @@
 
   <section class="view needs-js" id="viewDiary" hidden aria-labelledby="diTitle">
     <a class="back" href="#toi">← Trang của bạn</a>
-    <h2 id="diTitle" tabindex="-1">Nhật ký riêng tư</h2>
-    <p class="sub">Viết gì cũng được: cảm nhận sau một quẻ, điều làm bạn vui, điều đang lo. Nhật ký được mã hóa ngay trên máy bằng mật khẩu của bạn. Không ai khác đọc được, kể cả người làm ra trang này.</p>
+    <h2 id="diTitle" tabindex="-1">Nhật ký cũ</h2>
+    <p class="sub">Mục nhật ký đã ngừng nhận trang mới. Nhật ký cũ vẫn nằm trên máy này ở dạng mã hóa: mở khóa bằng mật khẩu cũ để đọc lại, tải về thành file chữ, hoặc xóa khỏi máy.</p>
+    <p class="note" id="diNone" hidden>Máy này không có nhật ký nào.</p>
     <p class="care">Nếu thấy nặng lòng quá, đừng giữ một mình: hãy kể với một người bạn hoặc người nhà tin tưởng. Khi thấy mình không an toàn, gọi ngay cấp cứu <a href="tel:115">115</a>.</p>
     <p class="note" id="diNoCrypto" hidden>Trình duyệt này không hỗ trợ mã hóa nên chưa dùng được nhật ký. Bạn mở bằng Chrome, Safari hoặc Edge bản mới nhé.</p>
     <form class="card stack" id="diSetup" hidden novalidate>
@@ -327,7 +327,7 @@
       <input id="diPass" type="password" maxlength="200" autocomplete="current-password" required>
       <button class="btn btn-main btn-sm" type="submit"><svg class="ico"><use href="#i-lock"/></svg><span>Mở khóa</span></button>
       <p class="err" id="diLockErr" role="alert"></p>
-      <p class="note">Quên mật khẩu? <button class="link muted" id="diForget" type="button">Xóa nhật ký để làm lại</button></p>
+      <p class="note">Không cần nữa hoặc quên mật khẩu? <button class="link muted" id="diForget" type="button">Xóa nhật ký khỏi máy này</button></p>
     </form>
     <div id="diOpen" hidden>
       <form class="card stack" id="diForm">
@@ -341,7 +341,7 @@
       </form>
       <div class="di-bar">
         <p class="note" id="diCount"></p>
-        <div class="acts"><button class="btn btn-soft btn-sm" id="diLockBtn" type="button"><svg class="ico"><use href="#i-lock"/></svg><span>Khóa lại</span></button><button class="link muted" id="diChangeBtn" type="button">Đổi mật khẩu</button></div>
+        <div class="acts"><button class="btn btn-main btn-sm" id="diExport" type="button"><svg class="ico"><use href="#i-download"/></svg><span>Tải về file chữ (.txt)</span></button><button class="btn btn-soft btn-sm" id="diLockBtn" type="button"><svg class="ico"><use href="#i-lock"/></svg><span>Khóa lại</span></button><button class="link muted" id="diChangeBtn" type="button">Đổi mật khẩu</button></div>
       </div>
       <form class="card stack" id="diChange" hidden novalidate>
         <h3>Đổi mật khẩu nhật ký</h3>
@@ -357,6 +357,8 @@
   </section>
 </main>
 
+{{topicsBlock}}
+
 <footer class="foot">
   <div class="wrap foot-in">
     <p class="foot-brand"><b>Hôm nay làm gì?</b></p>
@@ -365,7 +367,7 @@
     <p class="contact"><b>Liên hệ và góp ý:</b> Mọi thắc mắc, góp ý hoặc đề xuất hợp tác, vui lòng gửi email đến <a href="mailto:hotro@homnaylamgi.com">hotro@homnaylamgi.com</a> hoặc liên hệ Admin qua số <a href="tel:0919391060">0919 391 060</a>.</p>
     <p class="foot-slogan">Homnaylamgi.com – Hôm nay, thử làm một điều mới.</p>
     <p class="tiny">Thời gian, chi phí và túi tiền trên mỗi quẻ là ước tính. Ngày âm lịch tính theo giờ Việt Nam. Thời tiết: <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a>. Chất lượng không khí, UV: <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener">Copernicus Atmosphere Monitoring Service</a> qua <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0).</p>
-    <p class="tiny">© 2026 homnaylamgi.com · <a href="/bai-viet">Bài viết</a> · <a href="/rieng-tu">Chính sách quyền riêng tư</a></p>
+    <p class="tiny">© 2026 homnaylamgi.com · <a href="/hom-nay-an-gi">Hôm nay ăn gì?</a> · <a href="/chu-de/">Chủ đề</a> · <a href="/bai-viet">Bài viết</a> · <a href="/rieng-tu">Chính sách quyền riêng tư</a></p>
   </div>
 </footer>
 

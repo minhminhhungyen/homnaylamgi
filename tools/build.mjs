@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import * as esbuild from 'esbuild';
+import { buildTopics } from './topics.mjs';
 import { minify as minifyHtml } from 'html-minifier-terser';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -61,9 +62,11 @@ const fill = {
   qNo: '001', qLv: LVL(Q.d), qSealLabel: `Nhóm ${SEAL[Q.c][2]}`, qSeal: `<span>${SEAL[Q.c][0]}</span><span>${SEAL[Q.c][1]}</span>`,
   qTitle: esc(Q.t), qPoem: esc(Q.n), qStep: esc(Q.s),
   qStars: Array.from({ length: 10 }, (_, i) => `<svg class="star${i < Q.d ? ' on' : ''}" viewBox="0 0 24 24"><use href="#i-star"/></svg>`).join(''),
-  qStarsTxt: `Độ khó ${Q.d}/10 · nhận ${Q.d} sao`, qTime: fmtTime(Q.p), qCost: ['0 đồng', 'Dưới 100k', '100k–300k', 'Trên 300k'][Q.k],
+  qStarsTxt: `Độ khó ${Q.d}/10`, qTime: fmtTime(Q.p), qCost: ['0 đồng', 'Dưới 100k', '100k–300k', 'Trên 300k'][Q.k],
   qWhere: { i: 'Trong nhà', o: 'Ra ngoài', b: 'Đâu cũng được' }[Q.o], qWho: fmtWho(Q.ai), count: COUNT.toLocaleString('vi-VN'), foods: FOODS.length.toLocaleString('vi-VN')
 };
+const TP = buildTopics({ ACT, FOODS, SITE, esc });
+fill.topicsBlock = TP.blockIndex;
 const body = body0.replace(/\{\{(\w+)\}\}/g, (m, k) => { if (!(k in fill)) throw new Error('Thiếu giá trị cho ' + m); return fill[k]; });
 
 /* ---------- 3. font tự host: đã cắt sẵn chỉ còn chữ Latin + tiếng Việt (tools/subset-fonts.sh) ---------- */
@@ -129,18 +132,37 @@ ${body}
 <script>${jsSite}</script>
 </body>
 </html>`;
-let index = await minifyHtml(page, htmlOpts);
-const inlineHashes = re => [...index.matchAll(re)].map(m => `'sha256-${sha256(m[1])}'`);
-const scriptHashes = inlineHashes(/<script(?: type="application\/ld\+json")?>([\s\S]*?)<\/script>/g);
-const styleHashes = inlineHashes(/<style>([\s\S]*?)<\/style>/g);
-/* script, style, khung của Google chỉ dùng khi quản trị viên bật đăng nhập Google */
-const CSP = [
-  "default-src 'self'", `script-src 'self' ${scriptHashes.join(' ')} https://accounts.google.com/gsi/client`, `style-src 'self' ${styleHashes.join(' ')} https://accounts.google.com/gsi/style`,
-  "img-src 'self' data: blob: https://*.googleusercontent.com", "font-src 'self'", "connect-src 'self' https://api.met.no https://air-quality-api.open-meteo.com https://accounts.google.com/gsi/", "manifest-src 'self'", "worker-src 'self'",
-  "frame-src https://accounts.google.com/gsi/",
-  "object-src 'none'", "base-uri 'none'", "form-action 'none'", 'upgrade-insecure-requests'
-].join('; ');
-index = index.replace('__CSP__', CSP);
+/* thu gọn một trang ứng dụng và gắn CSP theo đúng mã băm của script, style trong trang đó */
+async function finalizeApp(src) {
+  let html = await minifyHtml(src, htmlOpts);
+  const inlineHashes = re => [...html.matchAll(re)].map(m => `'sha256-${sha256(m[1])}'`);
+  const scriptHashes = inlineHashes(/<script(?: type="application\/ld\+json")?>([\s\S]*?)<\/script>/g);
+  const styleHashes = inlineHashes(/<style>([\s\S]*?)<\/style>/g);
+  /* script, style, khung của Google chỉ dùng khi quản trị viên bật đăng nhập Google */
+  const CSP = [
+    "default-src 'self'", `script-src 'self' ${scriptHashes.join(' ')} https://accounts.google.com/gsi/client`, `style-src 'self' ${styleHashes.join(' ')} https://accounts.google.com/gsi/style`,
+    "img-src 'self' data: blob: https://*.googleusercontent.com", "font-src 'self'", "connect-src 'self' https://api.met.no https://air-quality-api.open-meteo.com https://accounts.google.com/gsi/", "manifest-src 'self'", "worker-src 'self'",
+    "frame-src https://accounts.google.com/gsi/",
+    "object-src 'none'", "base-uri 'none'", "form-action 'none'", 'upgrade-insecure-requests'
+  ].join('; ');
+  return html.replace('__CSP__', CSP);
+}
+let index = await finalizeApp(page);
+/* trang “Hôm nay ăn gì?”: cùng ứng dụng, mở sẵn mục món ăn, tiêu đề và mô tả riêng cho tìm kiếm */
+const FOOD_DESC = `Không biết hôm nay ăn gì? Bấm một cái là có món hợp bữa, hợp miền Bắc, Trung, Nam và thời tiết. ${FOODS.length.toLocaleString('vi-VN')} món, có món chay, chọn cho cả nhóm.`;
+const sub1 = (str, a, b) => { const n = str.split(a).length - 1; if (n !== 1) throw new Error(`Trang Ăn gì: cần đúng 1 chỗ "${a.slice(0, 50)}", thấy ${n}`); return str.replace(a, b); };
+let pageFood = page;
+pageFood = sub1(pageFood, '<html lang="vi" class="no-js">', '<html lang="vi" class="no-js" data-start="an">');
+pageFood = sub1(pageFood, '<title>Hôm nay làm gì? | Rút một quẻ, làm một việc nhỏ</title>', '<title>Hôm nay ăn gì? Random món ăn theo bữa, vùng miền, món chay</title>');
+pageFood = sub1(pageFood, `<meta name="description" content="${DESC}">`, `<meta name="description" content="${FOOD_DESC}">`);
+pageFood = sub1(pageFood, `<link rel="canonical" href="${SITE}/">`, `<link rel="canonical" href="${SITE}/hom-nay-an-gi">`);
+pageFood = sub1(pageFood, `<meta property="og:url" content="${SITE}/">`, `<meta property="og:url" content="${SITE}/hom-nay-an-gi">`);
+pageFood = sub1(pageFood, '<meta property="og:title" content="Hôm nay làm gì?">', '<meta property="og:title" content="Hôm nay ăn gì?">');
+pageFood = sub1(pageFood, '<meta property="og:description" content="Khỏi nghĩ nữa. Rút một quẻ, làm một việc nhỏ, để hôm nay khác hôm qua một chút.">', '<meta property="og:description" content="Khỏi nghĩ nữa. Bấm một cái là có món hợp bữa, hợp vùng miền, hợp thời tiết.">');
+pageFood = sub1(pageFood, `<script type="application/ld+json">${ldjson}</script>`, `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebPage', name: 'Hôm nay ăn gì?', url: SITE + '/hom-nay-an-gi', inLanguage: 'vi', description: FOOD_DESC, isPartOf: { '@type': 'WebSite', name: 'Hôm nay làm gì?', url: SITE + '/' } })}</script>`);
+pageFood = sub1(pageFood, '<span id="hVerb">làm</span>', '<span id="hVerb">ăn</span>');
+pageFood = sub1(pageFood, TP.blockIndex, TP.blockFood);
+const indexFood = await finalizeApp(pageFood);
 const VERSION = createHash('sha256').update(index).digest('hex').slice(0, 10);
 
 /* ---------- 6. trang 404 ---------- */
@@ -207,7 +229,7 @@ for (const L of LANDS) {
 /* ---------- 6c. Chính sách quyền riêng tư: /rieng-tu ---------- */
 const COMPANY = { name: 'CÔNG TY TNHH MINH MINH HƯNG YÊN', tax: '0901197922', addr: 'Đường Huyện Đội, Thôn Trai Trang, Xã Yên Mỹ, Tỉnh Hưng Yên', phone: '0368 386 357', email: 'minhminhhungyenco.ltd@gmail.com' };
 const SUPPORT = { email: 'hotro@homnaylamgi.com', phone: '0919 391 060' };
-const PRIV_DATE = '23/10/2026';
+const PRIV_DATE = '02/11/2026';
 const cssDoc = await minCss(FONTS.filter(f => PRELOAD.includes(f[3])).map(face).join('') + `
 :root{--bg:#F5F2F6;--ink:#241826;--muted:#6A5B6E;--do:#D02842;--line:#E4DCE6;--card:#FFFFFF;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#141018;--ink:#F4ECF2;--muted:#B7A8BB;--do:#FF5C72;--line:#352B3A;--card:#1D1722;color-scheme:dark}}
@@ -222,7 +244,7 @@ a{color:var(--do)}a:focus-visible{outline:3px solid var(--ink);outline-offset:2p
 let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'sha256-__H__'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Chính sách quyền riêng tư | Hôm nay làm gì?</title>
-<meta name="description" content="Hôm nay làm gì? dùng được không cần tài khoản, không quảng cáo, không theo dõi. Tài khoản là tùy chọn; sao, lịch sử, nhật ký nằm trên thiết bị của bạn.">
+<meta name="description" content="Hôm nay làm gì? dùng không cần tài khoản, không quảng cáo, không theo dõi. Lịch sử và lựa chọn của bạn nằm trên thiết bị của bạn.">
 <link rel="canonical" href="${SITE}/rieng-tu"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>${cssDoc}</style></head><body><main>
 <a class="back" href="/">← Về trang chính</a>
@@ -230,43 +252,33 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 <p class="date">Cập nhật ngày ${PRIV_DATE}</p>
 <p>“Hôm nay làm gì?” gồm website homnaylamgi.com và ứng dụng cùng tên trên điện thoại, máy tính. Dịch vụ do ${COMPANY.name} vận hành. Trang này nói rõ dịch vụ xử lý dữ liệu nào và vì sao.</p>
 <div class="sum"><ul>
-<li>Dùng được ngay không cần tài khoản. Tài khoản là tùy chọn: nếu đăng ký, công ty lưu tên gọi, email và mật khẩu đã băm một chiều.</li>
-<li>Sao, lịch sử và lựa chọn của bạn lưu trên thiết bị của bạn. Nếu bạn đăng nhập, sao, lịch sử và nhật ký đã mã hóa được đồng bộ vào tài khoản để dùng trên nhiều máy.</li>
-<li>Nhật ký riêng tư được mã hóa trên thiết bị bằng mật khẩu của bạn; không ai khác đọc được, kể cả công ty, kể cả khi nhật ký được đồng bộ vào tài khoản.</li>
+<li>Dùng ngay, không cần tài khoản. Từ ngày 02/11/2026 trang không mở tài khoản người dùng nữa, nên công ty không giữ tên, email hay mật khẩu của người dùng.</li>
+<li>Lịch sử và các lựa chọn của bạn chỉ lưu trên thiết bị của bạn.</li>
 <li>Vị trí chỉ dùng khi bạn bấm cho phép, để gợi ý theo thời tiết và vùng miền; được làm tròn khoảng 1 km, chỉ lưu trên máy bạn, không gửi về máy chủ của công ty.</li>
+<li>Trang chỉ đếm tổng số lượt dùng mỗi ngày, không cookie, không mã định danh, không lưu địa chỉ IP.</li>
 <li>Không quảng cáo, không công cụ theo dõi, không bán dữ liệu.</li>
 </ul></div>
 <h2>1. Dữ liệu lưu trên thiết bị của bạn</h2>
-<p>Các thông tin sau được lưu trong bộ nhớ trình duyệt trên thiết bị của bạn (localStorage): quẻ đang làm, lịch sử quẻ đã làm và cảm nhận, số thứ tự các quẻ và món đã hiện gần đây (để lần sau không lặp lại), danh sách để dành, các món bạn bấm “Không ăn món này”, lựa chọn món chay, tâm trạng, bữa ăn, các lựa chọn ở phần Tinh chỉnh. Từ bản trước còn lưu số sao và tiến độ thử thách 7 ngày; các mục này không còn hiện trên trang. Nếu bạn bật thời tiết, có thêm vị trí đã làm tròn hoặc tỉnh, thành bạn chọn và bản dự báo gần nhất.</p>
-<p>Nếu bạn không đăng nhập, các dữ liệu này không được gửi về máy chủ của công ty. Nếu bạn đăng nhập, xem mục 4b về đồng bộ. Bạn xóa được bất cứ lúc nào bằng nút “Xóa dữ liệu” ở phần Hành trình, bằng cách xóa dữ liệu trang web trong trình duyệt, hoặc gỡ ứng dụng.</p>
-<h2>2. Nhật ký riêng tư</h2>
-<p>Nhật ký được mã hóa ngay trên thiết bị của bạn (AES-GCM 256 bit, khóa sinh từ mật khẩu bằng PBKDF2-SHA256 với 600.000 vòng lặp) trước khi lưu vào bộ nhớ trình duyệt. Mật khẩu nhật ký không được lưu và không được gửi đi đâu. Vì vậy công ty và bất kỳ ai không có mật khẩu đều không đọc được nhật ký của bạn. Điều này cũng có nghĩa là nếu quên mật khẩu, không ai khôi phục được nội dung nhật ký.</p>
-<p>Nếu bạn đăng nhập, nhật ký ở dạng đã mã hóa được đồng bộ vào tài khoản. Máy chủ chỉ giữ dữ liệu đã mã hóa và không có mật khẩu để mở.</p>
-<p>Khi bạn tải bản sao lưu, file sao lưu chứa nhật ký ở dạng đã mã hóa cùng sao và lịch sử. File nằm trên thiết bị của bạn; hãy cất ở nơi an toàn.</p>
+<p>Các thông tin sau được lưu trong bộ nhớ trình duyệt trên thiết bị của bạn (localStorage): quẻ đang làm, lịch sử quẻ đã làm và cảm nhận, số thứ tự các quẻ và món đã hiện gần đây (để lần sau không lặp lại), danh sách để dành, các món bạn bấm “Không ăn món này”, lựa chọn món chay, tâm trạng, bữa ăn, các lựa chọn ở phần Tinh chỉnh, tên gọi nếu bạn đặt. Từ bản trước còn lưu số sao, huy hiệu và tiến độ thử thách 7 ngày; các mục này không còn hiện trên trang.</p>
+<p>Các dữ liệu này không được gửi về máy chủ của công ty. Bạn xóa được bất cứ lúc nào bằng nút “Xóa dữ liệu” ở mục “Của bạn”, ở trang Tôi, hoặc bằng cách xóa dữ liệu trang web trong trình duyệt. Nút “Tải bản sao lưu” tạo một file trên máy bạn để chuyển sang máy khác.</p>
+<h2>2. Nhật ký cũ</h2>
+<p>Mục nhật ký riêng tư đã ngừng nhận trang mới. Nếu trước đây bạn đã viết nhật ký, nhật ký vẫn nằm trên thiết bị của bạn ở dạng mã hóa (AES-GCM 256 bit, khóa sinh từ mật khẩu bằng PBKDF2-SHA256 với 600.000 vòng lặp). Mật khẩu chưa bao giờ được lưu hay gửi đi đâu, nên công ty và bất kỳ ai khác không đọc được. Bạn mở khóa bằng mật khẩu cũ để đọc lại, tải về thành file chữ (file này không có mật khẩu, hãy cất ở nơi riêng tư) hoặc xóa khỏi máy.</p>
 <h2>3. Vị trí và thời tiết (tùy chọn)</h2>
-<p>Khi bạn mở trang, một thông báo hỏi bạn có muốn cho xem vị trí không. Trình duyệt chỉ hỏi quyền vị trí khi bạn bấm “Cho phép” hoặc “Gợi ý theo thời tiết chỗ bạn”. Vị trí dùng để gợi ý việc và món ăn hợp thời tiết, hợp vùng miền nơi bạn ở. Bạn có thể không cho phép mà tự chọn miền Bắc, Trung hoặc Nam; lựa chọn này chỉ lưu trên máy bạn. Tọa độ được làm tròn đến 2 chữ số thập phân (khoảng 1 km), rồi gửi thẳng từ thiết bị của bạn tới:</p>
+<p>Khi bạn mở trang, một thông báo hỏi bạn có muốn cho xem vị trí không. Trình duyệt chỉ hỏi quyền vị trí khi bạn bấm “Cho phép” hoặc “Gợi ý theo thời tiết chỗ bạn”. Vị trí dùng để gợi ý việc và món ăn hợp thời tiết, hợp vùng miền nơi bạn ở. Vị trí được làm tròn khoảng 1 km, chỉ lưu trên máy bạn và chỉ được gửi (đã làm tròn) tới hai dịch vụ thời tiết miễn phí:</p>
 <ul><li><a href="https://www.met.no/en" rel="noopener">MET Norway</a> (Viện Khí tượng Na Uy, api.met.no) để lấy dự báo thời tiết;</li>
 <li><a href="https://open-meteo.com/" rel="noopener">Open-Meteo</a> (air-quality-api.open-meteo.com) để lấy chất lượng không khí và chỉ số UV.</li></ul>
 <p>Như mọi dịch vụ trên mạng, các nhà cung cấp này cũng nhận địa chỉ IP của bạn khi trả dữ liệu và xử lý theo chính sách của họ. Bạn có thể không cho phép vị trí mà chọn tỉnh, thành thay thế, hoặc bấm “Tắt thời tiết” để xóa vị trí đã lưu.</p>
-<h2>4. Chia sẻ, hỗ trợ</h2>
+<h2>4. Đếm lượt dùng ẩn danh</h2>
+<p>Để biết trang có hữu ích không, mỗi lượt bạn vào trang, trình duyệt gửi về máy chủ của công ty một gói tin nhỏ gồm các con số tổng như: đã mở trang, đã rút bao nhiêu quẻ, bao nhiêu món, có bấm “Nhận quẻ”, “Xong” hay dùng lọc món chay không. Gói tin không kèm cookie, mã định danh, tên quẻ hay món bạn xem, vị trí hay bất kỳ thông tin nào về bạn. Máy chủ chỉ cộng các con số này vào tổng của ngày và không lưu địa chỉ IP. Nếu trình duyệt của bạn bật Global Privacy Control hoặc “Do Not Track”, trang không gửi gói tin này.</p>
+<h2>5. Chia sẻ, hỗ trợ</h2>
 <p>Khi bạn bấm chia sẻ, lời rủ và đường link được chuyển tới ứng dụng bạn chọn (Zalo, Messenger, Facebook, Instagram…) hoặc bảng chia sẻ của thiết bị. Dịch vụ không đọc danh bạ và không đăng bài thay bạn. Việc xử lý sau đó theo chính sách của ứng dụng bạn chọn.</p>
 <p>Khi bạn gửi yêu cầu hỗ trợ hoặc góp ý, ứng dụng email trên máy bạn gửi thư tới hotro@homnaylamgi.com. Công ty chỉ dùng nội dung thư và địa chỉ email bạn để lại để trả lời bạn.</p>
-<h2>4b. Tài khoản (tùy chọn)</h2>
-<p>Bạn có thể dùng toàn bộ trang mà không cần tài khoản. Nếu bạn tạo tài khoản, công ty xử lý các dữ liệu sau để đăng nhập, gửi thư xác nhận và đặt lại mật khẩu, gửi tin và bài viết mới:</p>
-<ul><li>Tên gọi và email bạn nhập; mật khẩu chỉ được lưu dưới dạng băm một chiều (Argon2id), không ai đọc được mật khẩu gốc.</li>
-<li>Nếu đăng nhập bằng Google: mã định danh tài khoản Google, tên và email mà Google cung cấp sau khi bạn đồng ý. Công ty không nhận mật khẩu Google của bạn.</li>
-<li>Thời điểm tạo tài khoản, lần đăng nhập gần nhất, xác nhận bạn từ đủ 16 tuổi; địa chỉ IP được dùng tạm thời để chống dò mật khẩu và ghi nhật ký thao tác quản trị.</li>
-<li>Một cookie đăng nhập (hnlg_s), chỉ dùng để giữ phiên đăng nhập, không dùng để theo dõi hay quảng cáo.</li>
-<li>Dữ liệu đồng bộ (chỉ bật khi email đã xác nhận hoặc đăng nhập bằng Google): lịch sử quẻ đã làm và cảm nhận, danh sách để dành, tên gọi, nhật ký ở dạng đã mã hóa, cùng số sao và tiến độ thử thách 7 ngày từ bản trước (không còn hiện trên trang). Vị trí, thời tiết, các lựa chọn lọc, món chay, món đã ẩn và thói quen chọn nhóm việc không được đồng bộ. Khi bạn đăng xuất, dữ liệu này được xóa khỏi máy đang dùng (vẫn còn trong tài khoản); phần chưa kịp gửi lên được cất riêng trên máy và chỉ hiện lại khi chính bạn đăng nhập.</li></ul>
-<p>Dữ liệu tài khoản lưu trên máy chủ của Hostinger mà công ty thuê, không bán, không chia sẻ cho bên thứ ba để quảng cáo. Máy chủ có thể đặt ngoài Việt Nam tùy trung tâm dữ liệu của Hostinger; khi tạo tài khoản, bạn đồng ý cho dữ liệu nêu trên được lưu ở đó. Bạn xóa tài khoản bất cứ lúc nào trong Trang của bạn; dữ liệu tài khoản và dữ liệu đồng bộ bị xóa khỏi cơ sở dữ liệu ngay khi bạn bấm. Nút “Xóa toàn bộ dữ liệu” khi đang đăng nhập cũng xóa bản đồng bộ trong tài khoản.</p>
-<h2>5. Máy chủ lưu trữ</h2>
-<p>Website được phục vụ qua Hostinger và Vercel. Như mọi trang web, các nhà cung cấp này có thể ghi nhật ký kỹ thuật (địa chỉ IP, thời gian truy cập, loại trình duyệt) để vận hành và chống tấn công. Công ty không dùng nhật ký này để nhận diện cá nhân.</p>
-<h2>6. Không quảng cáo, không theo dõi</h2>
+<h2>6. Máy chủ lưu trữ</h2>
+<p>Website được phục vụ qua Hostinger và Vercel. Như mọi trang web, các nhà cung cấp này có thể ghi nhật ký kỹ thuật (địa chỉ IP, thời gian truy cập, loại trình duyệt) để vận hành và chống tấn công. Công ty không dùng nhật ký này để nhận diện cá nhân. Tài khoản quản trị của công ty (dùng để đăng bài viết, thông báo, thêm quẻ) lưu trên máy chủ Hostinger mà công ty thuê.</p>
+<h2>7. Không quảng cáo, không theo dõi</h2>
 <p>Website và ứng dụng không hiển thị quảng cáo, không dùng cookie quảng cáo hay công cụ phân tích hành vi, không bán hay cho thuê dữ liệu.</p>
-<h2>7. Độ tuổi</h2>
-<p>Dịch vụ dành cho người từ 16 tuổi trở lên. Khi tạo tài khoản, bạn xác nhận mình từ đủ 16 tuổi.</p>
 <h2>8. Quyền của bạn</h2>
-<p>Theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, bạn có quyền được biết về việc xử lý dữ liệu của mình, đồng ý hoặc rút lại đồng ý, và yêu cầu xóa dữ liệu. Vì dữ liệu nằm trên thiết bị của bạn, bạn có thể tự xóa ngay như ở mục 1, hoặc dùng nút “Xóa toàn bộ dữ liệu” ở Trang của bạn. Nếu có tài khoản, bạn xem, sửa tên, đổi mật khẩu và xóa tài khoản ngay trong Trang của bạn. Mọi câu hỏi xin gửi về <a href="mailto:${SUPPORT.email}">${SUPPORT.email}</a>.</p>
+<p>Theo Luật Bảo vệ dữ liệu cá nhân số 91/2025/QH15, bạn có quyền được biết về việc xử lý dữ liệu của mình, đồng ý hoặc rút lại đồng ý, và yêu cầu xóa dữ liệu. Vì dữ liệu của bạn chỉ nằm trên thiết bị của bạn, bạn có thể tự xóa ngay như ở mục 1. Mọi câu hỏi về dữ liệu, bạn liên hệ theo mục 9.</p>
 <h2>9. Liên hệ</h2>
 <p>Hỗ trợ người dùng: email <a href="mailto:${SUPPORT.email}">${SUPPORT.email}</a> hoặc gọi Admin: <a href="tel:${SUPPORT.phone.replace(/ /g, '')}">${SUPPORT.phone}</a>.</p>
 <p>Đơn vị vận hành: ${COMPANY.name}<br>Mã số thuế: ${COMPANY.tax}<br>Địa chỉ: ${COMPANY.addr}<br>Điện thoại: <a href="tel:${COMPANY.phone.replace(/ /g, '')}">${COMPANY.phone}</a> · Email: <a href="mailto:${COMPANY.email}">${COMPANY.email}</a></p>
@@ -275,11 +287,46 @@ let privacy = await minifyHtml(`<!doctype html><html lang="vi"><head><meta chars
 </main></body></html>`, htmlOpts);
 privacy = privacy.replace('__H__', sha256(privacy.match(/<style>([\s\S]*?)<\/style>/)[1]));
 
+/* ---------- 6c. trang chủ đề /chu-de/ (tĩnh, không cần JavaScript) ---------- */
+const cssTopic = cssDoc + await minCss(`
+.crumb{font-size:.88rem;color:var(--muted);margin-bottom:10px}.crumb a{color:var(--muted)}
+.lead{font-size:1.05rem;margin-top:10px}.cta{margin:18px 0}
+.btn{display:inline-block;padding:12px 20px;border-radius:999px;background:var(--do);color:#fff;font-weight:600;text-decoration:none}.btn:hover{filter:brightness(1.08)}
+.items{padding-left:1.4em;margin-top:8px}.items li{margin:0 0 16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.items h2{margin:0 0 4px;font-size:1.08rem}.items h2 a{color:var(--ink);text-decoration:none}.items h2 a:hover{color:var(--do);text-decoration:underline}
+.items p{margin:0 0 4px}.n{font-style:italic;color:var(--muted)}.m{font-size:.86rem;color:var(--muted)}
+.care{padding:12px 14px;border-left:3px solid var(--do);background:var(--bg);border-radius:6px}
+.note{font-size:.88rem;color:var(--muted)}h2.more{margin-top:30px}
+.topics{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0}.topics li{margin:0}.topics a{display:inline-block;padding:6px 12px;border:1px solid var(--line);border-radius:999px;text-decoration:none}
+.hub{list-style:none;padding:0}.hub li{margin:0 0 14px}.hub a{font-weight:600}.hub span{display:block;font-size:.9rem;color:var(--muted)}
+.foot{max-width:720px;margin:18px auto 0;font-size:.85rem;color:var(--muted);text-align:center}.foot a{color:var(--muted)}`);
+async function docPage({ title, desc, url, body, ld }) {
+  const ldTag = ld ? `<script type="application/ld+json">${JSON.stringify(ld)}</script>` : '';
+  let html = await minifyHtml(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>${esc(title)}</title><meta name="description" content="${esc(desc)}">
+<link rel="canonical" href="${url}"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Hôm nay làm gì?"><meta property="og:locale" content="vi_VN">
+<meta property="og:url" content="${url}"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}">
+<meta property="og:image" content="${SITE}/og-image.png"><meta name="twitter:card" content="summary_large_image">
+<style>${cssTopic}</style>${ldTag}</head><body><main>${body}</main>
+<p class="foot"><a href="/">Hôm nay làm gì?</a> · <a href="/hom-nay-an-gi">Hôm nay ăn gì?</a> · <a href="/chu-de/">Chủ đề</a> · <a href="/rieng-tu">Quyền riêng tư</a></p></body></html>`, htmlOpts);
+  const st = sha256(html.match(/<style>([\s\S]*?)<\/style>/)[1]);
+  const lm = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+  const csp = `default-src 'self'; style-src 'sha256-${st}'; script-src ${lm ? `'sha256-${sha256(lm[1])}'` : "'none'"}; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'`;
+  return html.replace('__CSP__', csp);
+}
+const TOPIC_PAGES = [];
+for (const t of [...TP.pages, TP.hub]) TOPIC_PAGES.push({ path: t.path, url: t.url, html: await docPage(t) });
+
 /* ---------- 7. ghi dist/ ---------- */
 rmSync(DIST, { recursive: true, force: true });
 mkdirSync(path.join(DIST, 'assets', 'fonts'), { recursive: true });
 const out = (f, s) => writeFileSync(path.join(DIST, f), s);
 out('index.html', index);
+out('hom-nay-an-gi.html', indexFood);
+mkdirSync(path.join(DIST, 'chu-de'), { recursive: true });
+for (const t of TOPIC_PAGES) out(t.path, t.html);
 out('404.html', p404);
 for (const f of fontFiles.concat('OFL.txt')) copyFileSync(path.join(SRC, 'fonts', f), path.join(DIST, 'assets', 'fonts', f));
 for (const f of readdirSync(path.join(SRC, 'static'), { withFileTypes: true })) if (f.isFile()) copyFileSync(path.join(SRC, 'static', f.name), path.join(DIST, f.name));
@@ -318,8 +365,10 @@ out('data/library.json', JSON.stringify({ q: ACT, an: FOODS }));
 /* Hostinger đang để website kiểu Node.js lấy thư mục dist/ làm gốc: cần package.json có lệnh build (không làm gì, vì dist đã build sẵn) */
 out('package.json', JSON.stringify({ name: 'homnaylamgi-dist', version: '1.0.0', private: true, description: 'Bản web đã build sẵn (tools/build.mjs). Hostinger chép nguyên thư mục này ra public_html.', scripts: { build: 'echo "dist da build san"' } }, null, 2) + '\n');
 out('.well-known/security.txt', `Contact: mailto:${SUPPORT.email}\nExpires: ${new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10)}T00:00:00.000Z\nPreferred-Languages: vi, en\nCanonical: ${SITE}/.well-known/security.txt\n`);
-out('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
-out('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${SITE}/</loc><lastmod>${TODAY}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>\n  <url><loc>${SITE}/bai-viet</loc><lastmod>${TODAY}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>\n  <url><loc>${SITE}/rieng-tu</loc><lastmod>${TODAY}</lastmod><changefreq>yearly</changefreq><priority>0.2</priority></url>\n</urlset>\n`);
+out('robots.txt', `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\nSitemap: ${SITE}/api/sitemap.php\n`);
+/* sơ đồ trang tĩnh; bài viết nằm ở /api/sitemap.php (chỉ có khi đã đăng bài). 3.000 trang quẻ, món lẻ để noindex nên không đưa vào */
+const SM = [[`${SITE}/`, 'weekly', '1.0'], [`${SITE}/hom-nay-an-gi`, 'weekly', '0.9'], [`${SITE}/chu-de/`, 'monthly', '0.7'], ...TP.pages.map(t => [t.url, 'monthly', '0.7']), [`${SITE}/rieng-tu`, 'yearly', '0.2']];
+out('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${SM.map(([u, f, pr]) => `  <url><loc>${u}</loc><lastmod>${TODAY}</lastmod><changefreq>${f}</changefreq><priority>${pr}</priority></url>`).join('\n')}\n</urlset>\n`);
 out('sw.js', await minJs(readFileSync(path.join(SRC, 'sw.js'), 'utf8').replace('__VERSION__', VERSION)));
 
 const SECURITY = [
@@ -355,6 +404,9 @@ ErrorDocument 404 /404.html
   RewriteCond %{DOCUMENT_ROOT}/$1/$2.html !-f
   RewriteRule ^(q|an)/([0-9]+)/?$ api/q.php?k=$1&id=$2 [L,QSA]
   RewriteRule ^(q|an)/([0-9]+)/?$ $1/$2.html [L]
+  # Bỏ dấu / cuối ở trang không phải thư mục: /rieng-tu/ → /rieng-tu
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.+)/$ /$1 [L,R=301]
   # Trang không đuôi: /rieng-tu → rieng-tu.html
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d

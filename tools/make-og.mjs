@@ -60,7 +60,7 @@ h1{font:800 72px/1.06 "Bricolage Grotesque";letter-spacing:-.025em;text-wrap:bal
 <div class="bot"><div id="left"></div><p class="site"><small>Rút quẻ của bạn tại</small>homnaylamgi.com</p></div></div></body></html>`;
 
 const buildJobs = (ACT, FOODS) => ACT.map(a => ({ file: `q-${a.id}.png`, lab: 'HÔM NAY LÀM GÌ?', no: `Quẻ số ${String(a.id).padStart(3, '0')} <span>· ${LVL(a.d)}</span>`, seal: SEAL[a.c], t: a.t, po: a.n,
-  left: `<div class="stars">${Array.from({ length: 10 }, (_, i) => `<svg viewBox="0 0 24 24"><path fill="${i < a.d ? '#E0A100' : '#EADBD5'}" d="${STAR}"/></svg>`).join('')}</div><p class="dk">Độ khó ${a.d}/10 · nhận ${a.d} sao</p>` }))
+  left: `<div class="stars">${Array.from({ length: 10 }, (_, i) => `<svg viewBox="0 0 24 24"><path fill="${i < a.d ? '#E0A100' : '#EADBD5'}" d="${STAR}"/></svg>`).join('')}</div><p class="dk">Độ khó ${a.d}/10 · ${a.d <= 3 ? 'Nhẹ nhàng' : a.d <= 6 ? 'Vừa sức' : 'Thử thách'}</p>` }))
   .concat(FOODS.map(f => ({ file: `an-${f.id}.png`, lab: 'HÔM NAY ĂN GÌ?', no: `Quẻ ăn số ${String(f.id).padStart(3, '0')} <span>· ${KIND[f.o]}</span>`, seal: FSEAL[f.o], t: f.t, po: f.n,
     left: `<p class="meta">Bữa ${f.b.split('').map(c => MEAL[c]).join(', ')}<br>${REGION[f.r]} · ${PURSE[f.k]}</p>` })));
 const jobs = buildJobs(ACT, FOODS);

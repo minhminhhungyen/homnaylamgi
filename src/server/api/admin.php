@@ -20,6 +20,7 @@ switch ($act) {
       'posts' => $c("SELECT COUNT(*) n FROM posts WHERE status = 'published'"), 'drafts' => $c("SELECT COUNT(*) n FROM posts WHERE status = 'draft'"),
       'notices' => $c('SELECT COUNT(*) n FROM notices WHERE active = 1 AND (ends_at IS NULL OR ends_at >= NOW())'), 'lib' => $c('SELECT COUNT(*) n FROM library'),
       'audit' => q('SELECT a.action, a.detail, a.at, u.name FROM audit a LEFT JOIN users u ON u.id = a.user_id ORDER BY a.id DESC LIMIT 15')->fetchAll(),
+      'counts' => q('SELECT day, ev, n FROM counters WHERE day >= CURDATE() - INTERVAL 29 DAY ORDER BY day DESC')->fetchAll(),
       'base' => $base, 'me' => public_user($me)]);
 
   /* ---------- người dùng ---------- */

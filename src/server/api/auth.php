@@ -24,6 +24,7 @@ switch ($act) {
 
   case 'register':
     need_post(); check_csrf();
+    if (!USER_ACCOUNTS) fail('Trang không còn mở tài khoản người dùng. Bạn dùng web ngay, không cần đăng ký.', 410);
     limit('reg:' . ip_bucket(), 5, 3600);
     $email = mb_strtolower(str_in('email', 190)); $name = clean_name(str_in('name', 120)); $pass = (string) (input()['password'] ?? '');
     if (!valid_email($email)) fail('Email chưa đúng.');
@@ -51,6 +52,7 @@ switch ($act) {
     $u = one('SELECT * FROM users WHERE email = ?', [$email]);
     if (!login_pass_ok($u, $pass)) { limit_hit($kIp, 900); limit_hit($kAcct, 3600); fail('Email hoặc mật khẩu chưa đúng.', 401); }
     limit_clear($kIp);
+    if (!USER_ACCOUNTS && $u['role'] !== 'admin') fail('Trang không còn dùng tài khoản người dùng.', 410);
     if ($u['status'] !== 'active') fail('Tài khoản đang bị khóa. Liên hệ hotro@homnaylamgi.com.', 403);
     if (password_needs_rehash($u['pass_hash'], defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT)) q('UPDATE users SET pass_hash = ? WHERE id = ?', [hash_pass($pass), $u['id']]);
     finish_login($u);
@@ -71,6 +73,7 @@ switch ($act) {
 
   case 'google':
     need_post(); check_csrf();
+    if (!USER_ACCOUNTS) fail('Trang không còn mở tài khoản người dùng.', 410);
     $gid = (string) cfg('google_client_id', '');
     if (!$gid) fail('Đăng nhập Google chưa được bật.', 503);
     limit('google:' . ip_bucket(), 20, 900);
@@ -118,8 +121,8 @@ switch ($act) {
     $email = mb_strtolower(str_in('email', 190));
     limit('forgot-ip:' . client_ip(), 5, 3600);
     limit('forgot:' . $email, 3, 3600);
-    $u = valid_email($email) ? one('SELECT id, name, status FROM users WHERE email = ?', [$email]) : null;
-    if ($u && $u['status'] === 'active') {
+    $u = valid_email($email) ? one('SELECT id, name, status, role FROM users WHERE email = ?', [$email]) : null;
+    if ($u && $u['status'] === 'active' && (USER_ACCOUNTS || $u['role'] === 'admin')) {
       $t = new_token((int) $u['id'], 'reset', 3600);
       send_mail($email, 'Đặt lại mật khẩu Hôm nay làm gì?', "Chào {$u['name']},\n\nBấm vào link sau để đặt mật khẩu mới (hiệu lực 1 giờ):\n" . site_url() . "/api/reset.php?t={$t}\n\nNếu bạn không yêu cầu, hãy bỏ qua thư này. Mật khẩu cũ vẫn dùng được.\n\nHôm nay làm gì? — homnaylamgi.com");
     }

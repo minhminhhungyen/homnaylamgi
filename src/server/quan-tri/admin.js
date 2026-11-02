@@ -72,7 +72,14 @@ const ACT_NAME = { 'user-update': 'Sửa quyền người dùng', 'user-delete':
 async function overview() {
   const s = await api('/api/admin.php?action=stats');
   const box = (n, t) => `<div class="card stat"><b>${n}</b>${t}</div>`;
-  app.innerHTML = `<h1>Tổng quan</h1><div class="grid">${box(s.users, 'người dùng')}${box(s.users7, 'đăng ký trong 7 ngày')}${box(s.active7, 'đăng nhập trong 7 ngày')}${box(s.posts, 'bài đã đăng')}${box(s.drafts, 'bài nháp')}${box(s.notices, 'thông báo đang chạy')}${box(s.lib, 'quẻ/món đã thêm, sửa, ẩn')}</div>
+  /* lượt dùng ẩn danh: chỉ có tổng theo ngày (xem api/dem.php) */
+  const EVN = { open: 'Mở trang', draw: 'Rút quẻ', food: 'Rút món', accept: 'Nhận quẻ', done: 'Làm xong', veg: 'Bật món chay', group: 'Chọn cho nhóm', ban: 'Ẩn món', share: 'Bấm chia sẻ', wx: 'Bật thời tiết', topic: 'Vào từ trang chủ đề' };
+  const days = {}; (s.counts || []).forEach(r => { (days[r.day] = days[r.day] || {})[r.ev] = +r.n; });
+  const d7 = Object.keys(days).sort().reverse().slice(0, 7), sum7 = k => d7.reduce((t, d) => t + (days[d][k] || 0), 0);
+  const cols = Object.keys(EVN);
+  const usage = Object.keys(days).length ? `<div class="tablewrap"><table><tr><th>Ngày</th>${cols.map(k => `<th>${EVN[k]}</th>`).join('')}</tr>${Object.keys(days).sort().reverse().map(d => `<tr><td>${esc(d.split('-').reverse().join('/'))}</td>${cols.map(k => `<td>${days[d][k] || 0}</td>`).join('')}</tr>`).join('')}</table></div>` : '<p class="muted">Chưa có số liệu. Số đếm bắt đầu từ khi cài cơ sở dữ liệu.</p>';
+  app.innerHTML = `<h1>Tổng quan</h1><div class="grid">${box(sum7('open'), 'lượt mở trang 7 ngày qua')}${box(sum7('draw'), 'lần rút quẻ 7 ngày qua')}${box(sum7('food'), 'lần rút món 7 ngày qua')}${box(sum7('done'), 'lần bấm làm xong 7 ngày qua')}${box(s.posts, 'bài đã đăng')}${box(s.drafts, 'bài nháp')}${box(s.notices, 'thông báo đang chạy')}${box(s.lib, 'quẻ/món đã thêm, sửa, ẩn')}</div>
+  <div class="card"><h2>Lượt dùng 30 ngày qua</h2><p class="muted">Đếm ẩn danh: không cookie, không IP, không biết ai là ai. Người bật chặn theo dõi (GPC, Do Not Track) không được đếm.</p>${usage}</div>
   <div class="card"><h2>Hoạt động gần đây</h2>${s.audit.length ? `<div class="tablewrap"><table><tr><th>Lúc</th><th>Ai</th><th>Việc</th><th>Chi tiết</th></tr>${s.audit.map(a => `<tr><td>${esc(dt(a.at))}</td><td>${esc(a.name || '—')}</td><td>${esc(ACT_NAME[a.action] || a.action)}</td><td>${esc(a.detail)}</td></tr>`).join('')}</table></div>` : '<p class="muted">Chưa có.</p>'}</div>`;
 }
 

@@ -5,7 +5,7 @@ require dirname(__DIR__) . '/api/_lib.php';
 require dirname(__DIR__) . '/api/_content.php';
 require dirname(__DIR__) . '/api/_page.php';
 $slug = (string) ($_GET['slug'] ?? '');
-if (!installed()) { page_head('Bài viết | Hôm nay làm gì?'); echo '<div class="card"><h1>Bài viết</h1><p>Mục bài viết sắp có.</p></div>'; page_foot(); exit; }
+if (!installed()) { header('X-Robots-Tag: noindex'); page_head('Bài viết | Hôm nay làm gì?'); echo '<div class="card"><h1>Bài viết</h1><p>Mục bài viết sắp có.</p></div>'; page_foot(); exit; }
 header('Cache-Control: public, max-age=120');
 if ($slug !== '') {
   if (!preg_match('/^[a-z0-9-]{1,120}$/', $slug)) { http_response_code(404); }
@@ -21,6 +21,7 @@ if ($slug !== '') {
 }
 $page = max(1, (int) ($_GET['trang'] ?? 1)); $per = 12;
 $total = (int) one("SELECT COUNT(*) n FROM posts WHERE status = 'published' AND published_at <= NOW()")['n'];
+if (!$total) header('X-Robots-Tag: noindex'); // chưa có bài thì chưa cho tìm kiếm xếp hạng trang trống
 $rows = q("SELECT slug, title, summary, cover, published_at FROM posts WHERE status = 'published' AND published_at <= NOW() ORDER BY published_at DESC LIMIT $per OFFSET " . (($page - 1) * $per))->fetchAll();
 page_head('Bài viết | Hôm nay làm gì?', 'Bài viết, mẹo hay và tin mới từ Hôm nay làm gì?', ['type' => 'website', 'site_name' => 'Hôm nay làm gì?', 'title' => 'Bài viết | Hôm nay làm gì?', 'url' => site_url() . '/bai-viet', 'image' => site_url() . '/og-image.png']);
 echo '<h1>Bài viết</h1>';

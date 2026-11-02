@@ -13,6 +13,7 @@ require __DIR__ . '/_lib.php';
 const STATE_MAX = 200 * 1024, DIARY_MAX = 1024 * 1024;
 const DAY_MS = 86400000;
 
+if (!USER_ACCOUNTS) fail('Đồng bộ đã tắt: trang không còn dùng tài khoản người dùng.', 410);
 if (!installed()) fail('Hệ thống tài khoản chưa được cài đặt.', 503);
 if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > STATE_MAX + DIARY_MAX + 65536) fail('Dữ liệu quá lớn.', 413);
 start_session();

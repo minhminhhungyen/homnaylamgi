@@ -1,29 +1,26 @@
 # Khai báo trong Play Console (bản nháp để Sếp duyệt)
 
-Đây là đề xuất trả lời theo đúng cách app đang chạy ngày 23/10/2026. Người chịu trách nhiệm khai báo là chủ tài khoản. Nếu sau này thêm đăng nhập, quảng cáo hay công cụ đo lường thì phải khai lại.
+Đây là đề xuất trả lời theo đúng cách app đang chạy ngày 02/11/2026. Người chịu trách nhiệm khai báo là chủ tài khoản. Nếu sau này bật lại tài khoản người dùng, thêm quảng cáo hay công cụ đo lường khác thì phải khai lại.
 
 ## An toàn dữ liệu (Data safety)
-- **Ứng dụng có thu thập hoặc chia sẻ dữ liệu người dùng không?** Có, chỉ một loại:
+- **Ứng dụng có thu thập hoặc chia sẻ dữ liệu người dùng không?** Có, hai loại:
   - **Vị trí → Vị trí gần đúng (Approximate location):**
-    - Thu thập (Collected): Có. Tọa độ làm tròn ~1 km được gửi từ máy người dùng tới dịch vụ thời tiết.
+    - Thu thập (Collected): Có. Tọa độ làm tròn khoảng 1 km được gửi từ máy người dùng tới dịch vụ thời tiết.
     - Chia sẻ (Shared): Có. Bên nhận là MET Norway (thời tiết) và Open-Meteo (chất lượng không khí). Em đề xuất khai thận trọng là có chia sẻ, vì hai bên này không xử lý dữ liệu thay mặt công ty.
     - Xử lý tạm thời (ephemeral): Không. Không kiểm soát được thời gian lưu của bên thứ ba.
     - Bắt buộc hay tùy chọn: Tùy chọn. Người dùng tự bật; không cho thì chọn tỉnh, thành.
     - Mục đích: Chức năng ứng dụng (App functionality).
-  - **Thông tin cá nhân → Tên, Địa chỉ email (từ 23/10/2026, khi có tài khoản):**
-    - Thu thập: Có, chỉ khi người dùng tự tạo tài khoản (email + mật khẩu hoặc Google). Chia sẻ: Không.
-    - Bắt buộc hay tùy chọn: Tùy chọn. Mọi chức năng chính dùng được không cần tài khoản.
-    - Mục đích: Quản lý tài khoản (Account management), Liên lạc với nhà phát triển (Developer communications).
-    - Người dùng xóa được tài khoản ngay trong app (Trang của bạn → Xóa tài khoản).
-  - **Mã định danh khác (User IDs):** mã tài khoản Google khi đăng nhập bằng Google. Mục đích: Quản lý tài khoản.
-  - **Hoạt động trong ứng dụng → Lịch sử tương tác trong ứng dụng (App interactions) và Nội dung khác do người dùng tạo (Other user-generated content):**
-    - Thu thập: Có, chỉ khi người dùng đăng nhập (đồng bộ sao, lịch sử quẻ, nhật ký ĐÃ MÃ HÓA trên máy). Chia sẻ: Không.
-    - Bắt buộc hay tùy chọn: Tùy chọn. Mục đích: Chức năng ứng dụng (App functionality).
-    - Nhật ký được mã hóa đầu cuối bằng mật khẩu riêng; máy chủ không đọc được.
+  - **Hoạt động trong ứng dụng → Lịch sử tương tác trong ứng dụng (App interactions):**
+    - Thu thập: Có. Mỗi lượt dùng gửi về máy chủ của công ty các con số tổng (mở trang, rút quẻ, rút món, nhận, xong, bật món chay…).
+    - Không kèm cookie, mã định danh, nội dung quẻ hay món; máy chủ chỉ cộng vào tổng theo ngày, không lưu IP.
+    - Chia sẻ: Không. Liên kết với người dùng: Không.
+    - Bắt buộc hay tùy chọn: người dùng tắt được bằng cài đặt chặn theo dõi của trình duyệt (Global Privacy Control, Do Not Track).
+    - Mục đích: Phân tích (Analytics).
+- **Không còn thu thập** tên, email, mật khẩu hay mã tài khoản Google: từ 02/11/2026 app không mở tài khoản người dùng, không đồng bộ.
 - Không thu thập: số điện thoại, danh bạ, ảnh, tệp, lịch sử duyệt web, định danh thiết bị, dữ liệu tài chính, sức khỏe.
-- Người không đăng nhập: tên gọi, tâm trạng, nhật ký chỉ lưu trên máy, không gửi đi đâu. Tâm trạng, vị trí thời tiết và bộ lọc không bao giờ được đồng bộ. Form hỗ trợ chỉ mở ứng dụng email của người dùng; họ tự bấm gửi.
+- Lịch sử, để dành, tên gọi, tâm trạng, bộ lọc, nhật ký cũ (đã mã hóa) chỉ lưu trên máy, không gửi đi đâu. Form hỗ trợ chỉ mở ứng dụng email của người dùng; họ tự bấm gửi.
 - **Dữ liệu có được mã hóa khi truyền không?** Có (HTTPS).
-- **Người dùng có thể yêu cầu xóa dữ liệu không?** Có. Dữ liệu chỉ nằm trên máy: nút “Xóa dữ liệu” trong app, nút “Tắt thời tiết” hoặc gỡ app.
+- **Người dùng có thể yêu cầu xóa dữ liệu không?** Có. Dữ liệu chỉ nằm trên máy: nút “Xóa dữ liệu” trong app, nút “Tắt thời tiết” hoặc gỡ app. Số đếm ẩn danh không gắn với ai nên không có gì để xóa theo từng người.
 - Lưu ý: nhà cung cấp máy chủ (Vercel, Hostinger) ghi nhật ký kỹ thuật có địa chỉ IP. Điều này đã nêu trong chính sách quyền riêng tư; không có mục riêng trong Data safety.
 
 ## Phân loại nội dung (Content rating)

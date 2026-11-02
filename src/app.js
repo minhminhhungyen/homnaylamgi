@@ -180,7 +180,15 @@ const INV = (() => {
   return none;
 })();
 /* ?mode=an hoặc ?mode=lam: phím tắt “Ăn gì”, “Rút quẻ” khi giữ lâu biểu tượng app */
-const START_MODE = (() => { try { const v = new URLSearchParams(location.search).get('mode'); return v === 'an' || v === 'lam' ? v : ''; } catch (e) { return ''; } })();
+const START_MODE = (() => { try { const v = new URLSearchParams(location.search).get('mode'); if (v === 'an' || v === 'lam') return v; } catch (e) { /* bỏ qua */ } return document.documentElement.dataset.start === 'an' ? 'an' : ''; })();
+/* link từ trang chủ đề: đặt sẵn lựa chọn như khi người dùng tự bấm (chỉ nhận đúng các giá trị có trên trang) */
+const PRESET = (() => {
+  const o = {}; let p; try { p = new URLSearchParams(location.search); } catch (e) { return o; }
+  const pick = (k, ok) => { const v = p.get(k); if (v !== null && ok.includes(v)) o[k] = v; };
+  pick('reg', ['B', 'T', 'N']); pick('chay', ['1']); pick('bua', ['s', 'c', 't', 'k', 'v']); pick('kieu', ['n', 'h']);
+  pick('ai', ['a', 'b', 'y', 'g']); pick('tien', ['0', '1', '2']); pick('lau', ['20', '60', '240', '999']); pick('noi', ['i', 'o']); pick('tam', ['c', 'b', 'm', 'x', 'l', 'h']); pick('tu', ['1']);
+  return o;
+})();
 if (location.search) { try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { /* bỏ qua */ } }
 /* học theo người dùng: chấm Vui/Đáng nhớ thì cộng điểm nhóm việc, bấm bỏ qua thì trừ nhẹ */
 const nudge = (c, v) => { if (!c) return; S.pref[c] = Math.max(-6, Math.min(6, Math.round(((S.pref[c] || 0) + v) * 100) / 100)); };
@@ -565,7 +573,7 @@ function refreshClock() {
 }
 function drawFood() {
   if (!refreshClock()) return;
-  const f = chooseFood(S.food);
+  const f = chooseFood(S.food); dem('food');
   animateSwap(() => { setFood(f.id); renderSlip(); announce(); });
 }
 function draw() {
@@ -573,6 +581,7 @@ function draw() {
   if (!refreshClock()) return;
   const res = choose(S.cur);
   if (!res.a) { toast('Chưa có quẻ hợp. Thử nới bớt phần Tinh chỉnh nhé.'); return; }
+  dem('draw');
   animateSwap(() => { lastRelax = res.relaxed; setCur(res.a.id); renderSlip(); announce(); });
 }
 function busy() { return S.acc && S.curDay === TODAY && !doneToday(S.cur); }
@@ -586,7 +595,7 @@ function complete(id) {
   if (doneToday(id)) return;
   const a = byId.get(id); if (!a) return;
   S.done.unshift({ id, day: TODAY, ts: syNowMs(), d: a.d, ch: id === CH.id ? 1 : 0, f: '' });
-  S.done = S.done.slice(0, 600);
+  S.done = S.done.slice(0, 600); dem('done');
   S.stars += a.d;
   nudge(a.c, 0.5);
   S.best = Math.max(S.best, streak());
@@ -598,7 +607,7 @@ function complete(id) {
 
 $('#btnMain').addEventListener('click', () => {
   const mode = $('#btnMain').dataset.mode;
-  if (mode === 'accept') { S.acc = 1; S.accAt = Date.now(); save(); renderSlip(); toast('Đã nhận quẻ. Làm xong nhớ quay lại bấm nhé!'); }
+  if (mode === 'accept') { S.acc = 1; S.accAt = Date.now(); save(); renderSlip(); dem('accept'); toast('Đã nhận quẻ. Làm xong nhớ quay lại bấm nhé!'); }
   else if (mode === 'done') complete(S.cur);
   else if (mode === 'food') openShare('item');
   else { lastRelax = []; draw(); }
@@ -609,13 +618,13 @@ $$('#pickrow [role="tab"]').forEach(b => b.addEventListener('click', () => { if 
 $$('#meals [data-meal]').forEach(b => b.addEventListener('click', () => { S.meal = b.dataset.meal; S.mealDay = TODAY; save(); renderMeals(); drawFood(); }));
 $$('#meals [data-ft]').forEach(b => b.addEventListener('click', () => { S.ftype = S.ftype === b.dataset.ft ? '' : b.dataset.ft; save(); renderMeals(); drawFood(); }));
 $('#vegChip').addEventListener('click', () => {
-  S.fveg = !S.fveg; save(); renderMeals(); drawFood();
+  S.fveg = !S.fveg; if (S.fveg) dem('veg'); save(); renderMeals(); drawFood();
   toast(S.fveg ? 'Chỉ gợi ý món chay.' : 'Gợi ý tất cả các món.');
 });
 /* không ăn món này: ẩn hẳn trên máy này, xem và hiện lại ở trang Tôi */
 $('#btnBan').addEventListener('click', () => {
   const f = foodById.get(S.food); if (!f) return;
-  S.fban = [f.id].concat((S.fban || []).filter(x => x !== f.id)).slice(0, 300);
+  S.fban = [f.id].concat((S.fban || []).filter(x => x !== f.id)).slice(0, 300); dem('ban');
   save(); drawFood(); renderMe();
   toast(`Đã ẩn “${f.t}”. Hiện lại được ở trang Tôi.`);
 });
@@ -627,7 +636,7 @@ function groupDraw() {
   S.frecent = GRP.map(f => f.id).concat(S.frecent.filter(x => !GRP.some(f => f.id === x))).slice(0, SEEN_MAX); save();
   $('#grpList').innerHTML = GRP.map(f => `<li class="grp-item"><div class="row-main"><p class="row-t">${esc(f.t)}</p><p class="row-m">${esc(f.n)}</p><p class="row-m">${esc(FOOD_KIND[f.o])} · ${esc(REGION[f.r] || 'Cả nước')} · ${esc(PURSE[f.k])}${f.v ? ' · Món chay' : ''}</p></div><button class="btn btn-main btn-sm" type="button" data-pick="${f.id}">Chốt món này</button></li>`).join('');
 }
-$('#btnGroup').addEventListener('click', () => { groupDraw(); openModal($('#groupModal')); });
+$('#btnGroup').addEventListener('click', () => { dem('group'); groupDraw(); openModal($('#groupModal')); });
 $('#grpAgain').addEventListener('click', groupDraw);
 $('#grpList').addEventListener('click', e => {
   const b = e.target.closest('[data-pick]'); if (!b) return;
@@ -919,7 +928,7 @@ function locate() {
   if (!navigator.geolocation) { openWxBox('Máy này không lấy được vị trí. Bạn chọn nơi gần nhất nhé.'); return; }
   wxLoading = true; wxFail = ''; renderWx();
   navigator.geolocation.getCurrentPosition(p => {
-    S.wxOn = true;
+    S.wxOn = true; dem('wx');
     S.wxLoc = { lat: Math.round(p.coords.latitude * 100) / 100, lon: Math.round(p.coords.longitude * 100) / 100, name: '' };
     save(); renderMeals(); getWx(true);
   }, err => {
@@ -934,7 +943,7 @@ $('#wxEdit').addEventListener('click', () => { if ($('#wxBox').hidden) openWxBox
 $('#wxLoc').addEventListener('click', locate);
 $('#wxCity').addEventListener('change', e => {
   const c = CITIES[+e.target.value]; if (!c || e.target.value === '') return;
-  S.wxOn = true; S.wxLoc = { lat: c[1], lon: c[2], name: c[0] }; save(); renderMeals(); getWx(true);
+  S.wxOn = true; dem('wx'); S.wxLoc = { lat: c[1], lon: c[2], name: c[0] }; save(); renderMeals(); getWx(true);
 });
 /* lời mời cho xem vị trí: chỉ hiện thông báo của trang; hộp xin quyền của trình duyệt chỉ bật khi người dùng bấm “Cho phép” */
 const LOCK = 'hnlg.locAsk';
@@ -1090,7 +1099,7 @@ function openModal(m) { lastFocus = document.activeElement; $('#toast').classLis
 function closeModal(m) { m.hidden = true; document.body.classList.remove('modal-open'); setInert(false); if (lastFocus && lastFocus.focus) lastFocus.focus(); }
 const renderFmt = () => $$('[data-fmt]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.fmt === (S.fmt === 'post' ? 'post' : 'story'))));
 function openShare(kind) {
-  shareKind = kind === 'site' ? 'site' : 'item';
+  shareKind = kind === 'site' ? 'site' : 'item'; dem('share');
   SH = shareInfo();
   $('#shTitle').textContent = shareKind === 'site' ? 'Rủ bạn bè cùng chơi' : S.mode === 'an' ? 'Rủ bạn đi ăn' : (doneToday(S.cur) ? 'Khoe với bạn bè' : 'Rủ thêm người cùng làm');
   $('#shareText').value = SH.msg;
@@ -1261,10 +1270,14 @@ function dLock(quiet) {
 }
 const dTouch = () => { clearTimeout(dLockT); if (DK) dLockT = setTimeout(() => { dLock(true); renderDiary(); }, 10 * 60e3); };
 const fmtWhen = ms => { const d = new Date(ms); return `${WD[d.getDay()]}, ${dm(d)}/${d.getFullYear()} · ${hm(ms)}`; };
+/* 02/11/2026: thôi nhận trang nhật ký mới. Ai đã có nhật ký vẫn mở khóa được để đọc, tải về file chữ hoặc xóa khỏi máy. */
+const DIARY_WRITE = false;
 function renderDiary() {
   const ok = HAS_CRYPTO, d = ok ? dLoad() : null;
   $('#diNoCrypto').hidden = ok;
-  $('#diSetup').hidden = !ok || !!d;
+  $('#diSetup').hidden = !DIARY_WRITE || !ok || !!d;
+  $('#diNone').hidden = DIARY_WRITE || !!d;
+  $('#diForm').hidden = !DIARY_WRITE; $('#diChangeBtn').hidden = !DIARY_WRITE;
   $('#diLocked').hidden = !ok || !d || !!DK;
   $('#diOpen').hidden = !ok || !d || !DK;
   if (!DK) return;
@@ -1274,10 +1287,10 @@ function renderDiary() {
   $('#diFormLbl').textContent = dEdit ? 'Sửa trang nhật ký' : 'Hôm nay của bạn thế nào?';
   $('#diSave').textContent = dEdit ? 'Lưu thay đổi' : 'Lưu trang nhật ký';
   $('#diCancel').hidden = !dEdit;
-  $('#diCount').textContent = DE.length ? `${DE.length} trang · đang mở, tự khóa sau 10 phút không dùng` : 'Chưa có trang nào. Viết trang đầu tiên nhé.';
+  $('#diCount').textContent = DE.length ? `${DE.length} trang · đang mở, tự khóa sau 10 phút không dùng` : (DIARY_WRITE ? 'Chưa có trang nào. Viết trang đầu tiên nhé.' : 'Nhật ký không còn trang nào.');
   $('#diList').innerHTML = DE.map(e => {
     const q = byId.get(e.q);
-    return `<li class="entry"><div class="entry-head"><span>${esc(fmtWhen(e.at))}</span>${e.u ? `<span>đã sửa ${esc(hm(e.u))} ${esc(dm(new Date(e.u)))}</span>` : ''}</div>${q ? `<p class="entry-q">Quẻ: ${esc(q.t)}</p>` : ''}<p class="entry-t">${esc(e.text)}</p><div class="acts"><button class="link" type="button" data-de="${e.id}">Sửa</button><button class="link muted" type="button" data-dx="${e.id}">Xóa</button></div></li>`;
+    return `<li class="entry"><div class="entry-head"><span>${esc(fmtWhen(e.at))}</span>${e.u ? `<span>đã sửa ${esc(hm(e.u))} ${esc(dm(new Date(e.u)))}</span>` : ''}</div>${q ? `<p class="entry-q">Quẻ: ${esc(q.t)}</p>` : ''}<p class="entry-t">${esc(e.text)}</p><div class="acts">${DIARY_WRITE ? `<button class="link" type="button" data-de="${e.id}">Sửa</button>` : ''}<button class="link muted" type="button" data-dx="${e.id}">Xóa</button></div></li>`;
   }).join('');
   dTouch();
 }
@@ -1342,6 +1355,16 @@ $('#diList').addEventListener('click', e => {
   }
 });
 $('#diLockBtn').addEventListener('click', () => { dLock(); renderDiary(); });
+/* tải nhật ký đã mở khóa về thành file chữ (.txt), mở được bằng mọi máy */
+$('#diExport').addEventListener('click', () => {
+  if (!DK) { renderDiary(); return; }
+  const lines = ['Nhật ký Hôm nay làm gì?', `Tải về ngày ${new Date().toLocaleDateString('vi-VN')} · ${DE.length} trang`, ''];
+  DE.slice().sort((x, y) => x.at - y.at).forEach(e => { const q = byId.get(e.q); lines.push(`— ${fmtWhen(e.at)}${q ? ` · Quẻ: ${q.t}` : ''}`, e.text, ''); });
+  const url = URL.createObjectURL(new Blob([lines.join('\r\n')], { type: 'text/plain;charset=utf-8' }));
+  const a = document.createElement('a'); a.href = url; a.download = `nhat-ky-homnaylamgi-${TODAY}.txt`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  toast('Đã tải nhật ký về máy. File là chữ thường, không có mật khẩu, cất ở nơi riêng tư nhé.');
+});
 $('#diChangeBtn').addEventListener('click', () => { const f = $('#diChange'); f.hidden = !f.hidden; if (!f.hidden) $('#diCh1').focus(); });
 $('#diChange').addEventListener('submit', async e => {
   e.preventDefault(); if (!DK) { renderDiary(); return; }
@@ -1356,7 +1379,6 @@ $('#diChange').addEventListener('submit', async e => {
   $('#diCh1').value = ''; $('#diCh2').value = ''; $('#diChange').hidden = true; renderDiary();
 });
 ['input', 'keydown', 'pointerdown'].forEach(t => $('#viewDiary').addEventListener(t, dTouch, { passive: true }));
-$('#btnJournal').addEventListener('click', () => { dLinkQ = S.mode !== 'an' && recToday(S.cur) ? S.cur : 0; $('#diLink').checked = !!dLinkQ; });
 
 /* ---------- trang của bạn: tên gọi, sao lưu, hỗ trợ, xóa dữ liệu ---------- */
 function renderMe() {
@@ -1367,7 +1389,8 @@ function renderMe() {
   $('#banNote').hidden = !nb;
   if (nb) $('#banTxt').textContent = `Bạn đã ẩn ${nb} món: ${(S.fban || []).slice(0, 5).map(id => (foodById.get(id) || {}).t).filter(Boolean).join(', ')}${nb > 5 ? '…' : ''}.`;
   const d = HAS_CRYPTO ? dLoad() : null;
-  $('#meDiary').textContent = !HAS_CRYPTO ? 'Trình duyệt này chưa hỗ trợ nhật ký mã hóa.' : d ? `${d.entries.length} trang, đã khóa bằng mật khẩu của bạn.` : 'Chưa có nhật ký. Đặt một mật khẩu là viết được ngay.';
+  $('#meDiaryCard').hidden = !d && !DIARY_WRITE;
+  $('#meDiary').textContent = !HAS_CRYPTO ? 'Trình duyệt này chưa hỗ trợ nhật ký mã hóa.' : d ? `Mục nhật ký đã ngừng nhận trang mới. Máy này còn một cuốn nhật ký cũ (${d.entries.length} trang): mở khóa để đọc lại, tải về file chữ hoặc xóa.` : 'Chưa có nhật ký.';
 }
 $('#btnUnban').addEventListener('click', () => { S.fban = []; save(); renderMe(); toast('Đã hiện lại tất cả các món.'); });
 $('#nameForm').addEventListener('submit', e => {
@@ -1445,6 +1468,22 @@ $('#btnWipe').addEventListener('click', async e => {
 /* điều hướng giữa trang chính và các trang con (#toi, #nhat-ky) */
 /* ---------- máy chủ homnaylamgi.com: thông báo, quẻ mới, tài khoản (tùy chọn) ---------- */
 const SERVER = DEPLOY && /^(homnaylamgi\.com|[\w-]+\.hostingersite\.com|127\.0\.0\.1|localhost)$/.test(location.hostname);
+/* 02/11/2026: web tư vấn cho gọn, không mở tài khoản người dùng, không đồng bộ (mã giữ lại, bật lại bằng cờ này và USER_ACCOUNTS ở _lib.php) */
+const ACCOUNTS = false;
+/* ---------- đếm lượt dùng ẩn danh (trang riêng tư mục 4) ----------
+   Chỉ gom số đếm trong bộ nhớ, gửi một gói khi trang bị ẩn hoặc đóng. Không cookie, không mã định danh, không nội dung.
+   Trình duyệt bật Global Privacy Control hoặc Do Not Track thì không gửi gì. */
+const DEM_ON = SERVER && !(navigator.globalPrivacyControl === true || navigator.doNotTrack === '1' || window.doNotTrack === '1');
+const DEM = {};
+function dem(k) { if (DEM_ON) DEM[k] = (DEM[k] || 0) + 1; }
+function demFlush() {
+  if (!DEM_ON) return;
+  const ks = Object.keys(DEM); if (!ks.length) return;
+  const body = JSON.stringify({ e: DEM }); ks.forEach(k => { delete DEM[k]; });
+  try { if (!navigator.sendBeacon || !navigator.sendBeacon('/api/dem.php', new Blob([body], { type: 'application/json' }))) fetch('/api/dem.php', { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'application/json' } }).catch(() => {}); } catch (e) { /* bỏ qua */ }
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) demFlush(); });
+window.addEventListener('pagehide', demFlush);
 let ACC = { ready: false, installed: false, user: null, google: '', csrf: '' }, accTab = 'login', gisLoaded = false;
 async function sx(path, body) {
   const opt = { credentials: 'same-origin', headers: { 'X-CSRF': ACC.csrf } };
@@ -1470,7 +1509,7 @@ let SY = syLoad(); SY_SKEW = Number.isFinite(SY.skew) ? SY.skew : 0;
 const sySave = () => { try { localStorage.setItem(SYK, JSON.stringify(SY)); } catch (e) { /* bỏ qua */ } };
 let syBusy = false, syChain = Promise.resolve(), syPending = 0, syT = 0, syLast = 0, syRetryT = 0, syConflict = false, syForce = '', syErr = '', syNote = '';
 var SY_ON = false; // var: gọi được an toàn trước khi phần đồng bộ được nạp
-const syCan = () => !!(SERVER && ACC.user && (ACC.user.verified || ACC.user.google));
+const syCan = () => !!(ACCOUNTS && SERVER && ACC.user && (ACC.user.verified || ACC.user.google));
 function syKick() { if (!SY_ON || !syCan() || LEAVING) return; clearTimeout(syT); syT = setTimeout(() => { syT = 0; syncNow(); }, 4000); }
 const syHash = str => { let h = 0x811c9dc5; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h >>> 0).toString(16) + ':' + str.length; };
 const syIsDay = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -1832,7 +1871,7 @@ async function boot() {
   } catch (e) { /* máy chủ chưa sẵn sàng: trang vẫn chạy bình thường */ }
 }
 async function accLoad() {
-  if (!SERVER) return;
+  if (!SERVER || !ACCOUNTS) return;
   try { const j = await sx('/api/auth.php?action=me'); ACC = { ready: true, installed: j.installed !== false, user: j.user, google: j.google || '', csrf: j.csrf || ACC.csrf }; } catch (e) { ACC.ready = false; }
   if (ACC.user) syClaim(ACC.user.id);
   renderAcc();
@@ -1841,7 +1880,7 @@ async function accLoad() {
 const accMsg = (m, ok) => { const p = $('#accMsg'); if (p) { p.textContent = m || ''; p.className = ok ? 'note' : 'err'; } };
 function renderAcc() {
   const card = $('#acctCard'), box = $('#acctBody');
-  card.hidden = !(SERVER && ACC.ready && ACC.installed);
+  card.hidden = !(ACCOUNTS && SERVER && ACC.ready && ACC.installed);
   if (card.hidden) return;
   const u = ACC.user;
   if (u) {
@@ -1910,8 +1949,8 @@ function route() {
   document.body.classList.toggle('view-on', !!v);
   $('#viewMe').hidden = v !== 'me'; $('#viewDiary').hidden = v !== 'diary';
   if (v !== 'diary' && DK) dLock(true);
-  if (v === 'me') { renderMe(); renderAcc(); if (SERVER) accLoad(); } // luôn hỏi lại máy chủ: phiên có thể đã hết hạn hoặc bị khóa
-  if (v === 'diary') { renderDiary(); if (SERVER && ACC.user) syncNow(); }
+  if (v === 'me') { renderMe(); renderAcc(); if (SERVER && ACCOUNTS) accLoad(); } // luôn hỏi lại máy chủ: phiên có thể đã hết hạn hoặc bị khóa
+  if (v === 'diary') { renderDiary(); if (ACCOUNTS && SERVER && ACC.user) syncNow(); }
   if (v) { window.scrollTo(0, 0); (v === 'me' ? $('#meTitle') : $('#diTitle')).focus({ preventScroll: true }); }
   else if (was) { renderSlip(); }
 }
@@ -2008,6 +2047,17 @@ if (INV.k === 'q') {
 } else if (INV.k === 'an') { S.mode = 'an'; setFood(INV.id); }
 else if (START_MODE) S.mode = START_MODE;
 if (INV.k !== 'an') S.foodDay = ''; // món cũng gieo mới mỗi lần vào trang
+if (PRESET.reg) S.freg = PRESET.reg;
+if (PRESET.chay) S.fveg = true;
+if (PRESET.bua) { S.meal = PRESET.bua; S.mealDay = TODAY; }
+if (PRESET.kieu) S.ftype = PRESET.kieu;
+if (PRESET.ai) S.f.who = PRESET.ai;
+if (PRESET.tien) S.f.budget = PRESET.tien;
+if (PRESET.lau) S.f.dur = PRESET.lau;
+if (PRESET.noi) S.f.place = PRESET.noi;
+if (PRESET.tam) { S.mood = PRESET.tam; S.moodDay = TODAY; }
+if ((PRESET.reg || PRESET.chay || PRESET.bua || PRESET.kieu) && !INV.k) S.mode = 'an';
+if ((PRESET.ai || PRESET.tien || PRESET.lau || PRESET.noi || PRESET.tam) && !INV.k) S.mode = 'lam';
 /* mỗi lần vào trang là một lần gieo mới, khác lần trước. Giữ nguyên quẻ chỉ khi đang làm dở (đã bấm Nhận) hoặc mở từ link rủ */
 let start = S.curDay === TODAY && (INV.k === 'q' || busy()) ? byId.get(S.cur) : null;
 if (!start) { const r = choose(S.cur); lastRelax = r.relaxed; setCur(r.a.id); }
@@ -2017,7 +2067,8 @@ renderAll(); renderSoon(); setMode(S.mode); save(); renderMe();
 SY_ON = true;
 locAskShow();
 boot();
-if (SERVER && SY.uid) accLoad();
+dem('open'); if (PRESET.tu) dem('topic');
+if (ACCOUNTS && SERVER && SY.uid) accLoad();
 if (location.hash === '#toi' || location.hash === '#nhat-ky') route();
 if (startMsg) toast(startMsg);
 if (S.wxOn && S.wxLoc) getWx(false);
@@ -2027,5 +2078,7 @@ window.addEventListener('pageshow', e => { if (e.persisted) refreshClock(); });
 if (DEPLOY && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(() => { /* không có service worker thì trang vẫn chạy */ }); });
 }
-window.__hnlg = { dLoad, mergeState, syClean, dMerge, diaryResolve, syDcl, syName, syncNow: f => syncNow(f), sy: () => SY, diary: () => ({ open: !!DK, n: DE.length }), canInstall, installGuide, START_MODE, choose, buildPool, eligible, chooseFood, setMode, state: () => S, CH, EVS, SLOT, A, F, sunSet, parseMet, wxNow, nearCity, wx: () => WX, weight, INV, lunarOf, vegDay: () => VEG_DAY };
+window.__hnlg = { dLoad, mergeState, syClean, dMerge, diaryResolve, syDcl, syName, syncNow: f => syncNow(f), sy: () => SY, diary: () => ({ open: !!DK, n: DE.length }), canInstall, installGuide, START_MODE, choose, buildPool, eligible, chooseFood, setMode, state: () => S, CH, EVS, SLOT, A, F, sunSet, parseMet, wxNow, nearCity, wx: () => WX, weight, INV, lunarOf, vegDay: () => VEG_DAY,
+  /* chỉ để kiểm thử nhật ký cũ (trang không còn nút tạo nhật ký): tạo một cuốn nhật ký mã hóa trên chính máy này */
+  mkDiary: async (pass, texts) => { const v = await newVault(pass, []); for (const t of texts) { const id = randId(); v.vault.entries.push({ id, box: await seal(v.key, { at: Date.now(), d: ymd(new Date()), text: t, q: 0 }, id), u: syNowMs() }); } return dStore(v.vault); } };
 })();

@@ -27,6 +27,9 @@ ErrorDocument 404 /404.html
   RewriteCond %{DOCUMENT_ROOT}/$1/$2.html !-f
   RewriteRule ^(q|an)/([0-9]+)/?$ api/q.php?k=$1&id=$2 [L,QSA]
   RewriteRule ^(q|an)/([0-9]+)/?$ $1/$2.html [L]
+  # Bỏ dấu / cuối ở trang không phải thư mục: /rieng-tu/ → /rieng-tu
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.+)/$ /$1 [L,R=301]
   # Trang không đuôi: /rieng-tu → rieng-tu.html
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d

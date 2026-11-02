@@ -85,6 +85,13 @@ const SCHEMA = [
     drev INT UNSIGNED NOT NULL DEFAULT 0,
     updated_at DATETIME NOT NULL,
     CONSTRAINT fk_user_data_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+  /* v6: đếm lượt dùng ẩn danh, chỉ có tổng theo ngày và loại việc (không IP, không cookie, không mã người dùng) */
+  "CREATE TABLE IF NOT EXISTS counters (
+    day DATE NOT NULL,
+    ev VARCHAR(16) NOT NULL,
+    n INT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (day, ev)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 ];
 /* số phiên bản cấu trúc nằm ở SCHEMA_V trong _lib.php (tên file cờ hnlg-schema-vN) */

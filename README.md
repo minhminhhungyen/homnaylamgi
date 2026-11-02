@@ -97,6 +97,12 @@ Thử thách 7 ngày (`CHALLENGES`): `k` mã không trùng, `c` nhóm, `t` tên,
 
 ## Tài khoản, quản trị, bài viết (PHP + MySQL, chỉ chạy trên Hostinger)
 
+> **Từ 02/11/2026 (đợt 2 gọn trang):** không mở tài khoản người dùng, không đồng bộ. Cờ `ACCOUNTS = false` (src/app.js) và `USER_ACCOUNTS = false` (src/server/api/_lib.php): máy chủ trả 410 cho đăng ký, đăng nhập Google, đăng nhập của người không phải quản trị viên và `api/sync.php`; quên mật khẩu chỉ gửi thư cho quản trị viên. Mã đồng bộ, bảng `user_data` giữ nguyên để bật lại khi cần (đặt cả hai cờ về `true`, chạy lại bộ kiểm thử đồng bộ). Phần mô tả đồng bộ, người dùng bên dưới là của bản trước.
+> - Nhật ký: `DIARY_WRITE = false`, thôi nhận trang mới; máy đã có nhật ký vẫn mở khóa để đọc, tải về file chữ (.txt), xóa từng trang hoặc cả cuốn.
+> - Đếm ẩn danh: `api/dem.php` + bảng `counters (day, ev, n)`, SCHEMA_V 6. Trình duyệt gom số đếm trong bộ nhớ, gửi một gói khi trang bị ẩn (sendBeacon); không cookie, không IP, không định danh; bật GPC hoặc Do Not Track thì không gửi. Loại đếm: open, draw, food, accept, done, veg, ban, group, share, wx, topic; mỗi lần tối đa 50. Xem trong trang quản trị → Tổng quan (30 ngày).
+> - Trang `/hom-nay-an-gi` (cùng ứng dụng, mở sẵn mục món, tiêu đề và mô tả riêng) và 12 trang chủ đề `/chu-de/...` + trang `/chu-de/` (tools/topics.mjs: mỗi trang 30 gợi ý chọn cố định theo mã băm, có ItemList). Link từ trang chủ đề đặt sẵn lựa chọn: `reg`, `chay`, `bua`, `kieu`, `ai`, `tien`, `lau`, `noi`, `tam`, `tu=1` (đếm lượt vào từ chủ đề).
+> - Sơ đồ trang: `sitemap.xml` (16 địa chỉ tĩnh) + `api/sitemap.php` (bài viết đã đăng). `/bai-viet` gửi `X-Robots-Tag: noindex` khi chưa có bài.
+
 - Mã nằm trong `src/server/` (build chép sang `dist/`): `api/` (auth, admin, public, setup, sync…), `bai-viet/`, `quan-tri/`.
 - Đồng bộ theo tài khoản (`api/sync.php`, bảng `user_data`), chỉ cho tài khoản đã xác nhận email hoặc đăng nhập Google: sao, lịch sử, thử thách, để dành, tên gọi và nhật ký đã mã hóa. Không đồng bộ vị trí, thời tiết, bộ lọc, mức ưa thích nhóm việc.
   - Gộp: lịch sử hợp theo (quẻ, ngày); sao lấy bên cao hơn cộng quẻ chỉ có ở bên kia (trừ quẻ bị cắt ở mốc 600); tên, để dành, thử thách theo giờ sửa riêng từng trường (`mtf`); trường `got` (huy hiệu cũ, đã bỏ) vẫn hợp lại để máy chưa cập nhật không lỗi.

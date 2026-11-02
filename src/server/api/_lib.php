@@ -28,7 +28,10 @@ function cfg(?string $k = null, $def = null) {
   if ($c === null) { $p = cfg_path(); $c = is_file($p) ? (require $p) : []; if (!is_array($c)) $c = []; }
   return $k === null ? $c : ($c[$k] ?? $def);
 }
-const SCHEMA_V = 5; // tăng khi đổi cấu trúc CSDL: lần gọi db() đầu tiên sau đó sẽ tự chạy migrate()
+/* 02/11/2026: web tư vấn cho gọn, không mở tài khoản người dùng. Chỉ quản trị viên đăng nhập được; đồng bộ tắt.
+   Bật lại: đặt true ở đây và ACCOUNTS = true trong src/app.js. */
+const USER_ACCOUNTS = false;
+const SCHEMA_V = 6; // tăng khi đổi cấu trúc CSDL: lần gọi db() đầu tiên sau đó sẽ tự chạy migrate()
 function upload_dir(): string { return dirname(cfg_path()) . '/hnlg-uploads'; }
 function installed(): bool { return (bool) cfg('db_name'); }
 

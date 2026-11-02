@@ -227,6 +227,18 @@ b,strong{font-weight:600}
 .local{margin-top:30px;font-size:.86rem;color:var(--muted);max-width:70ch}
 
 /* chân trang */
+/* gợi ý theo chủ đề (liên kết tới trang /chu-de/) */
+.tp{border-top:1px solid var(--line)}
+.tp .wrap{padding-block:26px 6px}
+.tp h2{font:800 1.2rem/1.3 var(--f-display);margin-bottom:10px}
+.tp p{color:var(--muted);max-width:68ch;margin-bottom:12px}
+.tp-list{list-style:none;margin:0;padding:0 0 6px;display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tp-list::-webkit-scrollbar{display:none}
+.tp-list li{flex:none}
+@media (min-width:760px){.tp-list{flex-wrap:wrap;overflow:visible}}
+.tp-list a{display:inline-block;padding:7px 13px;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;font-size:.9rem}
+.tp-list a:hover{border-color:var(--do-line);color:var(--do)}
+.tp .tp-more{margin-top:12px;font-size:.9rem}.tp .tp-more a{color:var(--do)}
 .foot{border-top:1px solid var(--line)}
 .foot-in{padding-block:26px 34px;display:flex;flex-direction:column;gap:12px;font-size:.88rem;color:var(--muted)}
 .foot-brand{font:800 1.15rem/1.2 var(--f-display);color:var(--ink)}.foot-slogan{font-style:italic;color:var(--ink)}

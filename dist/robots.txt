@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://homnaylamgi.com/sitemap.xml
+Sitemap: https://homnaylamgi.com/api/sitemap.php
