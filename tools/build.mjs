@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import * as esbuild from 'esbuild';
-import { buildTopics } from './topics.mjs';
+import { buildTopics, topicsJs } from './topics.mjs';
 import { minify as minifyHtml } from 'html-minifier-terser';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -59,10 +59,9 @@ const fmtWho = s => { if (s.length >= 4) return 'Ai cũng được'; const t = s
 const fmtTime = p => (p < 60 ? `${p} phút` : p % 60 === 0 ? `${p / 60} tiếng` : p % 60 === 30 ? `${(p - 30) / 60} tiếng rưỡi` : `${Math.floor(p / 60)} tiếng ${p % 60} phút`);
 const Q = ACT.find(a => a.id === 1);
 const fill = {
-  qNo: '001', qLv: LVL(Q.d), qSealLabel: `Nhóm ${SEAL[Q.c][2]}`, qSeal: `<span>${SEAL[Q.c][0]}</span><span>${SEAL[Q.c][1]}</span>`,
+  qNo: '001', qLv: `${LVL(Q.d)} · độ khó ${Q.d}/10`, qSealLabel: `Nhóm ${SEAL[Q.c][2]}`, qSeal: `<span>${SEAL[Q.c][0]}</span><span>${SEAL[Q.c][1]}</span>`,
   qTitle: esc(Q.t), qPoem: esc(Q.n), qStep: esc(Q.s),
-  qStars: Array.from({ length: 10 }, (_, i) => `<svg class="star${i < Q.d ? ' on' : ''}" viewBox="0 0 24 24"><use href="#i-star"/></svg>`).join(''),
-  qStarsTxt: `Độ khó ${Q.d}/10`, qTime: fmtTime(Q.p), qCost: ['0 đồng', 'Dưới 100k', '100k–300k', 'Trên 300k'][Q.k],
+  qTime: fmtTime(Q.p), qCost: ['0 đồng', 'Dưới 100k', '100k–300k', 'Trên 300k'][Q.k],
   qWhere: { i: 'Trong nhà', o: 'Ra ngoài', b: 'Đâu cũng được' }[Q.o], qWho: fmtWho(Q.ai), count: COUNT.toLocaleString('vi-VN'), foods: FOODS.length.toLocaleString('vi-VN')
 };
 const TP = buildTopics({ ACT, FOODS, SITE, esc });
@@ -89,8 +88,9 @@ const minCss = async css => (await esbuild.transform(css, { loader: 'css', minif
 const minJs = async js => (await esbuild.transform(js, { loader: 'js', minify: true, target: TARGET, legalComments: 'none', charset: 'utf8' })).code.trim();
 const cssSite = await minCss(fontFace + css0);
 const cssArt = await minCss(css0);
-const jsSite = await minJs(data0 + '\n' + app0.replace('const DEPLOY = false;', 'const DEPLOY = true;'));
-const jsArt = await minJs(data0 + '\n' + app0);
+const TOPICS_JS = topicsJs();
+const jsSite = await minJs(data0 + '\n' + TOPICS_JS + '\n' + app0.replace('const DEPLOY = false;', 'const DEPLOY = true;'));
+const jsArt = await minJs(data0 + '\n' + TOPICS_JS + '\n' + app0);
 const htmlOpts = { collapseWhitespace: true, conservativeCollapse: true, removeComments: true, minifyCSS: false, minifyJS: false, keepClosingSlash: true, decodeEntities: false };
 
 /* ---------- 5. dist/index.html ---------- */

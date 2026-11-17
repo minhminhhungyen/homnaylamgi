@@ -89,6 +89,17 @@ b,strong{font-weight:600}
 .hero h1 .q{color:var(--do)}
 .lede{font-size:1.08rem;color:var(--muted);max-width:44ch}
 .night{margin-top:12px;font-size:.92rem;color:var(--muted);max-width:52ch}
+/* lời giới thiệu cho người mới (3 lượt vào đầu) */
+.intro{display:flex;align-items:center;gap:10px;margin-top:12px;padding:8px 8px 8px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-size:.92rem;max-width:56ch}
+.intro span{flex:1 1 auto}
+.intro .x{flex:none;width:32px;height:32px;border:0}
+/* lọc nhanh */
+.quick{margin-top:10px;gap:6px}
+.quick .chip{min-height:36px;padding:5px 12px;font-size:.9rem}
+/* đang rút theo chủ đề */
+.topic-on{margin:0 0 10px;font-size:.9rem;color:var(--muted)}
+.topic-on b{color:var(--ink)}
+.topic-on .link{font-weight:600}
 
 /* ống quẻ */
 .tube{flex:none;width:78px;padding:0;border:0;background:none;cursor:pointer;transform-origin:50% 96%;-webkit-tap-highlight-color:transparent}
@@ -121,11 +132,6 @@ b,strong{font-weight:600}
 .seal{flex:none;width:64px;height:64px;background:var(--do);color:var(--slip);border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transform:rotate(-5deg);box-shadow:inset 0 0 0 3px var(--do),inset 0 0 0 4.5px var(--slip);font:800 .66rem/1.1 var(--f-display);letter-spacing:.04em}
 .slip-title{margin-top:16px;font-weight:700;font-size:clamp(1.5rem,4.4vw,2.05rem);line-height:1.18;letter-spacing:-.015em}
 .slip-poem{margin-top:12px;font:italic 400 1.12rem/1.5 var(--f-poem);color:var(--muted);max-width:46ch}
-.stars{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:16px}
-.stars-row{display:flex;gap:3px}
-.star{width:17px;height:17px;fill:var(--line);stroke:none}
-.star.on{fill:var(--gold)}
-.stars-txt{font-size:.85rem;font-weight:600;color:var(--gold-ink);font-variant-numeric:tabular-nums}
 .perf{margin:20px -20px 0;border-top:2px dashed var(--do-line);position:relative}
 @media (min-width:560px){.perf{margin-inline:-32px}}
 .first{padding-top:16px}
@@ -163,7 +169,6 @@ b,strong{font-weight:600}
 
 /* chip */
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.loc-ask{margin:14px 0 0;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:.85rem;line-height:1.45}.loc-ask p{margin:0 0 8px}.loc-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.loc-acts .chip{min-height:34px;padding:4px 12px;font-size:.88rem}.loc-acts .btn{min-height:34px}
 .fregs{margin-top:10px;align-items:center;gap:6px}.fregs .chip{min-height:34px;padding:4px 12px;font-size:.88rem}.fregs-lbl{font-size:.88rem;color:var(--muted);flex:none}.fregs-note{font-size:.8rem;color:var(--muted);flex:none}
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);font-size:.94rem;font-weight:400;cursor:pointer;transition:background-color .15s ease,border-color .15s ease}
 .chip:hover{border-color:var(--muted)}
@@ -184,20 +189,6 @@ b,strong{font-weight:600}
 .group h3{font:600 .72rem/1.3 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .group .chip{min-height:36px;padding:6px 12px;font-size:.9rem}
 .count{font-size:.88rem;color:var(--muted)}
-
-/* thử thách chung */
-.daily-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px}
-.daily-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.daily-badge{display:inline-flex;align-items:center;gap:6px;font:600 .72rem/1 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--gold-ink)}
-.daily-badge .star{width:14px;height:14px;fill:var(--gold)}
-.daily-card h3{margin-top:10px;font-size:1.2rem;font-weight:700;line-height:1.3}
-.daily-card .why{margin-top:8px;font-size:.94rem;color:var(--muted)}
-.daily-card details{margin-top:10px;font-size:.94rem}
-.daily-card summary{cursor:pointer;font-weight:600;color:var(--do)}
-.daily-card details p{margin-top:6px}
-.daily-act{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin-top:14px}
-.daily-act .note{font-size:.85rem;color:var(--muted)}
-
 
 /* sắp tới */
 .soon-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
@@ -263,12 +254,13 @@ b,strong{font-weight:600}
 .share-text{width:100%;margin-top:6px;min-height:84px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--bg);color:var(--ink);font:400 .95rem/1.5 var(--f-body)}
 .share-link{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.88rem;color:var(--muted);min-width:0}
 .share-link a{color:var(--do);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.nets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
 .net{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:60px;padding:8px 4px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:.85rem;font-weight:600;line-height:1.2;text-align:center;text-decoration:none;cursor:pointer;transition:border-color .15s ease,transform .12s ease}
 .net:hover{border-color:var(--do-line)}
 .net:active{transform:scale(.97)}
 .net .ico{width:22px;height:22px;color:var(--do)}
 .net span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:480px){.nets{grid-template-columns:repeat(2,minmax(0,1fr))}.net{flex-direction:row;gap:8px;min-height:48px;font-size:.92rem}}
 .share-hint{margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--do-soft);font-size:.9rem;line-height:1.45}
 .share-hint a{font-weight:600;color:var(--do)}
 .share-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
@@ -297,6 +289,7 @@ body.modal-open{overflow:hidden}
 .grp-list{margin:14px 0 16px}
 .grp-list .row-m + .row-m{margin-top:4px}
 .grp-item .btn{flex:none}
+.grp-acts{display:flex;flex-wrap:wrap;gap:8px}
 .calbox{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);display:grid;gap:10px;max-width:520px}
 .cal-lbl{font:600 .72rem/1.3 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
 .cal-time{font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:8px;padding:9px 10px;min-height:44px;width:100%;max-width:280px}
@@ -309,6 +302,8 @@ body.modal-open{overflow:hidden}
 .wx-ask{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:6px 14px;border-radius:999px;border:1.5px dashed var(--do-line);background:transparent;color:var(--do);font-weight:600;font-size:.9rem;cursor:pointer}
 .wx-ask:hover{border-style:solid}
 .wx-ask[disabled]{cursor:progress;opacity:.75}
+.wx-ask.hint{animation:hint 1.6s ease-in-out 2}
+@keyframes hint{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 5px var(--do-soft)}}
 .wx-now{font-size:.92rem;line-height:1.5;color:var(--muted);max-width:60ch}
 .wx-emo{display:inline-block;margin-right:6px;font-size:1.05rem;line-height:1;vertical-align:-1px}
 .wx-now .link{padding:2px 4px;margin-left:2px;font-size:.88rem}
@@ -320,8 +315,6 @@ body.modal-open{overflow:hidden}
 .wx-note .link{padding:2px 4px}
 .mood-note{margin-top:10px;font-size:.9rem;color:var(--muted);max-width:60ch}
 .invite{display:inline-flex;align-items:center;margin:0 0 10px;padding:6px 14px;border-radius:999px;background:var(--do-soft);color:var(--ink);font-size:.9rem;font-weight:600}
-.invite-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:22px;padding:14px 16px;border:1px dashed var(--do-line);border-radius:8px;max-width:640px}
-.invite-row p{flex:1 1 220px;font-size:.94rem}
 
 /* cài ứng dụng */
 .nudge{margin-top:16px;padding:14px 16px;border-radius:8px;background:var(--surface);border:1px dashed var(--do-line);display:grid;gap:10px;max-width:560px}
@@ -401,8 +394,6 @@ body.modal-open{overflow:hidden}
   .slip-no b{font-size:1.3rem}
   .slip-title{margin-top:10px;font-size:1.36rem}
   .slip-poem{margin-top:8px;font-size:1rem}
-  .stars{margin-top:10px}
-  .star{width:15px;height:15px}
   .perf{margin:14px -16px 0}
   .first{padding-top:12px}
   .first #qStep{font-size:.97rem}
@@ -420,6 +411,10 @@ body.modal-open{overflow:hidden}
   .wx-ask{min-height:34px;padding:5px 12px;font-size:.86rem}
   .wx-now{font-size:.88rem}
   .mood-note{margin-top:6px;font-size:.86rem}
+  .intro{margin-top:8px;font-size:.88rem;padding:6px 6px 6px 12px}
+  .quick{margin-top:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .quick .chip{flex:none;min-height:34px}
+
   .invite{font-size:.86rem;margin-bottom:8px}
   .toast{bottom:calc(78px + env(safe-area-inset-bottom,0px))}
   .me-btn{padding:6px;width:36px;justify-content:center}
@@ -449,3 +444,8 @@ body.modal-open{overflow:hidden}
 .site-notice{grid-column:1/-1;display:flex;gap:10px;align-items:center;justify-content:space-between;margin:0 0 12px;padding:10px 12px 10px 16px;border-radius:10px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--do);font-size:.95rem}
 .site-notice a{color:var(--do);font-weight:600}
 .site-notice .x{flex:0 0 auto}
+@media (max-width:600px){.site-notice{margin-bottom:-22px}}
+@media (min-width:960px){.site-notice{margin-bottom:-40px}}
+/* máy tính: Tinh chỉnh đã mở sẵn bên cạnh nên không cần lọc nhanh; lời giới thiệu chỉ cần trên điện thoại (lede đã nói điều này) */
+@media (min-width:601px){.intro{display:none!important}}
+@media (min-width:960px){.quick{display:none!important}}

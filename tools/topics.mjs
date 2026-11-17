@@ -56,32 +56,32 @@ export const TOPICS = [
     title: 'Cuối tuần làm gì? 30 ý tưởng cho hai ngày nghỉ',
     desc: 'Cuối tuần làm gì cho vui mà không tốn nhiều? 30 ý tưởng đi chơi, ở nhà, cùng bạn bè, gia đình. Bấm để rút một việc cho hôm nay.',
     intro: 'Hai ngày nghỉ trôi qua rất nhanh nếu chỉ nằm lướt điện thoại. Không cần kế hoạch to tát, chỉ cần một việc nhỏ khác ngày thường: một chuyến đi gần, một món tự làm, một buổi gặp người thân. Mỗi gợi ý có bước bắt đầu ngay, thời gian và chi phí ước tính.',
-    pick: a => xs(a).includes('cuoituan'), cta: '/?lau=240', ctaText: 'Rút một việc cho cuối tuần' },
+    pick: a => xs(a).includes('cuoituan'), cta: '/?cd=cuoi-tuan-lam-gi', ctaText: 'Rút một việc cho cuối tuần' },
   { slug: 'o-nha-lam-gi', kind: 'lam', short: 'Ở nhà làm gì cho đỡ chán',
     title: 'Ở nhà làm gì cho đỡ chán? 30 việc nhỏ trong nhà',
     desc: 'Ở nhà làm gì cho đỡ chán? 30 việc nhỏ làm ngay trong nhà: vận động nhẹ, học một điều mới, dọn dẹp, nấu ăn, giải trí.',
     intro: 'Ở nhà cả ngày dễ thấy chán, nhưng không cần ra ngoài mới có chuyện vui. Đây là 30 việc nhỏ làm được ngay trong nhà, từ vài phút đến vài tiếng, phần lớn không tốn tiền. Chọn một việc, làm xong rồi tính tiếp.',
-    pick: a => a.o === 'i' && FUN(a), cta: '/?noi=i', ctaText: 'Rút một việc làm trong nhà' },
+    pick: a => a.o === 'i' && FUN(a), cta: '/?cd=o-nha-lam-gi', ctaText: 'Rút một việc làm trong nhà' },
   { slug: 'hen-ho-lam-gi', kind: 'lam', short: 'Hẹn hò làm gì',
     title: 'Hẹn hò làm gì? 30 ý tưởng cho hai người',
     desc: 'Hẹn hò làm gì ngoài đi cà phê? 30 ý tưởng cho hai người: đi dạo, nấu ăn, học cùng nhau, chơi trò chơi, ở nhà vẫn vui.',
     intro: 'Đi cà phê mãi cũng nhạt. Danh sách này gợi ý 30 việc hai người làm cùng nhau, có việc ra ngoài, có việc ở nhà, có việc gần như không tốn tiền. Điều quan trọng là cùng nhau thử một điều mới.',
-    pick: a => a.ai.includes('y') && a.ai.length < 4 && !['sn', 'tt', 'hh', 'cm'].includes(a.c), cta: '/?ai=y', ctaText: 'Rút một việc cho hai người' },
+    pick: a => a.ai.includes('y') && a.ai.length < 4 && !['sn', 'tt', 'hh', 'cm'].includes(a.c), cta: '/?cd=hen-ho-lam-gi', ctaText: 'Rút một việc cho hai người' },
   { slug: 'viec-vui-khong-ton-tien', kind: 'lam', short: 'Việc vui không tốn tiền',
     title: '30 việc vui không tốn đồng nào',
     desc: '30 việc vui không tốn đồng nào: vận động, học hỏi, sáng tạo, kết nối, chăm sóc bản thân. Bấm để rút một việc 0 đồng cho hôm nay.',
     intro: 'Vui không nhất thiết phải tốn tiền. Mỗi việc dưới đây có chi phí ước tính 0 đồng: đi bộ, viết, vẽ, gọi điện cho người thân, học một kỹ năng nhỏ trên mạng. Hợp những ngày cuối tháng hay những lúc muốn sống chậm lại.',
-    pick: a => a.k === 0 && FUN(a), cta: '/?tien=0', ctaText: 'Rút một việc 0 đồng' },
+    pick: a => a.k === 0 && FUN(a), cta: '/?cd=viec-vui-khong-ton-tien', ctaText: 'Rút một việc 0 đồng' },
   { slug: 'lam-gi-cung-gia-dinh', kind: 'lam', short: 'Làm gì cùng gia đình',
     title: 'Làm gì cùng gia đình? 30 việc nhỏ cho cả nhà',
     desc: 'Làm gì cùng gia đình cuối tuần hay buổi tối? 30 việc nhỏ cho cả nhà: nấu ăn, chơi trò chơi, đi dạo, kể chuyện, chăm cây.',
     intro: 'Ở cùng một nhà mà nhiều khi mỗi người một màn hình. Đây là 30 việc nhỏ để cả nhà làm cùng nhau, hợp cả người lớn lẫn trẻ nhỏ, phần lớn làm ngay trong buổi tối hoặc cuối tuần.',
-    pick: a => a.ai.includes('g') && a.ai.length < 4 && FUN(a), cta: '/?ai=g', ctaText: 'Rút một việc cho cả nhà' },
+    pick: a => a.ai.includes('g') && a.ai.length < 4 && FUN(a), cta: '/?cd=lam-gi-cung-gia-dinh', ctaText: 'Rút một việc cho cả nhà' },
   { slug: 'buon-chan-lam-gi', kind: 'lam', short: 'Buồn chán nên làm gì', care: true,
     title: 'Buồn chán nên làm gì? 30 việc nhỏ cho đỡ chán',
     desc: 'Buồn chán nên làm gì? 30 việc nhỏ, nhẹ nhàng, làm được ngay để ngày hôm nay dễ chịu hơn một chút.',
     intro: 'Ai cũng có những ngày thấy chán, chẳng muốn làm gì. Những lúc đó, một việc thật nhỏ thường giúp nhiều hơn một kế hoạch lớn. Các gợi ý dưới đây đều nhẹ nhàng, làm được ngay, không cần chuẩn bị nhiều.',
-    pick: a => a.m.includes('c') && a.d <= 5 && ['gt', 'st', 'kp', 'kn', 'au', 'vd'].includes(a.c), cta: '/?tam=c', ctaText: 'Rút một việc cho đỡ chán' }
+    pick: a => a.m.includes('c') && a.d <= 5 && ['gt', 'st', 'kp', 'kn', 'au', 'vd'].includes(a.c), cta: '/?cd=buon-chan-lam-gi&tam=c', ctaText: 'Rút một việc cho đỡ chán' }
 ];
 
 const H = (slug, id) => createHash('sha1').update(slug + ':' + id).digest('hex');
@@ -100,6 +100,13 @@ function select(t, list, n = 30) {
 const itemLam = a => `<li><h2><a href="/q/${a.id}">${escH(a.t)}</a></h2><p class="n">${escH(a.n)}</p><p><b>Bắt đầu:</b> ${escH(a.s)}</p><p class="m">${CAT[a.c]} · ${LVL(a.d)} · ${fmtTime(a.p)} · ${COST[a.k]} · ${WHERE[a.o]} · ${fmtWho(a.ai)}</p></li>`;
 const itemAn = f => `<li><h2><a href="/an/${f.id}">${escH(f.t)}</a></h2><p class="n">${escH(f.n)}</p><p class="m">Bữa ${f.b.split('').map(c => MEAL[c]).join(', ')} · ${KIND[f.o]} · ${REGION[f.r] || 'Cả nước'} · ${PURSE[f.k]}${f.v ? ' · Món chay' : ''}</p></li>`;
 let escH = s => s;
+
+/* chép điều kiện chọn của các chủ đề “Làm gì” vào trang chính: bấm nút trên trang chủ đề (/?cd=...) thì app chỉ rút trong chủ đề đó */
+export function topicsJs() {
+  const lam = TOPICS.filter(t => t.kind === 'lam');
+  for (const t of lam) if (!t.cta.startsWith(`/?cd=${t.slug}`)) throw new Error(`Chủ đề ${t.slug}: nút phải trỏ về /?cd=${t.slug}`);
+  return `const TOPICS = (() => { const xs = a => (a.x ? a.x.split(' ') : []); const FUN = ${FUN.toString()}; void xs; void FUN; return {${lam.map(t => `${JSON.stringify(t.slug)}: { n: ${JSON.stringify(t.short)}, p: ${t.pick.toString()} }`).join(', ')}}; })();`;
+}
 
 export function buildTopics({ ACT, FOODS, SITE, esc }) {
   escH = esc;

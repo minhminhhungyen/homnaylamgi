@@ -1,5 +1,4 @@
 <svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
-  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.6l2.9 5.9 6.5.95-4.7 4.6 1.1 6.45L12 17.45l-5.8 3.05 1.1-6.45-4.7-4.6 6.5-.95z"/></symbol>
   <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></symbol>
   <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6.5 3.5h11v17l-5.5-3.8-5.5 3.8z"/></symbol>
@@ -57,6 +56,7 @@
       </button>
     </div>
     <p class="lede">Khỏi nghĩ nữa. Rút một quẻ, làm một việc nhỏ, để hôm nay khác hôm qua một chút.</p>
+    <p class="intro needs-js" id="introNote" hidden><span id="introTxt">Mỗi quẻ là một việc nhỏ hợp lúc này. Không ưng thì bấm “Rút quẻ khác”.</span><button class="x" type="button" id="introX" aria-label="Ẩn lời giới thiệu"><svg class="ico"><use href="#i-x"/></svg></button></p>
     <p class="night" id="nightHint" hidden>Khuya rồi nên mình chỉ rút những việc nhẹ nhàng, không cần ra ngoài. Muốn lên kế hoạch cho cả ngày mai, mở phần Tinh chỉnh và chọn “Cả ngày”.</p>
 
     <div class="wx needs-js" id="wx">
@@ -100,6 +100,11 @@
           <button class="chip" type="button" id="vegChip" aria-pressed="false">Món chay</button>
       </div>
     </div>
+    <div class="chips quick needs-js" id="quick" role="group" aria-label="Lọc nhanh">
+      <button class="chip" type="button" data-q="place" data-v="i" aria-pressed="false">Ở nhà</button>
+      <button class="chip" type="button" data-q="budget" data-v="0" aria-pressed="false">0 đồng</button>
+      <button class="chip" type="button" data-q="dur" data-v="30" aria-pressed="false">Dưới 30 phút</button>
+    </div>
     <div class="chips fregs" id="fregs" role="group" aria-label="Bạn ở miền nào?" hidden>
       <span class="fregs-lbl">Bạn ở</span>
       <button class="chip" type="button" data-reg="B" aria-pressed="false">Miền Bắc</button>
@@ -112,6 +117,7 @@
 
     <div class="draw">
       <p class="invite" id="invite" hidden></p>
+      <p class="topic-on needs-js" id="topicOn" hidden>Đang rút theo chủ đề: <b id="topicName"></b> · <button class="link" type="button" id="topicOff">Bỏ</button></p>
       <article class="slip" id="slip" aria-labelledby="qTitle">
         <div class="slip-head">
           <div>
@@ -122,7 +128,6 @@
         </div>
         <h2 class="slip-title" id="qTitle">{{qTitle}}</h2>
         <p class="slip-poem" id="qPoem">{{qPoem}}</p>
-        <div class="stars" id="qStarsWrap"><span class="stars-row" id="qStars" aria-hidden="true">{{qStars}}</span><span class="stars-txt" id="qStarsTxt">{{qStarsTxt}}</span></div>
         <div class="perf" aria-hidden="true"></div>
         <div class="first">
           <p class="eyebrow" id="qStepLbl">Bắt đầu ngay</p>
@@ -130,6 +135,7 @@
           <div class="links" id="qLinks" hidden>
             <a class="btn btn-soft btn-sm" id="lnkMap" href="https://www.google.com/maps" target="_blank" rel="noopener"><svg class="ico"><use href="#i-pin"/></svg><span>Tìm quán gần bạn</span></a>
             <a class="btn btn-soft btn-sm" id="lnkCook" href="https://www.youtube.com" target="_blank" rel="noopener"><svg class="ico"><use href="#i-play"/></svg><span>Xem cách nấu</span></a>
+            <a class="btn btn-soft btn-sm" id="lnkImg" href="https://www.google.com/search?tbm=isch" target="_blank" rel="noopener"><svg class="ico"><use href="#i-image"/></svg><span>Xem ảnh món</span></a>
           </div>
         </div>
         <dl class="meta">
@@ -148,10 +154,6 @@
         <button class="btn btn-line" id="btnDraw" type="button"><svg class="ico"><use href="#i-shuffle"/></svg><span>Rút quẻ khác</span></button>
       </div>
       <p class="food-more needs-js" id="foodMore" hidden><button class="btn btn-soft btn-sm" id="btnGroup" type="button"><svg class="ico"><use href="#i-users"/></svg><span>Chọn cho cả nhóm</span></button><button class="link muted" id="btnBan" type="button">Không ăn món này</button></p>
-      <div class="loc-ask needs-js" id="locAsk" hidden role="region" aria-labelledby="locAskT">
-        <p><b id="locAskT">Gợi ý hợp nơi bạn ở?</b> Cho xem vị trí để gợi ý theo thời tiết và vùng miền. Vị trí làm tròn khoảng 1 km, chỉ lưu trên máy bạn, không gửi về máy chủ của chúng tôi.</p>
-        <div class="loc-acts"><button class="btn btn-main btn-sm" type="button" id="locYes">Cho phép</button><button class="chip" type="button" data-locreg="B" aria-label="Chọn miền Bắc">Bắc</button><button class="chip" type="button" data-locreg="T" aria-label="Chọn miền Trung">Trung</button><button class="chip" type="button" data-locreg="N" aria-label="Chọn miền Nam">Nam</button><button class="link muted" type="button" id="locLater">Để sau</button></div>
-      </div>
       <div class="actions2 needs-js" id="actions2">
         <button class="btn btn-soft btn-sm" id="btnShare" type="button"><svg class="ico"><use href="#i-users"/></svg><span>Rủ bạn</span></button>
         <button class="btn btn-soft btn-sm" id="btnCal" type="button" aria-expanded="false" aria-controls="calBox"><svg class="ico"><use href="#i-cal"/></svg><span>Thêm vào lịch</span></button>
@@ -198,7 +200,7 @@
             <button class="chip" type="button" data-v="">Bao nhiêu cũng được</button><button class="chip" type="button" data-v="0">0 đồng</button><button class="chip" type="button" data-v="1">Dưới 100k</button><button class="chip" type="button" data-v="2">Dưới 300k</button>
           </div></div>
           <div class="group"><h3>Thời gian rảnh</h3><div class="chips" data-f="dur">
-            <button class="chip" type="button" data-v="">Bao lâu cũng được</button><button class="chip" type="button" data-v="20">15 phút</button><button class="chip" type="button" data-v="60">Khoảng 1 tiếng</button><button class="chip" type="button" data-v="240">Vài tiếng</button><button class="chip" type="button" data-v="999">Cả ngày</button>
+            <button class="chip" type="button" data-v="">Bao lâu cũng được</button><button class="chip" type="button" data-v="30">Dưới 30 phút</button><button class="chip" type="button" data-v="60">Khoảng 1 tiếng</button><button class="chip" type="button" data-v="240">Vài tiếng</button><button class="chip" type="button" data-v="999">Cả ngày</button>
           </div></div>
           <div class="group"><h3>Ở đâu</h3><div class="chips" data-f="place">
             <button class="chip" type="button" data-v="">Đâu cũng được</button><button class="chip" type="button" data-v="i">Trong nhà</button><button class="chip" type="button" data-v="o">Ra ngoài</button>
@@ -214,45 +216,19 @@
       </details>
     </section>
 
-    <section aria-labelledby="dLabel">
-      <h2 id="dLabel">Thử thách chung hôm nay</h2>
-      <div class="daily-card">
-        <div class="daily-top">
-          <span class="daily-badge"><svg class="star"><use href="#i-star"/></svg><span id="dDate"></span></span>
-          <span class="stars-txt" id="dStars"></span>
-        </div>
-        <h3 id="dTitle"></h3>
-        <p class="why" id="dWhy"></p>
-        <details><summary>Cách bắt đầu</summary><p id="dStep"></p></details>
-        <p class="night" id="dNight" hidden>Khuya rồi, thử thách này để mai hãy làm nhé.</p>
-        <div class="daily-act">
-          <button class="btn btn-main btn-sm" id="dBtn" type="button">Nhận thử thách</button>
-          <span class="note">Ai vào trang hôm nay cũng nhận cùng thử thách này.</span>
-        </div>
-      </div>
-    </section>
-
     <section id="soonSec" aria-labelledby="sLabel">
       <h2 id="sLabel">Sắp tới</h2>
       <ul class="soon-list" id="soonList"></ul>
     </section>
   </aside>
 
-  <section class="journey needs-js" aria-labelledby="jTitle">
+  <section class="journey needs-js" id="journey" hidden aria-labelledby="jTitle">
     <h2 id="jTitle">Của bạn</h2>
-    <div class="invite-row">
-      <p>Rủ cả hội cùng rút quẻ, cùng làm một việc nhỏ cho vui.</p>
-      <button class="btn btn-soft btn-sm" id="btnInvite" type="button"><svg class="ico"><use href="#i-users"/></svg><span>Rủ bạn cùng chơi</span></button>
-    </div>
-    <div class="invite-row" id="installRow" hidden>
-      <p>Cài lên màn hình chính: mỗi sáng mở một chạm là có quẻ, không cần gõ địa chỉ.</p>
-      <button class="btn btn-soft btn-sm" data-install type="button"><svg class="ico"><use href="#i-download"/></svg><span>Cài ứng dụng</span></button>
-    </div>
     <div class="lists">
-      <div><h3>Đã làm gần đây</h3><div id="hist"></div></div>
-      <div><h3>Để dành</h3><div id="saved"></div></div>
+      <div id="histBox"><h3>Đã làm gần đây</h3><div id="hist"></div></div>
+      <div id="savedBox"><h3>Để dành</h3><div id="saved"></div></div>
     </div>
-    <p class="local">Lịch sử và danh sách để dành được lưu ngay trên trình duyệt của bạn, không cần đăng nhập. <button class="link muted" id="btnReset" type="button">Xóa dữ liệu</button></p>
+    <p class="local">Lưu ngay trên máy này, không cần đăng nhập. Sao lưu hoặc xóa ở <a href="#toi">trang của bạn</a>.</p>
   </section>
 
   <section class="view needs-js" id="viewMe" hidden aria-labelledby="meTitle">
@@ -268,6 +244,11 @@
         <h3>Tên gọi</h3>
         <form class="row-form" id="nameForm"><label class="sr" for="nameInput">Tên gọi</label><input id="nameInput" maxlength="30" autocomplete="nickname" placeholder="Bạn muốn được gọi là gì?"><button class="btn btn-soft btn-sm" type="submit">Lưu</button></form>
         <p class="note">Chỉ dùng để chào bạn trên trang.</p>
+      </div>
+      <div class="card" id="installCard" hidden>
+        <h3>Cài lên màn hình chính</h3>
+        <p class="note">Mở một chạm là có quẻ, không cần gõ địa chỉ.</p>
+        <div class="acts"><button class="btn btn-soft btn-sm" data-install type="button"><svg class="ico"><use href="#i-download"/></svg><span>Cài ứng dụng</span></button></div>
       </div>
       <div class="card" id="meDiaryCard" hidden>
         <h3>Nhật ký cũ</h3>
@@ -382,11 +363,6 @@
       <button class="net" type="button" data-net="zalo"><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg><span>Zalo</span></button>
       <button class="net" type="button" data-net="messenger"><svg class="ico" aria-hidden="true"><use href="#i-chat"/></svg><span>Messenger</span></button>
       <a class="net" id="netFacebook" data-net="facebook" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fhomnaylamgi.com%2F" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-post"/></svg><span>Facebook</span></a>
-      <button class="net" type="button" data-net="instagram"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg><span>Instagram</span></button>
-      <button class="net" type="button" data-net="tiktok"><svg class="ico" aria-hidden="true"><use href="#i-image"/></svg><span>TikTok</span></button>
-      <a class="net" id="netThreads" data-net="threads" href="https://www.threads.com/intent/post" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-post"/></svg><span>Threads</span></a>
-      <a class="net" id="netTelegram" data-net="telegram" href="https://t.me/share/url" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg><span>Telegram</span></a>
-      <a class="net" id="netX" data-net="x" href="https://x.com/intent/tweet" target="_blank" rel="noopener"><svg class="ico" aria-hidden="true"><use href="#i-post"/></svg><span>X</span></a>
       <button class="net" id="netMore" type="button" data-net="more"><svg class="ico" aria-hidden="true"><use href="#i-share"/></svg><span>Khác</span></button>
     </div>
     <p class="share-hint" id="shareHint" role="status" hidden></p>
@@ -412,9 +388,12 @@
 <div class="modal" id="groupModal" hidden role="dialog" aria-modal="true" aria-labelledby="grTitle">
   <div class="modal-box">
     <div class="modal-head"><h2 id="grTitle">Cả nhóm chọn một món</h2><button class="x" type="button" data-close aria-label="Đóng"><svg class="ico"><use href="#i-x"/></svg></button></div>
-    <p class="note">Ba món hợp bữa này. Mỗi người nói một câu rồi chốt món nhiều người thích nhất.</p>
+    <p class="note">Ba món hợp bữa này. Gửi vào nhóm để mọi người cùng chọn, hoặc chốt luôn một món.</p>
     <ul class="rows grp-list" id="grpList"></ul>
-    <button class="btn btn-line btn-sm" id="grpAgain" type="button"><svg class="ico"><use href="#i-shuffle"/></svg><span>Rút 3 món khác</span></button>
+    <div class="grp-acts">
+      <button class="btn btn-main btn-sm" id="grpShare" type="button"><svg class="ico"><use href="#i-send"/></svg><span>Gửi 3 món vào nhóm</span></button>
+      <button class="btn btn-line btn-sm" id="grpAgain" type="button"><svg class="ico"><use href="#i-shuffle"/></svg><span>Rút 3 món khác</span></button>
+    </div>
   </div>
 </div>
 
